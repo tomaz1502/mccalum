@@ -1,0 +1,10 @@
+name = "mccalum"
+version = "0.1.0"
+defaultTargets = ["mccalum"]
+
+[[lean_lib]]
+name = "Mccalum"
+
+[[lean_exe]]
+name = "mccalum"
+root = "Main"
