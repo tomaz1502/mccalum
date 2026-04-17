@@ -1,16 +1,13 @@
 name = "mccalum"
 version = "0.1.0"
-defaultTargets = ["mccalum"]
+defaultTargets = ["Mccalum"]
+lintDriver = "batteries/runLinter"
 
 [[lean_lib]]
 name = "Mccalum"
 
 [[lean_lib]]
 name = "CAD"
-
-[[lean_exe]]
-name = "mccalum"
-root = "Main"
 
 [[require]]
 name = "checkdecls"
