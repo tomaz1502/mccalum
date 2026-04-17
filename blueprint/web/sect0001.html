@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']],
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reduced Projection for CAD</title>
+<link rel="prev" href="index.html" title="mccalum" />
+<link rel="up" href="index.html" title="mccalum" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">mccalum</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class=" active current">
+  <a href="sect0001.html"><span class="toc_ref">1</span> <span class="toc_entry">Reduced Projection for CAD</span></a>
+  <span class="expand-toc">▼</span>
+  <ul class="sub-toc-1 active">
+     <li class="">
+  <a href="sect0001.html#a0000000003"><span class="toc_ref">1.1</span> <span class="toc_entry">Evaluation and specialization</span></a>
+ </li>
+<li class="">
+  <a href="sect0001.html#a0000000004"><span class="toc_ref">1.2</span> <span class="toc_entry">Order</span></a>
+ </li>
+<li class="">
+  <a href="sect0001.html#a0000000005"><span class="toc_ref">1.3</span> <span class="toc_entry">Invariance conditions</span></a>
+ </li>
+<li class="">
+  <a href="sect0001.html#a0000000006"><span class="toc_ref">1.4</span> <span class="toc_entry">Sections and delineability</span></a>
+ </li>
+<li class="">
+  <a href="sect0001.html#a0000000007"><span class="toc_ref">1.5</span> <span class="toc_entry">Squarefree basis and reduced projection</span></a>
+ </li>
+<li class="">
+  <a href="sect0001.html#a0000000009"><span class="toc_ref">1.6</span> <span class="toc_entry">Prerequisites</span></a>
+ </li>
+<li class="">
+  <a href="sect0001.html#a0000000010"><span class="toc_ref">1.7</span> <span class="toc_entry">Main result</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="a0000000002">1 Reduced Projection for CAD</h1>
+<p>This blueprint covers the formalization of Theorem&#160;3.2.3 from McCallum’s PhD thesis <em>An Improved Projection Operation for Cylindrical Algebraic Decomposition</em> (1984). </p>
+<p>Throughout, we work with \(r\)-variate polynomials viewed as univariate polynomials in a “main variable” \(x_r\) over the ring \(\mathbb {R}[x_1, \ldots , x_{r-1}]\). We set \(n = r - 1\) and write \(x = (x_1, \ldots , x_n)\). </p>
+<h1 id="a0000000003">1.1 Evaluation and specialization</h1>
+<div class="definition_thmwrapper theorem-style-definition" id="def:specialize">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">1</span>
+    <span class="definition_thmtitle">Specialize</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:specialize">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/specialize" class="lean_decl">specialize</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   Given \(f \in \mathbb {R}[x_1,\ldots ,x_n][x_r]\) and a point \(a \in \mathbb {R}^n\), the <em>specialization</em> of \(f\) at \(a\) is the univariate polynomial \(f(a, x_r) \in \mathbb {R}[x_r]\) obtained by evaluating the coefficients of \(f\) (which are elements of \(\mathbb {R}[x_1,\ldots ,x_n]\)) at the point \(a\). </p>
+
+  </div>
+</div>
+<h1 id="a0000000004">1.2 Order</h1>
+<div class="definition_thmwrapper theorem-style-definition" id="def:poly_order">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">2</span>
+    <span class="definition_thmtitle">Order of a polynomial at a point</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:poly_order">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/polyOrder" class="lean_decl">polyOrder</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   The <em>order</em> of a polynomial \(g \in \mathbb {R}[x_1,\ldots ,x_m]\) at a point \(a \in \mathbb {R}^m\) is the smallest non-negative integer \(k\) such that the \(k\)-th iterated Fréchet derivative of the evaluation function \(x \mapsto g(x)\) at \(a\) is nonzero, or \(\infty \) if all iterated derivatives vanish. </p>
+<p>This coincides with the smallest total degree of a nonvanishing term in the Taylor expansion of \(g\) about \(a\), which can equivalently be characterized via iterated partial derivatives (see <span class="ttfamily">polyOrder_eq_order’</span>). </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:poly_order_eq">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">3</span>
+    <span class="theorem_thmtitle">Equivalence of order definitions</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#thm:poly_order_eq">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:poly_order">Definition 2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/polyOrder_eq_order'" class="lean_decl">polyOrder_eq_order'</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>    The Fréchet derivative-based order (<span class="ttfamily">polyOrder</span>) agrees with the iterated partial derivative-based definition (<span class="ttfamily">order’</span> from <span class="ttfamily">CAD.Order</span>). The proof uses the fact that a continuous multilinear map on a finite-dimensional space is determined by its values on standard basis vectors. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:order_full">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">4</span>
+    <span class="definition_thmtitle">Order of a full polynomial</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:order_full">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:poly_order">Definition 2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/orderFull" class="lean_decl">orderFull</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>    The <em>order</em> of \(f \in \mathbb {R}[x_1,\ldots ,x_n][x_r]\) at a point \((a, y) \in \mathbb {R}^n \times \mathbb {R}\) is defined by converting \(f\) to an element of \(\mathbb {R}[x_0, x_1,\ldots ,x_n]\) via the algebra equivalence <span class="ttfamily">finSuccEquiv</span> and computing <span class="ttfamily">polyOrder</span>. </p>
+
+  </div>
+</div>
+<h1 id="a0000000005">1.3 Invariance conditions</h1>
+<div class="definition_thmwrapper theorem-style-definition" id="def:degree_invariant">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">5</span>
+    <span class="definition_thmtitle">Degree-invariant</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:degree_invariant">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:specialize">Definition 1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/DegreeInvariant" class="lean_decl">DegreeInvariant</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>    A polynomial \(f(x, x_r)\) is <em>degree-invariant</em> on a set \(S \subseteq \mathbb {R}^n\) if \(\deg (f(a, x_r))\) is the same for all \(a \in S\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:order_invariant_mv">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">6</span>
+    <span class="definition_thmtitle">Order-invariant (base polynomial)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:order_invariant_mv">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:poly_order">Definition 2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/OrderInvariantMv" class="lean_decl">OrderInvariantMv</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>    A polynomial \(g \in \mathbb {R}[x_1,\ldots ,x_n]\) is <em>order-invariant</em> on \(S \subseteq \mathbb {R}^n\) if the order of \(g\) is the same at every point of&#160;\(S\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:order_invariant_full">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">7</span>
+    <span class="definition_thmtitle">Order-invariant (full polynomial)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:order_invariant_full">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:order_full">Definition 4</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/OrderInvariantFull" class="lean_decl">OrderInvariantFull</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>    A polynomial \(f(x, x_r)\) is <em>order-invariant</em> in a set \(T \subseteq \mathbb {R}^n \times \mathbb {R}\) if the order of \(f\) is constant throughout&#160;\(T\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:not_identically_zero">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">8</span>
+    <span class="definition_thmtitle">Not identically zero</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:not_identically_zero">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:specialize">Definition 1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/NotIdenticallyZeroOn" class="lean_decl">NotIdenticallyZeroOn</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>    A polynomial \(f(x, x_r)\) is <em>not identically zero</em> on \(S\) if there exists \(a \in S\) such that \(f(a, x_r) \neq 0\) as a univariate polynomial. </p>
+
+  </div>
+</div>
+<h1 id="a0000000006">1.4 Sections and delineability</h1>
+<div class="definition_thmwrapper theorem-style-definition" id="def:section_graph">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">9</span>
+    <span class="definition_thmtitle">Section graph</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:section_graph">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/SectionGraph" class="lean_decl">SectionGraph</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   Given a function \(\theta \colon \mathbb {R}^n \to \mathbb {R}\) and a set \(S \subseteq \mathbb {R}^n\), the <em>section graph</em> is \(\{  (a, \theta (a)) : a \in S \}  \subseteq \mathbb {R}^n \times \mathbb {R}\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:root_function">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">10</span>
+    <span class="definition_thmtitle">Root function</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:root_function">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:specialize">Definition 1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/IsRootFunction" class="lean_decl">IsRootFunction</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>    A function \(\theta \colon \mathbb {R}^n \to \mathbb {R}\) is a <em>root function</em> of \(G(x, x_r)\) on \(S\) if \(\theta (a)\) is a root of \(G(a, x_r)\) for every \(a \in S\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:analytic_submanifold">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">11</span>
+    <span class="definition_thmtitle">Analytic submanifold</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:analytic_submanifold">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/IsAnalyticSubmanifold" class="lean_decl">IsAnalyticSubmanifold</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   A nonempty subset \(S\) of \(\mathbb {R}^n\) is an <em>analytic \(s\)-dimensional submanifold</em> (\(0 \le s \le n\)) if for each point \(p \in S\) there is a neighborhood \(W \subseteq \mathbb {R}^n\) of \(p\) and an analytic coordinate system \(\Phi \colon W \to V\) about \(p\) such that \(S \cap W = \{  x \in W : \Phi _{s+1}(x) = 0, \ldots , \Phi _n(x) = 0 \} \). This is Definition on p.&#160;20 of the thesis; the characterization via coordinate systems is Theorem&#160;2.2.1. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:analytic_delineable">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">12</span>
+    <span class="definition_thmtitle">Analytic delineability</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:analytic_delineable">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:specialize">Definition 1</a></li>
+          
+          <li><a href="sect0001.html#def:root_function">Definition 10</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/AnalyticDelineable" class="lean_decl">AnalyticDelineable</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>    A polynomial \(f(x, x_r)\) is <em>analytically delineable</em> on a connected submanifold \(S \subseteq \mathbb {R}^n\) if there exist \(k \ge 0\) continuous functions \(\theta _1 \lt  \cdots \lt  \theta _k\) from \(S\) to \(\mathbb {R}\) and positive integers \(m_1, \ldots , m_k\) such that: </p>
+<ol class="enumerate">
+  <li><p>For every \(a \in S\), \(y\) is a real root of \(f(a, x_r)\) if and only if \(y = \theta _i(a)\) for some \(1 \le i \le k\). </p>
+</li>
+  <li><p>For every \(a \in S\) and \(1 \le i \le k\), \(\theta _i(a)\) is a root of \(f(a, x_r)\) with multiplicity \(m_i\). </p>
+</li>
+</ol>
+<p> The graphs of the \(\theta _i\) are the <em>\(f\)-sections</em> over \(S\); the regions between consecutive sections are the <em>\(f\)-sectors</em>. </p>
+<p><b class="bfseries">Note.</b> The thesis requires the \(\theta _i\) to be analytic on the submanifold&#160;\(S\). Our Lean formalization currently uses <span class="ttfamily">ContinuousOn</span> as a placeholder. </p>
+
+  </div>
+</div>
+<h1 id="a0000000007">1.5 Squarefree basis and reduced projection</h1>
+<div class="definition_thmwrapper theorem-style-definition" id="def:squarefree_basis">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">13</span>
+    <span class="definition_thmtitle">Squarefree basis</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:squarefree_basis">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/IsSquarefreeBasis" class="lean_decl">IsSquarefreeBasis</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   A finite set \(A\) of polynomials in \(\mathbb {R}[x_1,\ldots ,x_n][x_r]\) is a <em>squarefree basis</em> if: </p>
+<ol class="enumerate">
+  <li><p>Every \(F \in A\) has positive degree in \(x_r\). </p>
+</li>
+  <li><p>Every \(F \in A\) is squarefree. </p>
+</li>
+  <li><p>The elements of \(A\) are pairwise coprime. </p>
+</li>
+</ol>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:coeff_set">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">14</span>
+    <span class="definition_thmtitle">Coefficient set</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:coeff_set">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/coeffSet" class="lean_decl">coeffSet</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   The <em>coefficient set</em> \(\operatorname {coeff}(A)\) consists of all nonzero coefficients of elements of \(A\), viewed as polynomials in \(x_r\). These are elements of \(\mathbb {R}[x_1,\ldots ,x_n]\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:discr_set">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">15</span>
+    <span class="definition_thmtitle">Discriminant set</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:discr_set">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/discrSet" class="lean_decl">discrSet</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   The <em>discriminant set</em> \(\operatorname {discr}(A) = \{  \operatorname {discr}(F) : F \in A,\;  \deg (F) \ge 2 \} \). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:res_set">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">16</span>
+    <span class="definition_thmtitle">Resultant set</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:res_set">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/resSet" class="lean_decl">resSet</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   The <em>resultant set</em> \(\operatorname {res}(A) = \{  \operatorname {res}(F, G) : F, G \in A,\;  F \ne G,\;  \deg (F) \ge 1,\;  \deg (G) \ge 1 \} \). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:reduced_projection">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">17</span>
+    <span class="definition_thmtitle">Reduced projection</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:reduced_projection">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:coeff_set">Definition 14</a></li>
+          
+          <li><a href="sect0001.html#def:discr_set">Definition 15</a></li>
+          
+          <li><a href="sect0001.html#def:res_set">Definition 16</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/reducedProjection" class="lean_decl">reducedProjection</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>    The <em>reduced projection</em> of a squarefree basis \(A\) is </p>
+<div class="displaymath" id="a0000000008">
+  \[  P(A) = \operatorname {coeff}(A) \cup \operatorname {discr}(A) \cup \operatorname {res}(A).  \]
+</div>
+<p> This is a set of polynomials in \(\mathbb {R}[x_1,\ldots ,x_n]\). It is a subset of Collins’ original projection \(\operatorname {PROJ}(A)\), which additionally includes higher-order subdiscriminants and subresultants. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:sections_disjoint">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">18</span>
+    <span class="definition_thmtitle">Sections pairwise disjoint</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:sections_disjoint">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:specialize">Definition 1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/SectionsDisjoint" class="lean_decl">SectionsDisjoint</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>    The <em>sections of \(A\) over \(S\) are pairwise disjoint</em> if for all \(F \ne G \in A\) and all \(a \in S\), the polynomials \(F(a, x_r)\) and \(G(a, x_r)\) have no common real root. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:oi_all_sections">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">19</span>
+    <span class="definition_thmtitle">Order-invariant in all sections</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:oi_all_sections">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:order_invariant_full">Definition 7</a></li>
+          
+          <li><a href="sect0001.html#def:root_function">Definition 10</a></li>
+          
+          <li><a href="sect0001.html#def:section_graph">Definition 9</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/OrderInvariantInAllSections" class="lean_decl">OrderInvariantInAllSections</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>    Each element of \(A\) is <em>order-invariant in every section of \(A\) over \(S\)</em> if: for every \(F, G \in A\) and every continuous root function \(\theta \) of \(G\) on \(S\), \(F\) is order-invariant in \(\operatorname {graph}(\theta )\). </p>
+
+  </div>
+</div>
+<h1 id="a0000000009">1.6 Prerequisites</h1>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:lifting">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">20</span>
+    <span class="theorem_thmtitle">Lifting theorem (Theorem 3.2.1)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#thm:lifting">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:analytic_submanifold">Definition 11</a></li>
+          
+          <li><a href="sect0001.html#def:degree_invariant">Definition 5</a></li>
+          
+          <li><a href="sect0001.html#def:order_invariant_mv">Definition 6</a></li>
+          
+          <li><a href="sect0001.html#def:analytic_delineable">Definition 12</a></li>
+          
+          <li><a href="sect0001.html#def:order_invariant_full">Definition 7</a></li>
+          
+          <li><a href="sect0001.html#def:section_graph">Definition 9</a></li>
+          
+          <li><a href="sect0001.html#def:root_function">Definition 10</a></li>
+          
+          <li><a href="sect0001.html#def:not_identically_zero">Definition 8</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/lifting_theorem" class="lean_decl">lifting_theorem</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>    Let \(f(x, x_r)\) be a squarefree polynomial of positive degree in \(x_r\) with nonzero discriminant \(D(x)\). Let \(S\) be a connected analytic submanifold of \(\mathbb {R}^n\) in which \(f\) is degree-invariant and of non-negative degree, and in which \(D\) is order-invariant. Then \(f\) is analytically delineable on \(S\) and is order-invariant in each \(f\)-section over&#160;\(S\). </p>
+<p>The proof (pp.&#160;49–65) uses the Weierstrass preparation theorem, analytic coordinate changes on submanifolds, and Zariski’s 1975 theorem on equisingularity. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:discr_prod_oi">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">21</span>
+    <span class="lemma_thmtitle">Discriminant of product is order-invariant</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:discr_prod_oi">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:order_invariant_mv">Definition 6</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/discr_prod_order_invariant" class="lean_decl">discr_prod_order_invariant</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>    Let \(F_1, \ldots , F_m\) be squarefree pairwise coprime polynomials, and let \(S\) be a connected set. If each \(\operatorname {discr}(F_i)\) and each \(\operatorname {res}(F_i, F_j)\) (\(i \ne j\)) is order-invariant on \(S\), then \(\operatorname {discr}(\prod F_i)\) is order-invariant on \(S\). </p>
+<p>This combines the discriminant factorization formula (Theorem&#160;2.3.3): \(\operatorname {discr}(\prod F_i) = \prod \operatorname {discr}(F_i) \cdot \prod _{i\lt j} \operatorname {res}(F_i, F_j)^2\) with Lemma&#160;3.2.2 (order-invariance of products). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:oi_factors">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">22</span>
+    <span class="lemma_thmtitle">Order-invariance factors from product</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:oi_factors">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:order_invariant_full">Definition 7</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/order_invariant_full_factor_of_prod" class="lean_decl">order_invariant_full_factor_of_prod</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>    If \(\prod F_i\) is order-invariant in a set \(T \subseteq \mathbb {R}^n \times \mathbb {R}\), then each \(F_i\) is order-invariant in&#160;\(T\). </p>
+<p>This is the backward direction of Lemma&#160;3.2.2 (p.&#160;47), which states that a product of nonconstant analytic functions is order-invariant if and only if each factor is. The proof uses \(\operatorname {ord}(fg, p) = \operatorname {ord}(f,p) + \operatorname {ord}(g,p)\) and upper semicontinuity of order. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:deg_inv_of_coeff">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">23</span>
+    <span class="lemma_thmtitle">Degree-invariance from coefficient order-invariance</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:deg_inv_of_coeff">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:degree_invariant">Definition 5</a></li>
+          
+          <li><a href="sect0001.html#def:order_invariant_mv">Definition 6</a></li>
+          
+          <li><a href="sect0001.html#def:not_identically_zero">Definition 8</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/degree_invariant_of_coeff_order_invariant" class="lean_decl">degree_invariant_of_coeff_order_invariant</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>    If each nonzero coefficient of \(f\) (in \(x_r\)) is order-invariant on a connected set \(S\), and \(f\) is not identically zero on \(S\), then \(f\) is degree-invariant on&#160;\(S\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:prod_squarefree">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">24</span>
+    <span class="lemma_thmtitle">Squarefree product of coprime factors</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:prod_squarefree">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/prod_squarefree_of_coprime" class="lean_decl">prod_squarefree_of_coprime</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   The product of squarefree pairwise coprime polynomials is squarefree. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:discr_deg1">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">25</span>
+    <span class="lemma_thmtitle">Discriminant of degree-1 polynomial is order-invariant</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:discr_deg1">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:order_invariant_mv">Definition 6</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/discr_degree_one_order_invariant" class="lean_decl">discr_degree_one_order_invariant</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>    If \(f\) has degree&#160;\(1\) in \(x_r\) and each nonzero coefficient of \(f\) is order-invariant on \(S\), then \(\operatorname {discr}(f)\) is order-invariant on&#160;\(S\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:discr_ne_zero">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">26</span>
+    <span class="lemma_thmtitle">Nonzero discriminant of squarefree polynomial</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:discr_ne_zero">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/discr_ne_zero_of_squarefree" class="lean_decl">discr_ne_zero_of_squarefree</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   A squarefree polynomial of positive degree has nonzero discriminant. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:delin_factor">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">27</span>
+    <span class="lemma_thmtitle">Delineability of factor from delineability of product</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:delin_factor">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:analytic_delineable">Definition 12</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/delineable_factor_of_delineable_prod" class="lean_decl">delineable_factor_of_delineable_prod</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>    If \(\prod F_i\) is analytically delineable on \(S\) and the \(F_i\) are pairwise coprime, then each \(F_i\) is analytically delineable on&#160;\(S\). </p>
+
+  </div>
+</div>
+<h1 id="a0000000010">1.7 Main result</h1>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:no_common_root">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">28</span>
+    <span class="theorem_thmtitle">No common root of coprime polynomials</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#thm:no_common_root">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000011"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:specialize">Definition 1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/no_common_root_of_coprime" class="lean_decl">no_common_root_of_coprime</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>    If \(F\) and \(G\) are coprime in \(\mathbb {R}[x_1,\ldots ,x_n][x_r]\), then for every \(a \in \mathbb {R}^n\) the univariate polynomials \(F(a, x_r)\) and \(G(a, x_r)\) have no common real root. </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000011">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> From the Bézout identity \(u F + v G = 1\) we obtain, after specialization at \(a\) and evaluation at any common root \(y\): \(0 = 1\), a contradiction. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:mccallum_3_2_3">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">29</span>
+    <span class="theorem_thmtitle">Theorem 3.2.3 – Reduced projection theorem</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#thm:mccallum_3_2_3">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000012"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:squarefree_basis">Definition 13</a></li>
+          
+          <li><a href="sect0001.html#def:analytic_submanifold">Definition 11</a></li>
+          
+          <li><a href="sect0001.html#def:reduced_projection">Definition 17</a></li>
+          
+          <li><a href="sect0001.html#def:order_invariant_mv">Definition 6</a></li>
+          
+          <li><a href="sect0001.html#def:not_identically_zero">Definition 8</a></li>
+          
+          <li><a href="sect0001.html#def:degree_invariant">Definition 5</a></li>
+          
+          <li><a href="sect0001.html#def:analytic_delineable">Definition 12</a></li>
+          
+          <li><a href="sect0001.html#def:sections_disjoint">Definition 18</a></li>
+          
+          <li><a href="sect0001.html#def:oi_all_sections">Definition 19</a></li>
+          
+          <li><a href="sect0001.html#thm:lifting">Theorem 20</a></li>
+          
+          <li><a href="sect0001.html#lem:discr_prod_oi">Lemma 21</a></li>
+          
+          <li><a href="sect0001.html#lem:oi_factors">Lemma 22</a></li>
+          
+          <li><a href="sect0001.html#lem:deg_inv_of_coeff">Lemma 23</a></li>
+          
+          <li><a href="sect0001.html#lem:prod_squarefree">Lemma 24</a></li>
+          
+          <li><a href="sect0001.html#lem:discr_ne_zero">Lemma 26</a></li>
+          
+          <li><a href="sect0001.html#lem:delin_factor">Lemma 27</a></li>
+          
+          <li><a href="sect0001.html#thm:no_common_root">Theorem 28</a></li>
+          
+          <li><a href="sect0001.html#lem:discr_deg1">Lemma 25</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/mccallum_3_2_3" class="lean_decl">mccallum_3_2_3</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>    Let \(A\) be a finite squarefree basis of \((n{+}1)\)-variate polynomials, \(r \ge 2\), and let \(S\) be a connected analytic submanifold of \(\mathbb {R}^n\). Suppose that each element of \(A\) is not identically zero on \(S\), and that each element of \(P(A)\) is order-invariant in&#160;\(S\). Then: </p>
+<ol class="enumerate">
+  <li><p>Each element of \(A\) is degree-invariant on&#160;\(S\). </p>
+</li>
+  <li><p>Each element of \(A\) is analytically delineable on&#160;\(S\). </p>
+</li>
+  <li><p>The sections of \(A\) over \(S\) are pairwise disjoint. </p>
+</li>
+  <li><p>Each element of \(A\) is order-invariant in every section of \(A\) over&#160;\(S\). </p>
+</li>
+</ol>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000012">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>  Let \(F_1, \ldots , F_m\) be the elements of \(A\) and set \(f = \prod F_i\). </p>
+<p><b class="bfseries">(1) Degree-invariance.</b> Each nonzero coefficient of \(F_i\) (as a polynomial in \(x_r\)) belongs to \(\operatorname {coeff}(A) \subseteq P(A)\), hence is order-invariant on&#160;\(S\). Since \(F_i\) is not identically zero on \(S\), Lemma&#160;<a href="sect0001.html#lem:deg_inv_of_coeff">23</a> gives degree-invariance. </p>
+<p><b class="bfseries">(3) Section disjointness.</b> For \(F_i \ne F_j\), coprimality in \(\mathbb {R}[x][x_r]\) implies coprimality after specialization at any \(a \in S\) (the Bézout identity specializes). By Theorem&#160;<a href="sect0001.html#thm:no_common_root">28</a>, \(F_i(a, \cdot )\) and \(F_j(a, \cdot )\) have no common root. </p>
+<p><b class="bfseries">(2) Delineability and (4) order-invariance in sections.</b> Since \(f = \prod F_i\) is a product of squarefree pairwise coprime polynomials, \(f\) is squarefree (Lemma&#160;<a href="sect0001.html#lem:prod_squarefree">24</a>) with nonzero discriminant (Lemma&#160;<a href="sect0001.html#lem:discr_ne_zero">26</a>). By Theorem&#160;2.3.3, \(\operatorname {discr}(f) = \prod \operatorname {discr}(F_i) \cdot \prod _{i\lt j} \operatorname {res}(F_i, F_j)^2\). Each factor is order-invariant on \(S\) (hypothesis), so \(\operatorname {discr}(f)\) is order-invariant (Lemma&#160;<a href="sect0001.html#lem:discr_prod_oi">21</a>). Also, \(f\) is degree-invariant (from&#160;(1)) and not identically zero. </p>
+<p>By the Lifting theorem (<a href="sect0001.html#thm:lifting">20</a>), \(f\) is analytically delineable on \(S\) and order-invariant in each \(f\)-section. Since the \(F_i\) are pairwise coprime, each \(F_i\)-section is an \(f\)-section, so Lemma&#160;<a href="sect0001.html#lem:delin_factor">27</a> gives delineability of each \(F_i\). Lemma&#160;<a href="sect0001.html#lem:oi_factors">22</a> gives that each \(F_i\) is order-invariant in every \(f\)-section (hence every section of&#160;\(A\)). </p>
+
+  </div>
+</div>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="index.html" title="mccalum"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="index.html" title="mccalum"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

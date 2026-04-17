@@ -1,7 +1,390 @@
-% In this file you should put the actual content of the blueprint.
-% It will be used both by the web and the print version.
-% It should *not* include the \begin{document}
-%
-% If you want to split the blueprint content into several files then
-% the current file can be a simple sequence of \input. Otherwise It
-% can start with a \section or \chapter for instance.
+\chapter{Reduced Projection for CAD}
+
+This blueprint covers the formalization of Theorem~3.2.3 from McCallum's PhD thesis
+\emph{An Improved Projection Operation for Cylindrical Algebraic Decomposition} (1984).
+
+Throughout, we work with $r$-variate polynomials viewed as univariate polynomials in
+a ``main variable'' $x_r$ over the ring $\mathbb{R}[x_1, \ldots, x_{r-1}]$.
+We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
+
+\section{Evaluation and specialization}
+
+\begin{definition}[Specialize]
+  \label{def:specialize}
+  \lean{specialize}
+  \leanok
+  Given $f \in \mathbb{R}[x_1,\ldots,x_n][x_r]$ and a point $a \in \mathbb{R}^n$,
+  the \emph{specialization} of $f$ at $a$ is the univariate polynomial
+  $f(a, x_r) \in \mathbb{R}[x_r]$ obtained by evaluating the coefficients of $f$
+  (which are elements of $\mathbb{R}[x_1,\ldots,x_n]$) at the point $a$.
+\end{definition}
+
+\section{Order}
+
+\begin{definition}[Order of a polynomial at a point]
+  \label{def:poly_order}
+  \lean{polyOrder}
+  \leanok
+  The \emph{order} of a polynomial $g \in \mathbb{R}[x_1,\ldots,x_m]$ at a point
+  $a \in \mathbb{R}^m$ is the smallest non-negative integer $k$ such that the
+  $k$-th iterated Fr\'echet derivative of the evaluation function
+  $x \mapsto g(x)$ at $a$ is nonzero, or $\infty$ if all iterated derivatives vanish.
+
+  This coincides with the smallest total degree of a nonvanishing term in the
+  Taylor expansion of $g$ about $a$, which can equivalently be characterized
+  via iterated partial derivatives (see \texttt{polyOrder\_eq\_order'}).
+\end{definition}
+
+\begin{theorem}[Equivalence of order definitions]
+  \label{thm:poly_order_eq}
+  \lean{polyOrder_eq_order'}
+  \leanok
+  \uses{def:poly_order}
+  The Fr\'echet derivative-based order (\texttt{polyOrder}) agrees with the
+  iterated partial derivative-based definition (\texttt{order'} from
+  \texttt{CAD.Order}).  The proof uses the fact that a continuous multilinear
+  map on a finite-dimensional space is determined by its values on standard
+  basis vectors.
+\end{theorem}
+
+\begin{definition}[Order of a full polynomial]
+  \label{def:order_full}
+  \lean{orderFull}
+  \leanok
+  \uses{def:poly_order}
+  The \emph{order} of $f \in \mathbb{R}[x_1,\ldots,x_n][x_r]$ at a point
+  $(a, y) \in \mathbb{R}^n \times \mathbb{R}$ is defined by converting $f$ to an
+  element of $\mathbb{R}[x_0, x_1,\ldots,x_n]$ via the algebra equivalence
+  \texttt{finSuccEquiv} and computing \texttt{polyOrder}.
+\end{definition}
+
+
+\section{Invariance conditions}
+
+\begin{definition}[Degree-invariant]
+  \label{def:degree_invariant}
+  \lean{DegreeInvariant}
+  \leanok
+  \uses{def:specialize}
+  A polynomial $f(x, x_r)$ is \emph{degree-invariant} on a set
+  $S \subseteq \mathbb{R}^n$ if $\deg(f(a, x_r))$ is the same for all $a \in S$.
+\end{definition}
+
+\begin{definition}[Order-invariant (base polynomial)]
+  \label{def:order_invariant_mv}
+  \lean{OrderInvariantMv}
+  \leanok
+  \uses{def:poly_order}
+  A polynomial $g \in \mathbb{R}[x_1,\ldots,x_n]$ is \emph{order-invariant} on
+  $S \subseteq \mathbb{R}^n$ if the order of $g$ is the same at every point of~$S$.
+\end{definition}
+
+\begin{definition}[Order-invariant (full polynomial)]
+  \label{def:order_invariant_full}
+  \lean{OrderInvariantFull}
+  \leanok
+  \uses{def:order_full}
+  A polynomial $f(x, x_r)$ is \emph{order-invariant} in a set
+  $T \subseteq \mathbb{R}^n \times \mathbb{R}$ if the order of $f$ is constant
+  throughout~$T$.
+\end{definition}
+
+\begin{definition}[Not identically zero]
+  \label{def:not_identically_zero}
+  \lean{NotIdenticallyZeroOn}
+  \leanok
+  \uses{def:specialize}
+  A polynomial $f(x, x_r)$ is \emph{not identically zero} on $S$ if there exists
+  $a \in S$ such that $f(a, x_r) \neq 0$ as a univariate polynomial.
+\end{definition}
+
+\section{Sections and delineability}
+
+\begin{definition}[Section graph]
+  \label{def:section_graph}
+  \lean{SectionGraph}
+  \leanok
+  Given a function $\theta \colon \mathbb{R}^n \to \mathbb{R}$ and a set
+  $S \subseteq \mathbb{R}^n$, the \emph{section graph} is
+  $\{ (a, \theta(a)) : a \in S \} \subseteq \mathbb{R}^n \times \mathbb{R}$.
+\end{definition}
+
+\begin{definition}[Root function]
+  \label{def:root_function}
+  \lean{IsRootFunction}
+  \leanok
+  \uses{def:specialize}
+  A function $\theta \colon \mathbb{R}^n \to \mathbb{R}$ is a \emph{root function}
+  of $G(x, x_r)$ on $S$ if $\theta(a)$ is a root of $G(a, x_r)$ for every $a \in S$.
+\end{definition}
+
+\begin{definition}[Analytic submanifold]
+  \label{def:analytic_submanifold}
+  \lean{IsAnalyticSubmanifold}
+  \leanok
+  A nonempty subset $S$ of $\mathbb{R}^n$ is an \emph{analytic $s$-dimensional
+  submanifold} ($0 \le s \le n$) if for each point $p \in S$ there is a neighborhood
+  $W \subseteq \mathbb{R}^n$ of $p$ and an analytic coordinate system
+  $\Phi \colon W \to V$ about $p$ such that
+  $S \cap W = \{ x \in W : \Phi_{s+1}(x) = 0, \ldots, \Phi_n(x) = 0 \}$.
+  This is Definition on p.~20 of the thesis; the characterization via coordinate
+  systems is Theorem~2.2.1.
+\end{definition}
+
+\begin{definition}[Analytic delineability]
+  \label{def:analytic_delineable}
+  \lean{AnalyticDelineable}
+  \leanok
+  \uses{def:specialize, def:root_function}
+  A polynomial $f(x, x_r)$ is \emph{analytically delineable} on a connected
+  submanifold $S \subseteq \mathbb{R}^n$ if there exist $k \ge 0$ continuous
+  functions $\theta_1 < \cdots < \theta_k$ from $S$ to $\mathbb{R}$ and positive
+  integers $m_1, \ldots, m_k$ such that:
+  \begin{enumerate}
+    \item For every $a \in S$, $y$ is a real root of $f(a, x_r)$ if and only if
+          $y = \theta_i(a)$ for some $1 \le i \le k$.
+    \item For every $a \in S$ and $1 \le i \le k$, $\theta_i(a)$ is a root of
+          $f(a, x_r)$ with multiplicity $m_i$.
+  \end{enumerate}
+  The graphs of the $\theta_i$ are the \emph{$f$-sections} over $S$; the regions
+  between consecutive sections are the \emph{$f$-sectors}.
+
+  \textbf{Note.}  The thesis requires the $\theta_i$ to be analytic on the
+  submanifold~$S$.  Our Lean formalization currently uses \texttt{ContinuousOn}
+  as a placeholder.
+\end{definition}
+
+\section{Squarefree basis and reduced projection}
+
+\begin{definition}[Squarefree basis]
+  \label{def:squarefree_basis}
+  \lean{IsSquarefreeBasis}
+  \leanok
+  A finite set $A$ of polynomials in $\mathbb{R}[x_1,\ldots,x_n][x_r]$ is a
+  \emph{squarefree basis} if:
+  \begin{enumerate}
+    \item Every $F \in A$ has positive degree in $x_r$.
+    \item Every $F \in A$ is squarefree.
+    \item The elements of $A$ are pairwise coprime.
+  \end{enumerate}
+\end{definition}
+
+\begin{definition}[Coefficient set]
+  \label{def:coeff_set}
+  \lean{coeffSet}
+  \leanok
+  The \emph{coefficient set} $\operatorname{coeff}(A)$ consists of all nonzero
+  coefficients of elements of $A$, viewed as polynomials in $x_r$.  These are
+  elements of $\mathbb{R}[x_1,\ldots,x_n]$.
+\end{definition}
+
+\begin{definition}[Discriminant set]
+  \label{def:discr_set}
+  \lean{discrSet}
+  \leanok
+  The \emph{discriminant set} $\operatorname{discr}(A) = \{ \operatorname{discr}(F) : F \in A,\; \deg(F) \ge 2 \}$.
+\end{definition}
+
+\begin{definition}[Resultant set]
+  \label{def:res_set}
+  \lean{resSet}
+  \leanok
+  The \emph{resultant set}
+  $\operatorname{res}(A) = \{ \operatorname{res}(F, G) : F, G \in A,\; F \ne G,\;
+  \deg(F) \ge 1,\; \deg(G) \ge 1 \}$.
+\end{definition}
+
+\begin{definition}[Reduced projection]
+  \label{def:reduced_projection}
+  \lean{reducedProjection}
+  \leanok
+  \uses{def:coeff_set, def:discr_set, def:res_set}
+  The \emph{reduced projection} of a squarefree basis $A$ is
+  \[ P(A) = \operatorname{coeff}(A) \cup \operatorname{discr}(A) \cup \operatorname{res}(A). \]
+  This is a set of polynomials in $\mathbb{R}[x_1,\ldots,x_n]$.
+  It is a subset of Collins' original projection $\operatorname{PROJ}(A)$,
+  which additionally includes higher-order subdiscriminants and subresultants.
+\end{definition}
+
+\begin{definition}[Sections pairwise disjoint]
+  \label{def:sections_disjoint}
+  \lean{SectionsDisjoint}
+  \leanok
+  \uses{def:specialize}
+  The \emph{sections of $A$ over $S$ are pairwise disjoint} if for all
+  $F \ne G \in A$ and all $a \in S$, the polynomials $F(a, x_r)$ and
+  $G(a, x_r)$ have no common real root.
+\end{definition}
+
+\begin{definition}[Order-invariant in all sections]
+  \label{def:oi_all_sections}
+  \lean{OrderInvariantInAllSections}
+  \leanok
+  \uses{def:order_invariant_full, def:root_function, def:section_graph}
+  Each element of $A$ is \emph{order-invariant in every section of $A$ over $S$}
+  if: for every $F, G \in A$ and every continuous root function $\theta$ of $G$
+  on $S$, $F$ is order-invariant in $\operatorname{graph}(\theta)$.
+\end{definition}
+
+\section{Prerequisites}
+
+\begin{theorem}[Lifting theorem (Theorem 3.2.1)]
+  \label{thm:lifting}
+  \lean{lifting_theorem}
+  \leanok
+  \uses{def:analytic_submanifold, def:degree_invariant, def:order_invariant_mv,
+        def:analytic_delineable, def:order_invariant_full, def:section_graph,
+        def:root_function, def:not_identically_zero}
+  Let $f(x, x_r)$ be a squarefree polynomial of positive degree in $x_r$
+  with nonzero discriminant $D(x)$.  Let $S$ be a connected analytic submanifold of
+  $\mathbb{R}^n$ in which $f$ is degree-invariant and of non-negative degree, and in
+  which $D$ is order-invariant.  Then $f$ is analytically delineable on $S$ and is
+  order-invariant in each $f$-section over~$S$.
+
+  The proof (pp.~49--65) uses the Weierstrass preparation theorem, analytic
+  coordinate changes on submanifolds, and Zariski's 1975 theorem on equisingularity.
+\end{theorem}
+
+\begin{lemma}[Discriminant of product is order-invariant]
+  \label{lem:discr_prod_oi}
+  \lean{discr_prod_order_invariant}
+  \leanok
+  \uses{def:order_invariant_mv}
+  Let $F_1, \ldots, F_m$ be squarefree pairwise coprime polynomials, and let
+  $S$ be a connected set.  If each $\operatorname{discr}(F_i)$ and each
+  $\operatorname{res}(F_i, F_j)$ ($i \ne j$) is order-invariant on $S$, then
+  $\operatorname{discr}(\prod F_i)$ is order-invariant on $S$.
+
+  This combines the discriminant factorization formula (Theorem~2.3.3):
+  $\operatorname{discr}(\prod F_i) = \prod \operatorname{discr}(F_i)
+  \cdot \prod_{i<j} \operatorname{res}(F_i, F_j)^2$
+  with Lemma~3.2.2 (order-invariance of products).
+\end{lemma}
+
+\begin{lemma}[Order-invariance factors from product]
+  \label{lem:oi_factors}
+  \lean{order_invariant_full_factor_of_prod}
+  \leanok
+  \uses{def:order_invariant_full}
+  If $\prod F_i$ is order-invariant in a set $T \subseteq \mathbb{R}^n \times \mathbb{R}$,
+  then each $F_i$ is order-invariant in~$T$.
+
+  This is the backward direction of Lemma~3.2.2 (p.~47), which states that a product
+  of nonconstant analytic functions is order-invariant if and only if each factor is.
+  The proof uses $\operatorname{ord}(fg, p) = \operatorname{ord}(f,p) + \operatorname{ord}(g,p)$
+  and upper semicontinuity of order.
+\end{lemma}
+
+\begin{lemma}[Degree-invariance from coefficient order-invariance]
+  \label{lem:deg_inv_of_coeff}
+  \lean{degree_invariant_of_coeff_order_invariant}
+  \leanok
+  \uses{def:degree_invariant, def:order_invariant_mv, def:not_identically_zero}
+  If each nonzero coefficient of $f$ (in $x_r$) is order-invariant on a connected
+  set $S$, and $f$ is not identically zero on $S$, then $f$ is degree-invariant on~$S$.
+\end{lemma}
+
+\begin{lemma}[Squarefree product of coprime factors]
+  \label{lem:prod_squarefree}
+  \lean{prod_squarefree_of_coprime}
+  \leanok
+  The product of squarefree pairwise coprime polynomials is squarefree.
+\end{lemma}
+
+\begin{lemma}[Discriminant of degree-1 polynomial is order-invariant]
+  \label{lem:discr_deg1}
+  \lean{discr_degree_one_order_invariant}
+  \leanok
+  \uses{def:order_invariant_mv}
+  If $f$ has degree~$1$ in $x_r$ and each nonzero coefficient of $f$ is
+  order-invariant on $S$, then $\operatorname{discr}(f)$ is order-invariant on~$S$.
+\end{lemma}
+
+\begin{lemma}[Nonzero discriminant of squarefree polynomial]
+  \label{lem:discr_ne_zero}
+  \lean{discr_ne_zero_of_squarefree}
+  \leanok
+  A squarefree polynomial of positive degree has nonzero discriminant.
+\end{lemma}
+
+\begin{lemma}[Delineability of factor from delineability of product]
+  \label{lem:delin_factor}
+  \lean{delineable_factor_of_delineable_prod}
+  \leanok
+  \uses{def:analytic_delineable}
+  If $\prod F_i$ is analytically delineable on $S$ and the $F_i$ are pairwise
+  coprime, then each $F_i$ is analytically delineable on~$S$.
+\end{lemma}
+
+\section{Main result}
+
+\begin{theorem}[No common root of coprime polynomials]
+  \label{thm:no_common_root}
+  \lean{no_common_root_of_coprime}
+  \leanok
+  \uses{def:specialize}
+  If $F$ and $G$ are coprime in $\mathbb{R}[x_1,\ldots,x_n][x_r]$, then for
+  every $a \in \mathbb{R}^n$ the univariate polynomials $F(a, x_r)$ and $G(a, x_r)$
+  have no common real root.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \proves{thm:no_common_root}
+  From the B\'ezout identity $u F + v G = 1$ we obtain, after specialization at $a$
+  and evaluation at any common root $y$: $0 = 1$, a contradiction.
+\end{proof}
+
+\begin{theorem}[Theorem 3.2.3 -- Reduced projection theorem]
+  \label{thm:mccallum_3_2_3}
+  \lean{mccallum_3_2_3}
+  \leanok
+  \uses{def:squarefree_basis, def:analytic_submanifold, def:reduced_projection,
+        def:order_invariant_mv, def:not_identically_zero,
+        def:degree_invariant, def:analytic_delineable,
+        def:sections_disjoint, def:oi_all_sections}
+  Let $A$ be a finite squarefree basis of $(n{+}1)$-variate polynomials, $r \ge 2$,
+  and let $S$ be a connected analytic submanifold of $\mathbb{R}^n$.  Suppose that
+  each element of $A$ is not identically zero on $S$, and that each element of
+  $P(A)$ is order-invariant in~$S$.  Then:
+  \begin{enumerate}
+    \item Each element of $A$ is degree-invariant on~$S$.
+    \item Each element of $A$ is analytically delineable on~$S$.
+    \item The sections of $A$ over $S$ are pairwise disjoint.
+    \item Each element of $A$ is order-invariant in every section of $A$ over~$S$.
+  \end{enumerate}
+\end{theorem}
+\begin{proof}
+  \proves{thm:mccallum_3_2_3}
+  \uses{thm:lifting, lem:discr_prod_oi, lem:oi_factors,
+        lem:deg_inv_of_coeff, lem:prod_squarefree, lem:discr_ne_zero,
+        lem:delin_factor, thm:no_common_root, lem:discr_deg1}
+  Let $F_1, \ldots, F_m$ be the elements of $A$ and set $f = \prod F_i$.
+
+  \textbf{(1) Degree-invariance.}
+  Each nonzero coefficient of $F_i$ (as a polynomial in $x_r$) belongs to
+  $\operatorname{coeff}(A) \subseteq P(A)$, hence is order-invariant on~$S$.
+  Since $F_i$ is not identically zero on $S$, Lemma~\ref{lem:deg_inv_of_coeff}
+  gives degree-invariance.
+
+  \textbf{(3) Section disjointness.}
+  For $F_i \ne F_j$, coprimality in $\mathbb{R}[x][x_r]$ implies coprimality
+  after specialization at any $a \in S$ (the B\'ezout identity specializes).
+  By Theorem~\ref{thm:no_common_root}, $F_i(a, \cdot)$ and $F_j(a, \cdot)$
+  have no common root.
+
+  \textbf{(2) Delineability and (4) order-invariance in sections.}
+  Since $f = \prod F_i$ is a product of squarefree pairwise coprime polynomials,
+  $f$ is squarefree (Lemma~\ref{lem:prod_squarefree}) with nonzero discriminant
+  (Lemma~\ref{lem:discr_ne_zero}).
+  By Theorem~2.3.3, $\operatorname{discr}(f) = \prod \operatorname{discr}(F_i) \cdot
+  \prod_{i<j} \operatorname{res}(F_i, F_j)^2$.  Each factor is order-invariant
+  on $S$ (hypothesis), so $\operatorname{discr}(f)$ is order-invariant
+  (Lemma~\ref{lem:discr_prod_oi}).  Also, $f$ is degree-invariant (from~(1))
+  and not identically zero.
+
+  By the Lifting theorem (\ref{thm:lifting}), $f$ is analytically delineable on $S$
+  and order-invariant in each $f$-section.  Since the $F_i$ are pairwise coprime,
+  each $F_i$-section is an $f$-section, so Lemma~\ref{lem:delin_factor} gives
+  delineability of each $F_i$.  Lemma~\ref{lem:oi_factors} gives that each $F_i$
+  is order-invariant in every $f$-section (hence every section of~$A$).
+\end{proof}
