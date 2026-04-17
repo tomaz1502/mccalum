@@ -6,9 +6,6 @@ lintDriver = "batteries/runLinter"
 [[lean_lib]]
 name = "Mccalum"
 
-[[lean_lib]]
-name = "CAD"
-
 [[require]]
 name = "checkdecls"
 git = "https://github.com/PatrickMassot/checkdecls.git"

@@ -1,5 +1,5 @@
 import Mathlib
-import CAD.Order
+import Mccalum.Order
 
 /-!
 # McCallum's Reduced Projection Theorem (Theorem 3.2.3)
