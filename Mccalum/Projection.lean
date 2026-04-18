@@ -66,7 +66,6 @@ established in `CAD.Order.order_order'`.
     evaluation functions which are always analytic. -/
 def polyOrder (m : Nat) (g : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) : ℕ∞ :=
   order ℝ (fun x => MvPolynomial.eval x g) a
-    (AnalyticOnNhd.eval_mvPolynomial g a (Set.mem_univ a))
 
 /-- `polyOrder` agrees with the iterated-partial-derivative definition `order'`
     from `CAD.Order`. -/
@@ -77,13 +76,19 @@ theorem polyOrder_eq_order' (m : Nat) (g : MvPolynomial (Fin m) ℝ) (a : Fin m 
 
 /-! ## Analytic submanifold -/
 
-/-- `S` is an analytic submanifold of `ℝⁿ` (McCallum, Definition p.20). -/
+/-- `S` is an analytic `s`-dimensional submanifold of `ℝⁿ` (McCallum, Definition
+p.20). For each `p ∈ S` there exist an open neighborhood `W` of `p` and an
+analytic map `F : ℝⁿ → ℝ^{n-s}` for which `p` is a regular point (the Fréchet
+derivative of `F` at `p` is surjective), such that `S ∩ W` is exactly the zero
+set of `F` inside `W`. -/
 def IsAnalyticSubmanifold (S : Set (Fin n → ℝ)) : Prop :=
   S.Nonempty ∧
   ∃ s : ℕ, s ≤ n ∧
-    ∀ p ∈ S, ∃ (U : Set (Fin n → ℝ)) (_ : IsOpen U) (_ : p ∈ U),
-      ∃ Φ : (Fin n → ℝ) → (Fin n → ℝ),
-        (∀ x ∈ U, x ∈ S ↔ ∀ i : Fin n, s ≤ i.val → Φ x i = 0)
+    ∀ p ∈ S, ∃ W : Set (Fin n → ℝ), IsOpen W ∧ p ∈ W ∧
+      ∃ F : (Fin n → ℝ) → (Fin (n - s) → ℝ),
+        AnalyticOnNhd ℝ F W ∧
+        Function.Surjective (fderiv ℝ F p) ∧
+        (∀ x ∈ W, x ∈ S ↔ F x = 0)
 
 /-! ## Key Definitions -/
 

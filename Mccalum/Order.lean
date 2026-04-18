@@ -19,7 +19,7 @@ otherwise the smallest `n` such that `iteratedFDeriv 𝕜 n f x₀ ≠ 0`. -/
 noncomputable def order (𝕜 : Type*) [NontriviallyNormedField 𝕜]
     {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-    (f : E → F) (x₀ : E) (hf : AnalyticAt 𝕜 f x₀) : ℕ∞ :=
+    (f : E → F) (x₀ : E) : ℕ∞ :=
   -- Note: `iteratedFDeriv 𝕜 n f x₀ is a `ContinuousMultilinearMap`, taking a list of
   -- `n` vectors and producing the derivative of `f` along these vectors. If this function
   -- is `0`, it means that the output is `0` for all list of vectors, in particular for
@@ -185,8 +185,7 @@ theorem iteratedFDeriv_ne_zero_iff_exists_iteratedPDeriv (m : Nat)
 
 theorem order_order' (m : Nat) (f : MvPolynomial (Fin m) ℝ) (p : Fin m → ℝ) (k : ℕ∞) :
     order' m f p = k ↔
-      order ℝ (fun x => MvPolynomial.eval x f) p
-        (AnalyticOnNhd.eval_mvPolynomial f p (Set.mem_univ p)) = k := by
+      order ℝ (fun x => MvPolynomial.eval x f) p = k := by
   -- Both sides are defined via `Nat.find` on equivalent predicates.
   -- The key bridge: the predicates inside `Nat.find` are equivalent at each level.
   set g := fun x => eval x f
@@ -225,8 +224,8 @@ end PDeriv
 
 variable {f g : E → F} {x₀ : E} {n : ℕ}
 
-theorem order_eq_top_iff {hf : AnalyticAt 𝕜 f x₀} :
-    order 𝕜 f x₀ hf = ⊤ ↔ ∀ n, iteratedFDeriv 𝕜 n f x₀ = 0 := by
+theorem order_eq_top_iff :
+    order 𝕜 f x₀ = ⊤ ↔ ∀ n, iteratedFDeriv 𝕜 n f x₀ = 0 := by
   unfold order
   split_ifs with h
   · exact ⟨fun hc => absurd hc (ENat.coe_ne_top _),
@@ -234,8 +233,8 @@ theorem order_eq_top_iff {hf : AnalyticAt 𝕜 f x₀} :
   · push Not at h
     exact ⟨fun _ => h, fun _ => rfl⟩
 
-theorem order_eq_natCast_iff {hf : AnalyticAt 𝕜 f x₀} :
-    order 𝕜 f x₀ hf = ↑n ↔
+theorem order_eq_natCast_iff :
+    order 𝕜 f x₀ = ↑n ↔
       (∀ m, m < n → iteratedFDeriv 𝕜 m f x₀ = 0) ∧ iteratedFDeriv 𝕜 n f x₀ ≠ 0 := by
   unfold order
   constructor
@@ -256,12 +255,12 @@ theorem order_eq_natCast_iff {hf : AnalyticAt 𝕜 f x₀} :
       push Not at hlt'
       exact Nat.find_spec hex (hlt _ hlt')
 
-theorem iteratedFDeriv_eq_zero_of_lt_order {hf : AnalyticAt 𝕜 f x₀}
-    (hn : ↑n < order 𝕜 f x₀ hf) :
+theorem iteratedFDeriv_eq_zero_of_lt_order
+    (hn : ↑n < order 𝕜 f x₀) :
     iteratedFDeriv 𝕜 n f x₀ = 0 := by
   by_contra hne
   have hex : ∃ n, iteratedFDeriv 𝕜 n f x₀ ≠ 0 := ⟨n, hne⟩
-  have : order 𝕜 f x₀ hf ≤ ↑n := by
+  have : order 𝕜 f x₀ ≤ ↑n := by
     unfold order
     rw [dif_pos hex]
     exact_mod_cast Nat.find_min' hex hne

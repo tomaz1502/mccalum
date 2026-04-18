@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2022/dev/Debian) (preloaded format=xelatex 2026.2.3)  14 APR 2026 00:08
+This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2022/dev/Debian) (preloaded format=xelatex 2026.2.3)  17 APR 2026 16:15
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -725,20 +725,20 @@ LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
 [1
 
 ]
-Overfull \hbox (0.17058pt too wide) in paragraph at lines 181--182
+Overfull \hbox (0.17058pt too wide) in paragraph at lines 185--186
 [][]\TU/lmr/bx/n/10 Definition 15 \TU/lmr/m/n/10 (Discriminant set)\TU/lmr/bx/n
 /10 . []\TU/lmr/m/n/10 The \TU/lmr/m/it/10 discriminant set $[][][][] [] [][][]
 [][] [] [] [] [][]  [][][][] []
  []
 
 [2]
-Overfull \hbox (18.33536pt too wide) in paragraph at lines 254--258
+Overfull \hbox (18.33536pt too wide) in paragraph at lines 258--262
 []\TU/lmr/m/it/10 This combines the discriminant factorization formula (Theorem
  2.3.3): $[][][] [][][] [] [] [][][][][] []
  []
 
 
-Overfull \hbox (14.08516pt too wide) in paragraph at lines 321--325
+Overfull \hbox (14.08516pt too wide) in paragraph at lines 325--329
 [][]\TU/lmr/bx/n/10 Theorem 28 \TU/lmr/m/n/10 (No common root of coprime polyno
 mials)\TU/lmr/bx/n/10 . [][]\TU/lmr/m/it/10 If $[]$ and $[]$ are coprime in $[]
 [][][][] [] [] [][][][][][][]$,
@@ -749,13 +749,13 @@ Package rerunfilecheck Info: File `print.out' has not changed.
 (rerunfilecheck)             Checksum: E924BA143251C505FEE8D9314F30CED7;1310.
  ) 
 Here is how much of TeX's memory you used:
- 16586 strings out of 476191
- 308529 string characters out of 5812073
- 817115 words of memory out of 5000000
- 37114 multiletter control sequences out of 15000+600000
- 474638 words of font info for 78 fonts, out of 8000000 for 9000
+ 16589 strings out of 476191
+ 308578 string characters out of 5812073
+ 818115 words of memory out of 5000000
+ 37115 multiletter control sequences out of 15000+600000
+ 474646 words of font info for 79 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 86i,6n,115p,332b,438s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 86i,6n,115p,332b,440s stack positions out of 5000i,500n,10000p,200000b,80000s
 
 Output written on /home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.
 pdf (5 pages).

@@ -1,8 +1,8 @@
 # Fdb version 3
-["pdflatex"] 1776136088 "print.tex" "/home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.pdf" "print" 1776136089
+["pdflatex"] 1776453305 "print.tex" "/home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.pdf" "print" 1776453306
   "/etc/texmf/web2c/texmf.cnf" 1749129894 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.aux" 1776136089 4125 8e99df7d7a84136adf48190a90e78631 "pdflatex"
-  "/home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.out" 1776136089 1310 e924ba143251c505fee8d9314f30ced7 "pdflatex"
+  "/home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.aux" 1776453306 4128 1baca2f586b335bb2a5ec85adf8d145e "pdflatex"
+  "/home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.out" 1776453306 1310 e924ba143251c505fee8d9314f30ced7 "pdflatex"
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768653 1528 f853c4d1b4e0550255e02831fdc8496f ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm" 1246382020 916 f87d7c45f9c908e672703b83b72241a3 ""
@@ -87,7 +87,7 @@
   "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1644012257 39432 7155514e09a3d69036fac785183a21c2 ""
   "/usr/share/texmf/web2c/texmf.cnf" 1644012257 39432 7155514e09a3d69036fac785183a21c2 ""
   "/var/lib/texmf/web2c/xetex/xelatex.fmt" 1770149997 5135826 35e8bd6ad92df88cdc36b9b373b4218c ""
-  "content.tex" 1776135077 15704 906222a4ba6e17b79dc6d0f8bb17652f ""
+  "content.tex" 1776138309 15898 36d86e70155b9236e025c5c0bb43351e ""
   "macros/common.tex" 1776127576 820 60fafcc3aa944a5e60030581a943ef6b ""
   "macros/print.tex" 1776127576 1101 87627b2ec24fef68edc71c13f43f7bab ""
   "print.tex" 1776127576 1118 14995b3b27beb00f218d6bbce0d64849 ""
