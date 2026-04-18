@@ -74,6 +74,39 @@ theorem polyOrder_eq_order' (m : Nat) (g : MvPolynomial (Fin m) ℝ) (a : Fin m 
   unfold polyOrder
   rw [← order_order']
 
+/-- The 0th iterated Fréchet derivative of `f` is nonzero at `x₀` iff `f(x₀) ≠ 0`. -/
+private lemma iteratedFDeriv_zero_ne_zero_iff
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
+    {f : E → F} {x₀ : E} :
+    iteratedFDeriv ℝ 0 f x₀ ≠ 0 ↔ f x₀ ≠ 0 := by
+  constructor
+  · intro h hfx; apply h; ext m; simp [iteratedFDeriv_zero_apply, hfx]
+  · intro h heq; apply h
+    have := iteratedFDeriv_zero_apply (𝕜 := ℝ) (f := f) (x := x₀) (fun i => Fin.elim0 i)
+    rw [heq] at this; simp at this; exact this.symm
+
+/-- `polyOrder m g a = 0` iff `eval a g ≠ 0`. -/
+theorem polyOrder_zero_iff (m : Nat) (g : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) :
+    polyOrder m g a = 0 ↔ MvPolynomial.eval a g ≠ 0 := by
+  unfold polyOrder order
+  constructor
+  · intro h
+    split_ifs at h with hex
+    · have hfind : Nat.find hex = 0 := by exact_mod_cast h
+      have hspec := Nat.find_spec hex
+      rw [hfind] at hspec
+      exact (iteratedFDeriv_zero_ne_zero_iff (f := fun x => MvPolynomial.eval x g)).mp hspec
+    · simp at h
+  · intro h
+    have hex : ∃ k, iteratedFDeriv ℝ k (fun x => MvPolynomial.eval x g) a ≠ 0 :=
+      ⟨0, (iteratedFDeriv_zero_ne_zero_iff (f := fun x => MvPolynomial.eval x g)).mpr h⟩
+    rw [dif_pos hex]
+    have : Nat.find hex = 0 :=
+      Nat.eq_zero_of_le_zero (Nat.find_min' hex
+        ((iteratedFDeriv_zero_ne_zero_iff (f := fun x => MvPolynomial.eval x g)).mpr h))
+    simp [this]
+
 /-! ## Analytic submanifold -/
 
 /-- `S` is an analytic `s`-dimensional submanifold of `ℝⁿ` (McCallum, Definition
@@ -276,12 +309,71 @@ axiom degree_invariant_prod
     (hne : ∀ f ∈ A, NotIdenticallyZeroOn f S) :
     DegreeInvariant (∏ f ∈ A, f) S
 
-/-- Product of not-identically-zero polynomials is not identically zero. -/
-axiom not_identically_zero_prod
+/-- If a nonzero coefficient of `f` is order-invariant on `S` and `f` is not identically
+    zero on `S`, then at every point of `S` the specialization of `f` is nonzero.
+
+    **Proof idea**: Since `f` is not identically zero on `S`, some coefficient `c = f.coeff k`
+    satisfies `c ≠ 0` and `eval a₀ c ≠ 0` at some `a₀ ∈ S`. By `polyOrder_zero_iff`,
+    `polyOrder n c a₀ = 0`. By order-invariance, `polyOrder n c a = 0` for all `a ∈ S`,
+    hence `eval a c ≠ 0` everywhere on `S`. Therefore `specialize f a` has a nonzero
+    coefficient, so it is nonzero. -/
+theorem specialize_nonzero_everywhere
+    (f : PolyR n)
+    (S : Set (Fin n → ℝ))
+    (hne : NotIdenticallyZeroOn f S)
+    (hcoeff : ∀ k : ℕ, f.coeff k ≠ 0 → OrderInvariantMv (f.coeff k) S) :
+    ∀ a ∈ S, specialize f a ≠ 0 := by
+  -- From hne: ∃ a₀ ∈ S, specialize f a₀ ≠ 0
+  obtain ⟨a₀, ha₀, hfa₀⟩ := hne
+  -- specialize f a₀ ≠ 0 means some coefficient is nonzero after evaluation
+  rw [Ne, Polynomial.ext_iff, not_forall] at hfa₀
+  push_neg at hfa₀
+  obtain ⟨k, hk⟩ := hfa₀
+  simp only [specialize, Polynomial.coeff_map, Polynomial.coeff_zero] at hk
+  -- So c = f.coeff k satisfies c ≠ 0 and eval a₀ c ≠ 0
+  have hc_ne : f.coeff k ≠ 0 := by
+    intro heq; apply hk; simp [heq]
+  -- c is order-invariant on S
+  have hc_oi := hcoeff k hc_ne
+  -- polyOrder of c at a₀ is 0
+  have hord₀ : polyOrder n (f.coeff k) a₀ = 0 := by
+    rw [polyOrder_zero_iff]; exact hk
+  -- By order-invariance, polyOrder is 0 everywhere on S
+  intro a ha
+  have hord : polyOrder n (f.coeff k) a = 0 := by
+    rw [hc_oi a ha a₀ ha₀, hord₀]
+  rw [polyOrder_zero_iff] at hord
+  -- specialize f a has a nonzero k-th coefficient
+  intro hfa
+  apply hord
+  have : (specialize f a).coeff k = 0 := by rw [hfa]; simp
+  simp [specialize, Polynomial.coeff_map] at this
+  exact this
+
+/-- Product of not-identically-zero polynomials is not identically zero on `S`,
+    when all nonzero coefficients of each factor are order-invariant on `S`.
+
+    The argument: by `specialize_nonzero_everywhere`, each `f ∈ A` has `specialize f a ≠ 0`
+    for ALL `a ∈ S`. Then at any point `a ∈ S`, the product specialization is a product of
+    nonzero elements in the integral domain `ℝ[xᵣ]`, hence nonzero. -/
+theorem not_identically_zero_prod
     (S : Set (Fin n → ℝ))
     (A : Finset (PolyR n))
-    (hne : ∀ f ∈ A, NotIdenticallyZeroOn f S) :
-    NotIdenticallyZeroOn (∏ f ∈ A, f) S
+    (hne : ∀ f ∈ A, NotIdenticallyZeroOn f S)
+    (hcoeff : ∀ f ∈ A, ∀ k : ℕ, f.coeff k ≠ 0 → OrderInvariantMv (f.coeff k) S)
+    (hS_ne : S.Nonempty) :
+    NotIdenticallyZeroOn (∏ f ∈ A, f) S := by
+  -- Each f ∈ A has specialize f a ≠ 0 for all a ∈ S
+  have hall : ∀ f ∈ A, ∀ a ∈ S, specialize f a ≠ 0 :=
+    fun f hf => specialize_nonzero_everywhere f S (hne f hf) (hcoeff f hf)
+  -- Pick any a ∈ S
+  obtain ⟨a, ha⟩ := hS_ne
+  refine ⟨a, ha, ?_⟩
+  -- specialize (∏ f ∈ A, f) a = ∏ f ∈ A, specialize f a
+  rw [show specialize (∏ f ∈ A, f) a = ∏ f ∈ A, specialize f a from by
+    simp [specialize, Polynomial.map_prod]]
+  -- Product of nonzero elements in an integral domain is nonzero
+  exact Finset.prod_ne_zero_iff.mpr (fun f hf => hall f hf a ha)
 
 lemma natDegree_mul {n : Nat} (p q : PolyR n) (hp : 0 < p.natDegree) (hq : 0 < q.natDegree) :
     (p * q).natDegree = p.natDegree + q.natDegree := by
@@ -408,7 +500,7 @@ theorem mccallum_3_2_3
   have hf_discr_ne : Polynomial.discr f ≠ 0 :=
     discr_ne_zero_of_squarefree f hf_sf hf_pos
   have hf_nz : NotIdenticallyZeroOn f S :=
-    not_identically_zero_prod S A hnonzero
+    not_identically_zero_prod S A hnonzero hcoeff_oi hS_ne
   have hf_deg : DegreeInvariant f S :=
     degree_invariant_prod S A h_deg hnonzero
   have hf_discr_oi : OrderInvariantMv (Polynomial.discr f) S :=
