@@ -301,13 +301,26 @@ axiom root_function_factor_of_prod
     (hθ : IsRootFunction G θ S) :
     IsRootFunction (∏ f ∈ A, f) θ S
 
-/-- Degree-invariance of product from degree-invariance of factors. -/
-axiom degree_invariant_prod
+/-- Degree-invariance of product from degree-invariance of factors.
+
+**Note:** The original statement used `NotIdenticallyZeroOn` (existential) for `hne`,
+but that is too weak — a factor can be degree-invariant with constant degree 0, not
+identically zero, yet have its specialization vanish at some points, breaking
+degree-invariance of the product. The corrected hypothesis requires each specialization
+to be nonzero everywhere on `S`, which is what is available at the call site via
+`specialize_nonzero_everywhere`. -/
+theorem degree_invariant_prod
     (S : Set (Fin n → ℝ))
     (A : Finset (PolyR n))
     (hdeg : ∀ f ∈ A, DegreeInvariant f S)
-    (hne : ∀ f ∈ A, NotIdenticallyZeroOn f S) :
-    DegreeInvariant (∏ f ∈ A, f) S
+    (hne : ∀ f ∈ A, ∀ a ∈ S, specialize f a ≠ 0) :
+    DegreeInvariant (∏ f ∈ A, f) S := by
+  intro a ha b hb
+  have ha' : ∀ f ∈ A, Polynomial.map (evalBase a) f ≠ 0 := fun f hf => hne f hf a ha
+  have hb' : ∀ f ∈ A, Polynomial.map (evalBase b) f ≠ 0 := fun f hf => hne f hf b hb
+  simp only [specialize, Polynomial.map_prod]
+  rw [Polynomial.natDegree_prod _ _ ha', Polynomial.natDegree_prod _ _ hb']
+  exact Finset.sum_congr rfl (fun f hf => hdeg f hf a ha b hb)
 
 /-- If a nonzero coefficient of `f` is order-invariant on `S` and `f` is not identically
     zero on `S`, then at every point of `S` the specialization of `f` is nonzero.
@@ -327,7 +340,7 @@ theorem specialize_nonzero_everywhere
   obtain ⟨a₀, ha₀, hfa₀⟩ := hne
   -- specialize f a₀ ≠ 0 means some coefficient is nonzero after evaluation
   rw [Ne, Polynomial.ext_iff, not_forall] at hfa₀
-  push_neg at hfa₀
+  push Not at hfa₀
   obtain ⟨k, hk⟩ := hfa₀
   simp only [specialize, Polynomial.coeff_map, Polynomial.coeff_zero] at hk
   -- So c = f.coeff k satisfies c ≠ 0 and eval a₀ c ≠ 0
@@ -502,7 +515,8 @@ theorem mccallum_3_2_3
   have hf_nz : NotIdenticallyZeroOn f S :=
     not_identically_zero_prod S A hnonzero hcoeff_oi hS_ne
   have hf_deg : DegreeInvariant f S :=
-    degree_invariant_prod S A h_deg hnonzero
+    degree_invariant_prod S A h_deg
+      (fun f hf => specialize_nonzero_everywhere f S (hnonzero f hf) (hcoeff_oi f hf))
   have hf_discr_oi : OrderInvariantMv (Polynomial.discr f) S :=
     discr_prod_order_invariant S A hS_conn hA.sq_free hA.pairwise_coprime
       hdisc_oi hres_oi
