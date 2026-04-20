@@ -22,7 +22,7 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \section{Order}
 
 \begin{definition}[Order of a polynomial at a point]
-  \label{def:poly_order}
+  \label{def:polyOrder}
   \lean{polyOrder}
   \leanok
   The \emph{order} of a polynomial $g \in \mathbb{R}[x_1,\ldots,x_m]$ at a point
@@ -36,10 +36,10 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{definition}
 
 \begin{theorem}[Equivalence of order definitions]
-  \label{thm:poly_order_eq}
+  \label{thm:polyOrder_eq_order}
   \lean{polyOrder_eq_order'}
   \leanok
-  \uses{def:poly_order}
+  \uses{def:polyOrder}
   The Fr\'echet derivative-based order (\texttt{polyOrder}) agrees with the
   iterated partial derivative-based definition (\texttt{order'} from
   \texttt{CAD.Order}).  The proof uses the fact that a continuous multilinear
@@ -48,10 +48,10 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{theorem}
 
 \begin{definition}[Order of a full polynomial]
-  \label{def:order_full}
+  \label{def:orderFull}
   \lean{orderFull}
   \leanok
-  \uses{def:poly_order}
+  \uses{def:polyOrder}
   The \emph{order} of $f \in \mathbb{R}[x_1,\ldots,x_n][x_r]$ at a point
   $(a, y) \in \mathbb{R}^n \times \mathbb{R}$ is defined by converting $f$ to an
   element of $\mathbb{R}[x_0, x_1,\ldots,x_n]$ via the algebra equivalence
@@ -62,7 +62,7 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \section{Invariance conditions}
 
 \begin{definition}[Degree-invariant]
-  \label{def:degree_invariant}
+  \label{def:DegreeInvariant}
   \lean{DegreeInvariant}
   \leanok
   \uses{def:specialize}
@@ -71,26 +71,26 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{definition}
 
 \begin{definition}[Order-invariant (base polynomial)]
-  \label{def:order_invariant_mv}
+  \label{def:OrderInvariantMv}
   \lean{OrderInvariantMv}
   \leanok
-  \uses{def:poly_order}
+  \uses{def:polyOrder}
   A polynomial $g \in \mathbb{R}[x_1,\ldots,x_n]$ is \emph{order-invariant} on
   $S \subseteq \mathbb{R}^n$ if the order of $g$ is the same at every point of~$S$.
 \end{definition}
 
 \begin{definition}[Order-invariant (full polynomial)]
-  \label{def:order_invariant_full}
+  \label{def:OrderInvariantFull}
   \lean{OrderInvariantFull}
   \leanok
-  \uses{def:order_full}
+  \uses{def:orderFull}
   A polynomial $f(x, x_r)$ is \emph{order-invariant} in a set
   $T \subseteq \mathbb{R}^n \times \mathbb{R}$ if the order of $f$ is constant
   throughout~$T$.
 \end{definition}
 
 \begin{definition}[Not identically zero]
-  \label{def:not_identically_zero}
+  \label{def:NotIdenticallyZeroOn}
   \lean{NotIdenticallyZeroOn}
   \leanok
   \uses{def:specialize}
@@ -101,7 +101,7 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \section{Sections and delineability}
 
 \begin{definition}[Section graph]
-  \label{def:section_graph}
+  \label{def:SectionGraph}
   \lean{SectionGraph}
   \leanok
   Given a function $\theta \colon \mathbb{R}^n \to \mathbb{R}$ and a set
@@ -110,7 +110,7 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{definition}
 
 \begin{definition}[Root function]
-  \label{def:root_function}
+  \label{def:IsRootFunction}
   \lean{IsRootFunction}
   \leanok
   \uses{def:specialize}
@@ -119,7 +119,7 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{definition}
 
 \begin{definition}[Analytic submanifold]
-  \label{def:analytic_submanifold}
+  \label{def:IsAnalyticSubmanifold}
   \lean{IsAnalyticSubmanifold}
   \leanok
   A nonempty subset $S$ of $\mathbb{R}^n$ is an \emph{analytic $s$-dimensional
@@ -132,10 +132,10 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{definition}
 
 \begin{definition}[Analytic delineability]
-  \label{def:analytic_delineable}
+  \label{def:AnalyticDelineable}
   \lean{AnalyticDelineable}
   \leanok
-  \uses{def:specialize, def:root_function}
+  \uses{def:specialize, def:IsRootFunction}
   A polynomial $f(x, x_r)$ is \emph{analytically delineable} on a connected
   submanifold $S \subseteq \mathbb{R}^n$ if there exist $k \ge 0$ continuous
   functions $\theta_1 < \cdots < \theta_k$ from $S$ to $\mathbb{R}$ and positive
@@ -157,7 +157,7 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \section{Squarefree basis and reduced projection}
 
 \begin{definition}[Squarefree basis]
-  \label{def:squarefree_basis}
+  \label{def:IsSquarefreeBasis}
   \lean{IsSquarefreeBasis}
   \leanok
   A finite set $A$ of polynomials in $\mathbb{R}[x_1,\ldots,x_n][x_r]$ is a
@@ -170,7 +170,7 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{definition}
 
 \begin{definition}[Coefficient set]
-  \label{def:coeff_set}
+  \label{def:coeffSet}
   \lean{coeffSet}
   \leanok
   The \emph{coefficient set} $\operatorname{coeff}(A)$ consists of all nonzero
@@ -179,14 +179,14 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{definition}
 
 \begin{definition}[Discriminant set]
-  \label{def:discr_set}
+  \label{def:discrSet}
   \lean{discrSet}
   \leanok
   The \emph{discriminant set} $\operatorname{discr}(A) = \{ \operatorname{discr}(F) : F \in A,\; \deg(F) \ge 2 \}$.
 \end{definition}
 
 \begin{definition}[Resultant set]
-  \label{def:res_set}
+  \label{def:resSet}
   \lean{resSet}
   \leanok
   The \emph{resultant set}
@@ -195,10 +195,10 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{definition}
 
 \begin{definition}[Reduced projection]
-  \label{def:reduced_projection}
+  \label{def:reducedProjection}
   \lean{reducedProjection}
   \leanok
-  \uses{def:coeff_set, def:discr_set, def:res_set}
+  \uses{def:coeffSet, def:discrSet, def:resSet}
   The \emph{reduced projection} of a squarefree basis $A$ is
   \[ P(A) = \operatorname{coeff}(A) \cup \operatorname{discr}(A) \cup \operatorname{res}(A). \]
   This is a set of polynomials in $\mathbb{R}[x_1,\ldots,x_n]$.
@@ -207,7 +207,7 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{definition}
 
 \begin{definition}[Sections pairwise disjoint]
-  \label{def:sections_disjoint}
+  \label{def:SectionsDisjoint}
   \lean{SectionsDisjoint}
   \leanok
   \uses{def:specialize}
@@ -217,10 +217,10 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{definition}
 
 \begin{definition}[Order-invariant in all sections]
-  \label{def:oi_all_sections}
+  \label{def:OrderInvariantInAllSections}
   \lean{OrderInvariantInAllSections}
   \leanok
-  \uses{def:order_invariant_full, def:root_function, def:section_graph}
+  \uses{def:OrderInvariantFull, def:IsRootFunction, def:SectionGraph}
   Each element of $A$ is \emph{order-invariant in every section of $A$ over $S$}
   if: for every $F, G \in A$ and every continuous root function $\theta$ of $G$
   on $S$, $F$ is order-invariant in $\operatorname{graph}(\theta)$.
@@ -229,12 +229,12 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \section{Prerequisites}
 
 \begin{theorem}[Lifting theorem (Theorem 3.2.1)]
-  \label{thm:lifting}
+  \label{thm:lifting_theorem}
   \lean{lifting_theorem}
   \leanok
-  \uses{def:analytic_submanifold, def:degree_invariant, def:order_invariant_mv,
-        def:analytic_delineable, def:order_invariant_full, def:section_graph,
-        def:root_function, def:not_identically_zero}
+  \uses{def:IsAnalyticSubmanifold, def:DegreeInvariant, def:OrderInvariantMv,
+        def:AnalyticDelineable, def:OrderInvariantFull, def:SectionGraph,
+        def:IsRootFunction, def:NotIdenticallyZeroOn}
   Let $f(x, x_r)$ be a squarefree polynomial of positive degree in $x_r$
   with nonzero discriminant $D(x)$.  Let $S$ be a connected analytic submanifold of
   $\mathbb{R}^n$ in which $f$ is degree-invariant and of non-negative degree, and in
@@ -246,10 +246,10 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{theorem}
 
 \begin{lemma}[Discriminant of product is order-invariant]
-  \label{lem:discr_prod_oi}
+  \label{lem:discr_prod_order_invariant}
   \lean{discr_prod_order_invariant}
   \leanok
-  \uses{def:order_invariant_mv}
+  \uses{def:OrderInvariantMv}
   Let $F_1, \ldots, F_m$ be squarefree pairwise coprime polynomials, and let
   $S$ be a connected set.  If each $\operatorname{discr}(F_i)$ and each
   $\operatorname{res}(F_i, F_j)$ ($i \ne j$) is order-invariant on $S$, then
@@ -262,10 +262,10 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{lemma}
 
 \begin{lemma}[Order-invariance factors from product]
-  \label{lem:oi_factors}
+  \label{lem:order_invariant_full_factor_of_prod}
   \lean{order_invariant_full_factor_of_prod}
   \leanok
-  \uses{def:order_invariant_full}
+  \uses{def:OrderInvariantFull}
   If $\prod F_i$ is order-invariant in a set $T \subseteq \mathbb{R}^n \times \mathbb{R}$,
   then each $F_i$ is order-invariant in~$T$.
 
@@ -276,50 +276,84 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{lemma}
 
 \begin{lemma}[Degree-invariance from coefficient order-invariance]
-  \label{lem:deg_inv_of_coeff}
+  \label{lem:degree_invariant_of_coeff_order_invariant}
   \lean{degree_invariant_of_coeff_order_invariant}
   \leanok
-  \uses{def:degree_invariant, def:order_invariant_mv, def:not_identically_zero}
+  \uses{def:DegreeInvariant, def:OrderInvariantMv, def:NotIdenticallyZeroOn}
   If each nonzero coefficient of $f$ (in $x_r$) is order-invariant on a connected
   set $S$, and $f$ is not identically zero on $S$, then $f$ is degree-invariant on~$S$.
 \end{lemma}
 
 \begin{lemma}[Squarefree product of coprime factors]
-  \label{lem:prod_squarefree}
+  \label{lem:prod_squarefree_of_coprime}
   \lean{prod_squarefree_of_coprime}
   \leanok
   The product of squarefree pairwise coprime polynomials is squarefree.
 \end{lemma}
+\begin{proof}
+  \leanok
+  \proves{lem:prod_squarefree_of_coprime}
+  By induction on the finite set $A$.  The empty product is $1$, which is
+  squarefree.  For the inductive step on $\{p\} \cup A'$ with $p \notin A'$, we
+  have $\prod (\{p\} \cup A') = p \cdot \prod A'$; it remains to verify
+  (a) $p$ squarefree (hypothesis), (b) $\prod A'$ squarefree (IH), and
+  (c) $p$ coprime to $\prod A'$, which follows from pairwise coprimality of $p$
+  with each element of $A'$.  Mathlib's \texttt{squarefree\_mul\_iff} concludes.
+\end{proof}
 
 \begin{lemma}[Discriminant of degree-1 polynomial is order-invariant]
-  \label{lem:discr_deg1}
+  \label{lem:discr_degree_one_order_invariant}
   \lean{discr_degree_one_order_invariant}
   \leanok
-  \uses{def:order_invariant_mv}
-  If $f$ has degree~$1$ in $x_r$ and each nonzero coefficient of $f$ is
-  order-invariant on $S$, then $\operatorname{discr}(f)$ is order-invariant on~$S$.
+  \uses{def:OrderInvariantMv}
+  If $f$ has degree~$1$ in $x_r$, then $\operatorname{discr}(f)$ is
+  order-invariant on every~$S$.
 \end{lemma}
+\begin{proof}
+  \leanok
+  \proves{lem:discr_degree_one_order_invariant}
+  The discriminant of a degree-$1$ polynomial is $1$
+  (\texttt{Polynomial.discr\_of\_degree\_eq\_one}).  The constant $1$ has
+  order $0$ at every point, so it is order-invariant on any set.
+\end{proof}
 
 \begin{lemma}[Nonzero discriminant of squarefree polynomial]
-  \label{lem:discr_ne_zero}
+  \label{lem:discr_ne_zero_of_squarefree}
   \lean{discr_ne_zero_of_squarefree}
   \leanok
   A squarefree polynomial of positive degree has nonzero discriminant.
 \end{lemma}
 
 \begin{lemma}[Delineability of factor from delineability of product]
-  \label{lem:delin_factor}
+  \label{lem:delineable_factor_of_delineable_prod}
   \lean{delineable_factor_of_delineable_prod}
   \leanok
-  \uses{def:analytic_delineable}
+  \uses{def:AnalyticDelineable}
   If $\prod F_i$ is analytically delineable on $S$ and the $F_i$ are pairwise
   coprime, then each $F_i$ is analytically delineable on~$S$.
 \end{lemma}
 
+\begin{lemma}[Root function of factor is root function of product]
+  \label{lem:root_function_factor_of_prod}
+  \lean{root_function_factor_of_prod}
+  \leanok
+  \uses{def:IsRootFunction}
+  If $\theta$ is a root function of $G \in A$ on $S$, then $\theta$ is a root
+  function of $\prod_{F \in A} F$ on~$S$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \proves{lem:root_function_factor_of_prod}
+  Specialization at $a$ and evaluation at $\theta(a)$ are both ring
+  homomorphisms, so they commute with the finite product:
+  $(\prod F)(a, \theta(a)) = \prod F(a, \theta(a))$.  Since $G \in A$ and
+  $G(a, \theta(a)) = 0$, one factor vanishes, so the entire product vanishes.
+\end{proof}
+
 \section{Main result}
 
 \begin{theorem}[No common root of coprime polynomials]
-  \label{thm:no_common_root}
+  \label{thm:no_common_root_of_coprime}
   \lean{no_common_root_of_coprime}
   \leanok
   \uses{def:specialize}
@@ -329,7 +363,7 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \proves{thm:no_common_root}
+  \proves{thm:no_common_root_of_coprime}
   From the B\'ezout identity $u F + v G = 1$ we obtain, after specialization at $a$
   and evaluation at any common root $y$: $0 = 1$, a contradiction.
 \end{proof}
@@ -338,10 +372,10 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
   \label{thm:mccallum_3_2_3}
   \lean{mccallum_3_2_3}
   \leanok
-  \uses{def:squarefree_basis, def:analytic_submanifold, def:reduced_projection,
-        def:order_invariant_mv, def:not_identically_zero,
-        def:degree_invariant, def:analytic_delineable,
-        def:sections_disjoint, def:oi_all_sections}
+  \uses{def:IsSquarefreeBasis, def:IsAnalyticSubmanifold, def:reducedProjection,
+        def:OrderInvariantMv, def:NotIdenticallyZeroOn,
+        def:DegreeInvariant, def:AnalyticDelineable,
+        def:SectionsDisjoint, def:OrderInvariantInAllSections}
   Let $A$ be a finite squarefree basis of $(n{+}1)$-variate polynomials, $r \ge 2$,
   and let $S$ be a connected analytic submanifold of $\mathbb{R}^n$.  Suppose that
   each element of $A$ is not identically zero on $S$, and that each element of
@@ -355,36 +389,40 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \end{theorem}
 \begin{proof}
   \proves{thm:mccallum_3_2_3}
-  \uses{thm:lifting, lem:discr_prod_oi, lem:oi_factors,
-        lem:deg_inv_of_coeff, lem:prod_squarefree, lem:discr_ne_zero,
-        lem:delin_factor, thm:no_common_root, lem:discr_deg1}
+  \uses{thm:lifting_theorem, lem:discr_prod_order_invariant,
+        lem:order_invariant_full_factor_of_prod,
+        lem:degree_invariant_of_coeff_order_invariant,
+        lem:prod_squarefree_of_coprime, lem:discr_ne_zero_of_squarefree,
+        lem:delineable_factor_of_delineable_prod,
+        lem:root_function_factor_of_prod, thm:no_common_root_of_coprime,
+        lem:discr_degree_one_order_invariant}
   Let $F_1, \ldots, F_m$ be the elements of $A$ and set $f = \prod F_i$.
 
   \textbf{(1) Degree-invariance.}
   Each nonzero coefficient of $F_i$ (as a polynomial in $x_r$) belongs to
   $\operatorname{coeff}(A) \subseteq P(A)$, hence is order-invariant on~$S$.
-  Since $F_i$ is not identically zero on $S$, Lemma~\ref{lem:deg_inv_of_coeff}
+  Since $F_i$ is not identically zero on $S$, Lemma~\ref{lem:degree_invariant_of_coeff_order_invariant}
   gives degree-invariance.
 
   \textbf{(3) Section disjointness.}
   For $F_i \ne F_j$, coprimality in $\mathbb{R}[x][x_r]$ implies coprimality
   after specialization at any $a \in S$ (the B\'ezout identity specializes).
-  By Theorem~\ref{thm:no_common_root}, $F_i(a, \cdot)$ and $F_j(a, \cdot)$
+  By Theorem~\ref{thm:no_common_root_of_coprime}, $F_i(a, \cdot)$ and $F_j(a, \cdot)$
   have no common root.
 
   \textbf{(2) Delineability and (4) order-invariance in sections.}
   Since $f = \prod F_i$ is a product of squarefree pairwise coprime polynomials,
-  $f$ is squarefree (Lemma~\ref{lem:prod_squarefree}) with nonzero discriminant
-  (Lemma~\ref{lem:discr_ne_zero}).
+  $f$ is squarefree (Lemma~\ref{lem:prod_squarefree_of_coprime}) with nonzero discriminant
+  (Lemma~\ref{lem:discr_ne_zero_of_squarefree}).
   By Theorem~2.3.3, $\operatorname{discr}(f) = \prod \operatorname{discr}(F_i) \cdot
   \prod_{i<j} \operatorname{res}(F_i, F_j)^2$.  Each factor is order-invariant
   on $S$ (hypothesis), so $\operatorname{discr}(f)$ is order-invariant
-  (Lemma~\ref{lem:discr_prod_oi}).  Also, $f$ is degree-invariant (from~(1))
+  (Lemma~\ref{lem:discr_prod_order_invariant}).  Also, $f$ is degree-invariant (from~(1))
   and not identically zero.
 
-  By the Lifting theorem (\ref{thm:lifting}), $f$ is analytically delineable on $S$
+  By the Lifting theorem (\ref{thm:lifting_theorem}), $f$ is analytically delineable on $S$
   and order-invariant in each $f$-section.  Since the $F_i$ are pairwise coprime,
-  each $F_i$-section is an $f$-section, so Lemma~\ref{lem:delin_factor} gives
-  delineability of each $F_i$.  Lemma~\ref{lem:oi_factors} gives that each $F_i$
+  each $F_i$-section is an $f$-section, so Lemma~\ref{lem:delineable_factor_of_delineable_prod} gives
+  delineability of each $F_i$.  Lemma~\ref{lem:order_invariant_full_factor_of_prod} gives that each $F_i$
   is order-invariant in every $f$-section (hence every section of~$A$).
 \end{proof}

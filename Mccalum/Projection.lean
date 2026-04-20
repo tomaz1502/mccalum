@@ -1,4 +1,7 @@
-import Mathlib
+import Mathlib.Algebra.MvPolynomial.Division
+import Mathlib.Algebra.Squarefree.Basic
+import Mathlib.RingTheory.Polynomial.Resultant.Basic
+import Mathlib.RingTheory.SimpleRing.Principal
 import Mccalum.Order
 
 /-!
@@ -66,13 +69,6 @@ established in `CAD.Order.order_order'`.
     evaluation functions which are always analytic. -/
 def polyOrder (m : Nat) (g : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) : ℕ∞ :=
   order ℝ (fun x => MvPolynomial.eval x g) a
-
-/-- `polyOrder` agrees with the iterated-partial-derivative definition `order'`
-    from `CAD.Order`. -/
-theorem polyOrder_eq_order' (m : Nat) (g : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) :
-    polyOrder m g a = order' m g a := by
-  unfold polyOrder
-  rw [← order_order']
 
 /-- The 0th iterated Fréchet derivative of `f` is nonzero at `x₀` iff `f(x₀) ≠ 0`. -/
 private lemma iteratedFDeriv_zero_ne_zero_iff
@@ -264,20 +260,45 @@ axiom degree_invariant_of_coeff_order_invariant
     DegreeInvariant f S
 
 /-- Product of squarefree pairwise coprime polynomials is squarefree. -/
-axiom prod_squarefree_of_coprime
+theorem prod_squarefree_of_coprime
     (A : Finset (PolyR n))
     (hsf : ∀ f ∈ A, Squarefree f)
     (hcop : ∀ f ∈ A, ∀ g ∈ A, f ≠ g → IsCoprime f g) :
-    Squarefree (∏ f ∈ A, f)
+    Squarefree (∏ f ∈ A, f) := by
+  induction A using Finset.induction with
+  | empty => simp
+  | @insert p A hpA ih =>
+    rw [Finset.prod_insert hpA, squarefree_mul_iff]
+    refine ⟨?_, hsf p (Finset.mem_insert_self p A), ?_⟩
+    · apply IsCoprime.isRelPrime
+      apply IsCoprime.prod_right
+      intro g hg
+      refine hcop p (Finset.mem_insert_self p A) g (Finset.mem_insert_of_mem hg) ?_
+      intro heq; rw [heq] at hpA; exact hpA hg
+    · exact ih (fun f hf => hsf f (Finset.mem_insert_of_mem hf))
+        (fun f hf g hg hne =>
+          hcop f (Finset.mem_insert_of_mem hf) g (Finset.mem_insert_of_mem hg) hne)
 
-/-- Discriminant of a degree-1 polynomial is order-invariant whenever
-    its coefficients are (it equals the leading coefficient up to sign). -/
-axiom discr_degree_one_order_invariant
+/-- Discriminant of a degree-1 polynomial is order-invariant. In fact the
+discriminant equals `1`, so this is trivially invariant. -/
+theorem discr_degree_one_order_invariant
     (S : Set (Fin n → ℝ))
     (f : PolyR n)
-    (hdeg : f.natDegree = 1)
-    (hcoeff : ∀ k : ℕ, f.coeff k ≠ 0 → OrderInvariantMv (f.coeff k) S) :
-    OrderInvariantMv (Polynomial.discr f) S
+    (hdeg : f.natDegree = 1) :
+    OrderInvariantMv (Polynomial.discr f) S := by
+  have hf_ne : f ≠ 0 := by
+    intro h; rw [h] at hdeg; simp at hdeg
+  have hf_deg : f.degree = 1 := by
+    rw [Polynomial.degree_eq_natDegree hf_ne, hdeg]; rfl
+  have hdiscr : Polynomial.discr f = 1 :=
+    Polynomial.discr_of_degree_eq_one hf_deg
+  rw [hdiscr]
+  intro a _ b _
+  have h1 : polyOrder n (1 : MvPolyR n) a = 0 :=
+    (polyOrder_zero_iff n 1 a).mpr (by simp)
+  have h2 : polyOrder n (1 : MvPolyR n) b = 0 :=
+    (polyOrder_zero_iff n 1 b).mpr (by simp)
+  rw [h1, h2]
 
 /-- Nonzero discriminant of squarefree polynomial. -/
 axiom discr_ne_zero_of_squarefree
@@ -294,12 +315,17 @@ axiom delineable_factor_of_delineable_prod
     ∀ f ∈ A, AnalyticDelineable f S
 
 /-- Root function of a factor is a root function of the product. -/
-axiom root_function_factor_of_prod
+theorem root_function_factor_of_prod
     (S : Set (Fin n → ℝ))
     (A : Finset (PolyR n)) (G : PolyR n) (hG : G ∈ A)
     (θ : (Fin n → ℝ) → ℝ)
     (hθ : IsRootFunction G θ S) :
-    IsRootFunction (∏ f ∈ A, f) θ S
+    IsRootFunction (∏ f ∈ A, f) θ S := by
+  intro a ha
+  have hprod : specialize (∏ f ∈ A, f) a = ∏ f ∈ A, specialize f a := by
+    simp [specialize, Polynomial.map_prod]
+  rw [Polynomial.IsRoot, hprod, Polynomial.eval_prod]
+  exact Finset.prod_eq_zero hG (hθ a ha)
 
 /-- Degree-invariance of product from degree-invariance of factors.
 
@@ -497,7 +523,7 @@ theorem mccallum_3_2_3
     · -- deg(f) = 1: use discr_degree_one_order_invariant
       have hpos := hA.pos_degree f hf
       have h1 : f.natDegree = 1 := by omega
-      exact discr_degree_one_order_invariant S f h1 (hcoeff_oi f hf)
+      exact discr_degree_one_order_invariant S f h1
   -- Resultants of distinct pairs are order-invariant in S
   have hres_oi : ∀ f ∈ A, ∀ g ∈ A, f ≠ g →
       OrderInvariantMv (Polynomial.resultant f g) S := by
@@ -521,9 +547,8 @@ theorem mccallum_3_2_3
     discr_prod_order_invariant S A hS_conn hA.sq_free hA.pairwise_coprime
       hdisc_oi hres_oi
   -- Apply the Lifting theorem to f
-  have hf_lift := lifting_theorem S f hS_submfld hS_conn hf_pos hf_sf
+  obtain ⟨hf_delin, hf_oi_sections⟩ := lifting_theorem S f hS_submfld hS_conn hf_pos hf_sf
     hf_discr_ne hf_nz hf_deg hf_discr_oi
-  obtain ⟨hf_delin, hf_oi_sections⟩ := hf_lift
   refine ⟨h_deg, ?_, h_disjoint, ?_⟩
   -- (2) Delineability: each F∈A is delineable since ∏A is and factors are coprime
   · exact delineable_factor_of_delineable_prod S A hA.pairwise_coprime hf_delin
@@ -539,3 +564,5 @@ theorem mccallum_3_2_3
     exact order_invariant_full_factor_of_prod S A (SectionGraph θ S) hprod_oi F hF
 
 #print axioms mccallum_3_2_3
+
+#min_imports

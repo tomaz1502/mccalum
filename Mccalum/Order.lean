@@ -1,4 +1,8 @@
-import Mathlib
+import Mathlib.Algebra.MvPolynomial.PDeriv
+import Mathlib.Analysis.Analytic.Polynomial
+import Mathlib.Analysis.Calculus.FDeriv.Mul
+import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Order.BourbakiWitt
 
 noncomputable section
 

@@ -1,4 +1,7 @@
-import Mathlib
+import Mathlib.Algebra.Order.Ring.Star
+import Mathlib.Analysis.Analytic.Basic
+import Mathlib.Analysis.Calculus.FDeriv.Defs
+import Mathlib.Analysis.InnerProductSpace.Basic
 
 /-! ## Analytic submanifold -/
 
@@ -50,3 +53,5 @@ lemma UnitSphere_submanifold : IsAnalyticSubmanifold UnitSphere 2 := by
                 rfl
               · intro h
                 admit
+
+#min_imports
