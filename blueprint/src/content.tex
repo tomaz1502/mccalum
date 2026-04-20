@@ -35,18 +35,6 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
   via iterated partial derivatives (see \texttt{polyOrder\_eq\_order'}).
 \end{definition}
 
-\begin{theorem}[Equivalence of order definitions]
-  \label{thm:polyOrder_eq_order}
-  \lean{polyOrder_eq_order'}
-  \leanok
-  \uses{def:polyOrder}
-  The Fr\'echet derivative-based order (\texttt{polyOrder}) agrees with the
-  iterated partial derivative-based definition (\texttt{order'} from
-  \texttt{CAD.Order}).  The proof uses the fact that a continuous multilinear
-  map on a finite-dimensional space is determined by its values on standard
-  basis vectors.
-\end{theorem}
-
 \begin{definition}[Order of a full polynomial]
   \label{def:orderFull}
   \lean{orderFull}
@@ -57,7 +45,6 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
   element of $\mathbb{R}[x_0, x_1,\ldots,x_n]$ via the algebra equivalence
   \texttt{finSuccEquiv} and computing \texttt{polyOrder}.
 \end{definition}
-
 
 \section{Invariance conditions}
 

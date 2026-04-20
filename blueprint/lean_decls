@@ -1,6 +1,5 @@
 specialize
 polyOrder
-polyOrder_eq_order'
 orderFull
 DegreeInvariant
 OrderInvariantMv
