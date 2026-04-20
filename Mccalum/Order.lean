@@ -37,10 +37,14 @@ section PDeriv
 
 open MvPolynomial
 
+/-- The partial derivative of a multivariate polynomial according to a list
+of variables to differentiate -/
 def iteratedPDeriv {n : Nat} (l : List (Fin n))
     (p : MvPolynomial (Fin n) ℝ) : MvPolynomial (Fin n) ℝ :=
   l.foldr (fun i q => MvPolynomial.pderiv i q) p
 
+/-- An alternative definition for the order of a multivariate polynomial at
+a point based on partial derivatives -/
 def order' (n : Nat) (f : MvPolynomial (Fin n) ℝ) (p : Fin n → Real) : ℕ∞ :=
   if h: (∃ k : Nat, ∃ l : List (Fin n), l.length = k ∧ (iteratedPDeriv l f).eval p ≠ 0) then ↑(Nat.find h)
   else ⊤
