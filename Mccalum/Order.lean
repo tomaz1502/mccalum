@@ -273,3 +273,42 @@ theorem iteratedFDeriv_eq_zero_of_lt_order
     rw [dif_pos hex]
     exact_mod_cast Nat.find_min' hex hne
   exact not_le.mpr hn this
+
+/-- The analytic order of `g ∈ ℝ[x₁,…,xₘ]` at `a`, defined via Frechet derivatives.
+    This is a wrapper around `order` from `CAD.Order`, specializing to polynomial
+    evaluation functions which are always analytic. -/
+def polyOrder (m : Nat) (g : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) : ℕ∞ :=
+  order ℝ (fun x => MvPolynomial.eval x g) a
+
+/-- The 0th iterated Fréchet derivative of `f` is nonzero at `x₀` iff `f(x₀) ≠ 0`. -/
+private lemma iteratedFDeriv_zero_ne_zero_iff
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
+    {f : E → F} {x₀ : E} :
+    iteratedFDeriv ℝ 0 f x₀ ≠ 0 ↔ f x₀ ≠ 0 := by
+  constructor
+  · intro h hfx; apply h; ext m; simp [iteratedFDeriv_zero_apply, hfx]
+  · intro h heq; apply h
+    have := iteratedFDeriv_zero_apply (𝕜 := ℝ) (f := f) (x := x₀) (fun i => Fin.elim0 i)
+    rw [heq] at this; simp at this; exact this.symm
+
+/-- `polyOrder m g a = 0` iff `eval a g ≠ 0`. -/
+theorem polyOrder_zero_iff (m : Nat) (g : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) :
+    polyOrder m g a = 0 ↔ MvPolynomial.eval a g ≠ 0 := by
+  unfold polyOrder order
+  constructor
+  · intro h
+    split_ifs at h with hex
+    · have hfind : Nat.find hex = 0 := by exact_mod_cast h
+      have hspec := Nat.find_spec hex
+      rw [hfind] at hspec
+      exact (iteratedFDeriv_zero_ne_zero_iff (f := fun x => MvPolynomial.eval x g)).mp hspec
+    · simp at h
+  · intro h
+    have hex : ∃ k, iteratedFDeriv ℝ k (fun x => MvPolynomial.eval x g) a ≠ 0 :=
+      ⟨0, (iteratedFDeriv_zero_ne_zero_iff (f := fun x => MvPolynomial.eval x g)).mpr h⟩
+    rw [dif_pos hex]
+    have : Nat.find hex = 0 :=
+      Nat.eq_zero_of_le_zero (Nat.find_min' hex
+        ((iteratedFDeriv_zero_ne_zero_iff (f := fun x => MvPolynomial.eval x g)).mpr h))
+    simp [this]
