@@ -1,8 +1,10 @@
 import Mccalum.Basic
 import Mccalum.Delineability
 import Mccalum.DiscrNonzero
+import Mccalum.DiscrProdInvariant
 import Mccalum.Invariance
 import Mccalum.Order
+import Mccalum.PolyOrderMul
 import Mccalum.Prerequisites
 import Mccalum.Projection
 import Mccalum.SquarefreeBasis
