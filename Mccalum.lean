@@ -1,5 +1,6 @@
 import Mccalum.Basic
 import Mccalum.Delineability
+import Mccalum.DiscrMul
 import Mccalum.DiscrNonzero
 import Mccalum.DiscrProdInvariant
 import Mccalum.Invariance
