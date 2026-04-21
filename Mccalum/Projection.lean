@@ -1,4 +1,6 @@
 import Mccalum.DiscrNonzero
+import Mccalum.DiscrMul
+import Mccalum.DiscrProdInvariant
 import Mccalum.Prerequisites
 import Mccalum.SquarefreeBasis
 
@@ -97,8 +99,7 @@ theorem mccallum_3_2_3
     degree_invariant_prod S A h_deg
       (fun f hf => specialize_nonzero_everywhere f S (hnonzero f hf) (hcoeff_oi f hf))
   have hf_discr_oi : OrderInvariantMv (Polynomial.discr f) S :=
-    discr_prod_order_invariant S A hS_conn hA.sq_free hA.pairwise_coprime
-      hdisc_oi hres_oi
+    discr_prod_order_invariant S A hA.pos_degree hA.sq_free hA.pairwise_coprime hdisc_oi hres_oi
   obtain ⟨hf_delin, hf_oi_sections⟩ := lifting_theorem S f hS_submfld hS_conn hf_pos hf_sf
     hf_discr_ne hf_nz hf_deg hf_discr_oi
   refine ⟨h_deg, ?_, h_disjoint, ?_⟩

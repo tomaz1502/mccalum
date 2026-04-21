@@ -39,18 +39,6 @@ axiom lifting_theorem
     (∀ (θ : (Fin n → ℝ) → ℝ), ContinuousOn θ S → IsRootFunction f θ S →
       OrderInvariantFull f (SectionGraph θ S))
 
-/-- **Theorem 2.3.3** + **Lemma 3.2.2**: discriminant of product is order-invariant. -/
-axiom discr_prod_order_invariant
-    (S : Set (Fin n → ℝ))
-    (A : Finset (PolyR n))
-    (hS : IsConnected S)
-    (hsf : ∀ f ∈ A, Squarefree f)
-    (hcop : ∀ f ∈ A, ∀ g ∈ A, f ≠ g → IsCoprime f g)
-    (hdisc : ∀ f ∈ A, OrderInvariantMv (Polynomial.discr f) S)
-    (hres : ∀ f ∈ A, ∀ g ∈ A, f ≠ g →
-      OrderInvariantMv (Polynomial.resultant f g) S) :
-    OrderInvariantMv (Polynomial.discr (∏ f ∈ A, f)) S
-
 /-- **Lemma 3.2.2** backward: order-invariance of product implies each factor. -/
 axiom order_invariant_full_factor_of_prod
     (S : Set (Fin n → ℝ))

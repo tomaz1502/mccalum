@@ -54,7 +54,7 @@
   <a href="sect0001.html#a0000000009"><span class="toc_ref">1.6</span> <span class="toc_entry">Prerequisites</span></a>
  </li>
 <li class="">
-  <a href="sect0001.html#a0000000022"><span class="toc_ref">1.7</span> <span class="toc_entry">Main result</span></a>
+  <a href="sect0001.html#a0000000024"><span class="toc_ref">1.7</span> <span class="toc_entry">Main result</span></a>
  </li>
 
   </ul>
@@ -1271,10 +1271,15 @@
     <span class="theorem_thmtitle">Discriminant of a product (Theorem 2.3.3)</span>
     <div class="thm_header_extras">
 
+    
+    ✓
         </div>
     <div class="thm_header_hidden_extras">
 
     <a class="icon proof" href="sect0001.html#thm:discr_mul_eq">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000012"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
     
     
     
@@ -1301,10 +1306,27 @@
   </div>
   <div class="theorem_thmcontent">
   <p>   Let \(R\) be an integral domain of characteristic zero, and let \(f, g \in R[x]\) have positive degree. Then </p>
-<div class="displaymath" id="a0000000012">
+<div class="displaymath" id="a0000000013">
   \[  \operatorname {discr}(f \cdot g) = \operatorname {discr}(f) \cdot \operatorname {res}(f, g)^2 \cdot \operatorname {discr}(g).  \]
 </div>
-<p>The proof (McCallum, pp.&#160;11–12) factors \(f, g\) over an algebraic closure and expands using the root formulas for discriminant and resultant. This statement is currently taken as an axiom in the Lean formalization. </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000012">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Let \(n = \deg f\), \(m = \deg g\). Apply Mathlib’s <span class="ttfamily">resultant_deriv</span> identity to \(fg\) (of degree \(n + m\)) to express the discriminant of \(fg\) as </p>
+<div class="displaymath" id="a0000000014">
+  \[  (-1)^{\binom {n+m}{2}} \cdot \operatorname {lc}(fg) \cdot \operatorname {discr}(fg) = \operatorname {res}_{n+m,\, n+m-1}(fg,\;  (fg)') = \operatorname {res}(fg,\;  f'g + fg'),  \]
+</div>
+<p> using the Leibniz rule \((fg)' = f'g + fg'\). </p>
+<p>Bilinearity of the resultant (<span class="ttfamily">resultant_mul_left</span>) splits this as \(\operatorname {res}(f, f'g + fg') \cdot \operatorname {res}(g, f'g + fg')\). For the first factor, \(fg'\) is a multiple of \(f\), so \(\operatorname {res}(f, f'g + fg') = \operatorname {res}(f, f'g) = \operatorname {res}(f, f') \cdot \operatorname {res}(f, g)\) by <span class="ttfamily">resultant_add_mul_right</span> and <span class="ttfamily">resultant_mul_right</span>; symmetrically, \(\operatorname {res}(g, f'g + fg') = \operatorname {res}(g, f) \cdot \operatorname {res}(g, g')\). Apply <span class="ttfamily">resultant_deriv</span> again on each side to rewrite \(\operatorname {res}(f, f')\) and \(\operatorname {res}(g, g')\) in terms of \(\operatorname {discr}(f)\) and \(\operatorname {discr}(g)\). </p>
+<p>Combining the factors and using \(\operatorname {res}(g, f) = (-1)^{nm} \operatorname {res}(f, g)\) (<span class="ttfamily">resultant_comm</span>) together with the sign identity \(\binom {n+m}{2} = \binom {n}{2} + nm + \binom {m}{2}\) and the leading-coefficient identity \(\operatorname {lc}(fg) = \operatorname {lc}(f) \cdot \operatorname {lc}(g)\), the sign and leading-coefficient prefactors on both sides match; cancelling them (since \(\operatorname {lc}(f), \operatorname {lc}(g) \neq 0\) in an integral domain) yields the claim. </p>
 
   </div>
 </div>
@@ -1324,7 +1346,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:discr_prod_order_invariant">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000013"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000015"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1379,7 +1401,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000013">
+<div class="proof_wrapper" id="a0000000015">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1389,7 +1411,7 @@
   <div class="proof_content">
   <p>  By induction on the finite set \(A = \{ F_1, \ldots , F_m\} \). The empty product is \(1\), whose discriminant is \(1\), which is order-invariant on any set. </p>
 <p>For the inductive step with \(A = \{ p\}  \cup A'\) and \(p \notin A'\), apply Theorem&#160;<a href="sect0001.html#thm:discr_mul_eq">21</a> to \(p\) and \(q := \prod _{f \in A'} f\) (both of positive degree) to obtain </p>
-<div class="displaymath" id="a0000000014">
+<div class="displaymath" id="a0000000016">
   \[  \operatorname {discr}(p \cdot q) = \operatorname {discr}(p) \cdot \operatorname {res}(p, q)^2 \cdot \operatorname {discr}(q).  \]
 </div>
 <p> Order-invariance is preserved under products, which follows from Lemma&#160;<a href="sect0001.html#lem:polyOrder_mul_add">20</a>: if \(\operatorname {polyOrder}(f, a) = \operatorname {polyOrder}(f, b)\) and \(\operatorname {polyOrder}(g, a) = \operatorname {polyOrder}(g, b)\), then adding the two equations gives the same for \(f \cdot g\). Hence it suffices to show each factor is order-invariant: \(\operatorname {discr}(p)\) by hypothesis; \(\operatorname {discr}(q)\) by the inductive hypothesis; and \(\operatorname {res}(p, q)^2\) by expanding \(\operatorname {res}(p, q) = \prod _{g \in A'} \operatorname {res}(p, g)\) (Mathlib’s <span class="ttfamily">resultant_prod_right</span>) and applying closure under products again. </p>
@@ -1477,7 +1499,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000015"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000017"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1530,7 +1552,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000015">
+<div class="proof_wrapper" id="a0000000017">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1540,7 +1562,7 @@
   <div class="proof_content">
   <p> Write \(f = \sum _k c_k(x)\,  x_r^k\) with \(c_k \in \mathbb {R}[x_1,\ldots ,x_{r-1}]\). Fix \(a, b \in S\); we show \((\operatorname {specialize} f\,  a).\operatorname {natDegree} = (\operatorname {specialize} f\,  b).\operatorname {natDegree}\). </p>
 <p>The key observation is that, under the hypothesis, the support of the specialization does not depend on the basepoint: for every index \(k\), </p>
-<div class="displaymath" id="a0000000016">
+<div class="displaymath" id="a0000000018">
   \[  c_k(a) \ne 0 \iff c_k(b) \ne 0.  \]
 </div>
 <p> Indeed, if \(c_k = 0\) this is vacuous; otherwise \(c_k\) is order-invariant on \(S\), so \(\operatorname {polyOrder}(c_k, a) = \operatorname {polyOrder}(c_k, b)\), and <span class="ttfamily">polyOrder_zero_iff</span> gives \(c_k(a) \ne 0 \Leftrightarrow \operatorname {polyOrder}(c_k, a) = 0 \Leftrightarrow \operatorname {polyOrder}(c_k, b) = 0 \Leftrightarrow c_k(b) \ne 0\). </p>
@@ -1564,7 +1586,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:prod_squarefree_of_coprime">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000017"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000019"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1595,7 +1617,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000017">
+<div class="proof_wrapper" id="a0000000019">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1623,7 +1645,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:discr_degree_one_order_invariant">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000018"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000020"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1674,7 +1696,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000018">
+<div class="proof_wrapper" id="a0000000020">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1702,7 +1724,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:discr_ne_zero_of_squarefree">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000019"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000021"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1733,7 +1755,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000019">
+<div class="proof_wrapper" id="a0000000021">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1744,7 +1766,7 @@
   <p> Let \(K = \operatorname {Frac}(R)\) be the fraction field of \(R\) and \(\varphi : R \hookrightarrow K\) the (injective) localization map. Since \(R\) is a UFD of characteristic \(0\), \(K\) is a perfect field of characteristic \(0\). </p>
 <p><em>Step 1 (Gauss’s lemma): \(f\) remains squarefree over \(K\).</em> Suppose, for contradiction, that \(p^2 \mid \varphi (f)\) in \(K[x_r]\) for some irreducible \(p \in K[x_r]\). Clearing denominators (<span class="ttfamily">IsLocalization.integerNormalization</span>) and extracting the primitive part yields a primitive \(q \in R[x_r]\) with \(\varphi (q)\) associated to \(p\) in \(K[x_r]\); by Gauss’s lemma (<span class="ttfamily">IsPrimitive.irreducible_of_irreducible_map_of_injective</span>), \(q\) is irreducible in \(R[x_r]\). From \(p^2 \mid \varphi (f)\) we get \(\varphi (q)^2 \mid \varphi (f)\), i.e. \(\varphi (q^2) \mid \varphi (f)\); cancelling the content of \(f\) and applying <span class="ttfamily">IsPrimitive.dvd_of_fraction_map_dvd_fraction_map</span> gives \(q^2 \mid f\) in \(R[x_r]\), contradicting squarefreeness of \(f\). Hence \(\varphi (f)\) is squarefree in \(K[x_r]\). </p>
 <p><em>Step 2: squarefree \(\Rightarrow \) separable \(\Rightarrow \) nonzero discriminant over \(K\).</em> Over the perfect field \(K\), squarefree is equivalent to separable (<span class="ttfamily">PerfectField.separable_iff_squarefree</span>), so \(\gcd (\varphi (f), \varphi (f)') = 1\), i.e. \(\varphi (f)\) and its derivative are coprime in \(K[x_r]\). Hence \(\operatorname {res}(\varphi (f), \varphi (f)') \ne 0\) (<span class="ttfamily">Polynomial.resultant_ne_zero</span>). The identity </p>
-<div class="displaymath" id="a0000000020">
+<div class="displaymath" id="a0000000022">
   \[  \operatorname {res}(g, g') \; =\;  (-1)^{\binom {\deg g}{2}}\,  \operatorname {lc}(g)\, \operatorname {disc}(g)  \]
 </div>
 <p> (<span class="ttfamily">Polynomial.resultant_deriv</span>) then forces \(\operatorname {disc}(\varphi (f)) \ne 0\), using that in characteristic zero the derivative has degree exactly \(\deg f - 1\). </p>
@@ -1832,7 +1854,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:root_function_factor_of_prod">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000021"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000023"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1883,7 +1905,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000021">
+<div class="proof_wrapper" id="a0000000023">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1895,7 +1917,7 @@
 
   </div>
 </div>
-<h1 id="a0000000022">1.7 Main result</h1>
+<h1 id="a0000000024">1.7 Main result</h1>
 <div class="theorem_thmwrapper theorem-style-plain" id="thm:no_common_root_of_coprime">
   <div class="theorem_thmheading">
     <span class="theorem_thmcaption">
@@ -1912,7 +1934,7 @@
 
     <a class="icon proof" href="sect0001.html#thm:no_common_root_of_coprime">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000023"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000025"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1963,7 +1985,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000023">
+<div class="proof_wrapper" id="a0000000025">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1989,7 +2011,7 @@
 
     <a class="icon proof" href="sect0001.html#thm:mccallum_3_2_3">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000024"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000026"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -2086,7 +2108,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000024">
+<div class="proof_wrapper" id="a0000000026">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof

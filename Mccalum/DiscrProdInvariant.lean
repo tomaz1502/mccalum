@@ -1,5 +1,6 @@
-import Mccalum.Prerequisites
+import Mccalum.DiscrMul
 import Mccalum.PolyOrderMul
+import Mccalum.Prerequisites
 import Mathlib.RingTheory.MvPolynomial.Basic
 
 /-!
@@ -62,20 +63,6 @@ theorem order_invariant_prod_mv
       (hf i (Finset.mem_insert_self i s))
       (ih (fun j hj => hf j (Finset.mem_insert_of_mem hj)))
 
-/-! ### Theorem 2.3.3: Discriminant of a product -/
-
-/-- **Theorem 2.3.3** (McCallum PhD, p.12).
-For non-constant polynomials `f, g` over an integral domain of characteristic zero:
-`discr(f · g) = discr(f) · res(f, g)² · discr(g)`.
-
-The proof proceeds by factoring `f` and `g` into linear factors over an algebraic closure
-and expanding using the root formulas for discriminant (eq. 2.3.6) and resultant (eq. 2.3.5).
-See the thesis for details. -/
-axiom discr_mul_eq
-    {R : Type*} [CommRing R] [IsDomain R] [CharZero R]
-    (f g : R[X]) (hf : 0 < f.natDegree) (hg : 0 < g.natDegree) :
-    discr (f * g) = discr f * resultant f g ^ 2 * discr g
-
 /-! ### Main result -/
 
 private lemma leadingCoeff_prod_ne_zero
@@ -99,10 +86,9 @@ and pairwise resultants.
 This replaces the axiom `discr_prod_order_invariant` from `Mccalum.Prerequisites`, with the
 additional hypothesis `hpos` (positive degree), which is available at every call site via
 `IsSquarefreeBasis.pos_degree`. -/
-theorem discr_prod_order_invariant_proof
+theorem discr_prod_order_invariant
     (S : Set (Fin n → ℝ))
     (A : Finset (PolyR n))
-    (_ : IsConnected S)
     (hpos : ∀ f ∈ A, 0 < f.natDegree)
     (hsf : ∀ f ∈ A, Squarefree f)
     (hcop : ∀ f ∈ A, ∀ g ∈ A, f ≠ g → IsCoprime f g)
@@ -147,5 +133,7 @@ theorem discr_prod_order_invariant_proof
           (hdisc p (Finset.mem_insert_self p A))
           (order_invariant_sq_mv S _ hres_pq))
         ih_oi
+
+#print axioms discr_prod_order_invariant
 
 end

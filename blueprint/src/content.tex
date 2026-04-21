@@ -264,6 +264,7 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 \begin{theorem}[Discriminant of a product (Theorem 2.3.3)]
   \label{thm:discr_mul_eq}
   \lean{discr_mul_eq}
+  \leanok
   Let $R$ be an integral domain of characteristic zero, and let
   $f, g \in R[x]$ have positive degree.  Then
   \[
@@ -271,11 +272,40 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
       = \operatorname{discr}(f) \cdot \operatorname{res}(f, g)^2
         \cdot \operatorname{discr}(g).
   \]
-
-  The proof (McCallum, pp.~11--12) factors $f, g$ over an algebraic closure
-  and expands using the root formulas for discriminant and resultant.  This
-  statement is currently taken as an axiom in the Lean formalization.
 \end{theorem}
+\begin{proof}
+  \leanok
+  \proves{thm:discr_mul_eq}
+  Let $n = \deg f$, $m = \deg g$.  Apply Mathlib's \texttt{resultant\_deriv}
+  identity to $fg$ (of degree $n + m$) to express the discriminant of $fg$ as
+  \[
+    (-1)^{\binom{n+m}{2}} \cdot \operatorname{lc}(fg) \cdot \operatorname{discr}(fg)
+      = \operatorname{res}_{n+m,\,n+m-1}(fg,\; (fg)')
+      = \operatorname{res}(fg,\; f'g + fg'),
+  \]
+  using the Leibniz rule $(fg)' = f'g + fg'$.
+
+  Bilinearity of the resultant (\texttt{resultant\_mul\_left}) splits this as
+  $\operatorname{res}(f, f'g + fg') \cdot \operatorname{res}(g, f'g + fg')$.
+  For the first factor, $fg'$ is a multiple of $f$, so
+  $\operatorname{res}(f, f'g + fg') = \operatorname{res}(f, f'g)
+  = \operatorname{res}(f, f') \cdot \operatorname{res}(f, g)$
+  by \texttt{resultant\_add\_mul\_right} and \texttt{resultant\_mul\_right};
+  symmetrically, $\operatorname{res}(g, f'g + fg')
+  = \operatorname{res}(g, f) \cdot \operatorname{res}(g, g')$.  Apply
+  \texttt{resultant\_deriv} again on each side to rewrite
+  $\operatorname{res}(f, f')$ and $\operatorname{res}(g, g')$ in terms of
+  $\operatorname{discr}(f)$ and $\operatorname{discr}(g)$.
+
+  Combining the factors and using $\operatorname{res}(g, f)
+  = (-1)^{nm} \operatorname{res}(f, g)$ (\texttt{resultant\_comm}) together
+  with the sign identity $\binom{n+m}{2} = \binom{n}{2} + nm + \binom{m}{2}$
+  and the leading-coefficient identity $\operatorname{lc}(fg)
+  = \operatorname{lc}(f) \cdot \operatorname{lc}(g)$, the sign and
+  leading-coefficient prefactors on both sides match; cancelling them
+  (since $\operatorname{lc}(f), \operatorname{lc}(g) \neq 0$ in an integral
+  domain) yields the claim.
+\end{proof}
 
 \begin{lemma}[Discriminant of product is order-invariant]
   \label{lem:discr_prod_order_invariant}
