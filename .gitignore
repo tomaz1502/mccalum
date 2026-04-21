@@ -1,4 +1,4 @@
 /.lake
 prompt
-blueprint/web/docs
-blueprint/web/dep_graph_document.html
+blueprint/web/
+blueprint/print/
