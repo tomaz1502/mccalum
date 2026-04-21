@@ -308,8 +308,51 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
   \label{lem:discr_ne_zero_of_squarefree}
   \lean{discr_ne_zero_of_squarefree}
   \leanok
-  A squarefree polynomial of positive degree has nonzero discriminant.
+  A squarefree polynomial $f \in R[x_r]$ of positive degree, with
+  $R = \mathbb{R}[x_1, \ldots, x_{r-1}]$, has nonzero discriminant.
 \end{lemma}
+\begin{proof}
+  \leanok
+  \proves{lem:discr_ne_zero_of_squarefree}
+  Let $K = \operatorname{Frac}(R)$ be the fraction field of $R$ and
+  $\varphi : R \hookrightarrow K$ the (injective) localization map.  Since $R$ is a
+  UFD of characteristic $0$, $K$ is a perfect field of characteristic $0$.
+
+  \emph{Step 1 (Gauss's lemma): $f$ remains squarefree over $K$.}
+  Suppose, for contradiction, that $p^2 \mid \varphi(f)$ in $K[x_r]$ for some
+  irreducible $p \in K[x_r]$.  Clearing denominators
+  (\texttt{IsLocalization.integerNormalization}) and extracting the primitive
+  part yields a primitive $q \in R[x_r]$ with $\varphi(q)$ associated to $p$ in
+  $K[x_r]$; by Gauss's lemma
+  (\texttt{IsPrimitive.irreducible\_of\_irreducible\_map\_of\_injective}), $q$ is
+  irreducible in $R[x_r]$.  From $p^2 \mid \varphi(f)$ we get
+  $\varphi(q)^2 \mid \varphi(f)$, i.e.\ $\varphi(q^2) \mid \varphi(f)$; cancelling
+  the content of $f$ and applying
+  \texttt{IsPrimitive.dvd\_of\_fraction\_map\_dvd\_fraction\_map} gives
+  $q^2 \mid f$ in $R[x_r]$, contradicting squarefreeness of $f$.  Hence
+  $\varphi(f)$ is squarefree in $K[x_r]$.
+
+  \emph{Step 2: squarefree $\Rightarrow$ separable $\Rightarrow$ nonzero
+  discriminant over $K$.}  Over the perfect field $K$, squarefree is equivalent
+  to separable (\texttt{PerfectField.separable\_iff\_squarefree}), so
+  $\gcd(\varphi(f), \varphi(f)') = 1$, i.e.\ $\varphi(f)$ and its derivative are
+  coprime in $K[x_r]$.  Hence
+  $\operatorname{res}(\varphi(f), \varphi(f)') \ne 0$
+  (\texttt{Polynomial.resultant\_ne\_zero}).  The identity
+  \[
+    \operatorname{res}(g, g') \;=\; (-1)^{\binom{\deg g}{2}}\,
+      \operatorname{lc}(g)\,\operatorname{disc}(g)
+  \]
+  (\texttt{Polynomial.resultant\_deriv}) then forces
+  $\operatorname{disc}(\varphi(f)) \ne 0$, using that in characteristic zero the
+  derivative has degree exactly $\deg f - 1$.
+
+  \emph{Step 3: descend to $R$.}  Because $\varphi$ is a ring homomorphism, the
+  resultant commutes with it (\texttt{Polynomial.resultant\_map\_map}), and the
+  same equation evaluated over $R$ gives
+  $\varphi(\operatorname{disc}(f)) = \operatorname{disc}(\varphi(f)) \ne 0$.
+  Injectivity of $\varphi$ yields $\operatorname{disc}(f) \ne 0$.
+\end{proof}
 
 \begin{lemma}[Delineability of factor from delineability of product]
   \label{lem:delineable_factor_of_delineable_prod}

@@ -54,7 +54,7 @@
   <a href="sect0001.html#a0000000009"><span class="toc_ref">1.6</span> <span class="toc_entry">Prerequisites</span></a>
  </li>
 <li class="">
-  <a href="sect0001.html#a0000000013"><span class="toc_ref">1.7</span> <span class="toc_entry">Main result</span></a>
+  <a href="sect0001.html#a0000000015"><span class="toc_ref">1.7</span> <span class="toc_entry">Main result</span></a>
  </li>
 
   </ul>
@@ -1531,6 +1531,9 @@
 
     <a class="icon proof" href="sect0001.html#lem:discr_ne_zero_of_squarefree">#</a>
     
+    <a class="icon proof" href="sect0001.html#a0000000012"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
     
     
     <button class="modal lean">L∃∀N</button>
@@ -1555,7 +1558,26 @@
         </div>
   </div>
   <div class="lemma_thmcontent">
-  <p>   A squarefree polynomial of positive degree has nonzero discriminant. </p>
+  <p>   A squarefree polynomial \(f \in R[x_r]\) of positive degree, with \(R = \mathbb {R}[x_1, \ldots , x_{r-1}]\), has nonzero discriminant. </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000012">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Let \(K = \operatorname {Frac}(R)\) be the fraction field of \(R\) and \(\varphi : R \hookrightarrow K\) the (injective) localization map. Since \(R\) is a UFD of characteristic \(0\), \(K\) is a perfect field of characteristic \(0\). </p>
+<p><em>Step 1 (Gauss’s lemma): \(f\) remains squarefree over \(K\).</em> Suppose, for contradiction, that \(p^2 \mid \varphi (f)\) in \(K[x_r]\) for some irreducible \(p \in K[x_r]\). Clearing denominators (<span class="ttfamily">IsLocalization.integerNormalization</span>) and extracting the primitive part yields a primitive \(q \in R[x_r]\) with \(\varphi (q)\) associated to \(p\) in \(K[x_r]\); by Gauss’s lemma (<span class="ttfamily">IsPrimitive.irreducible_of_irreducible_map_of_injective</span>), \(q\) is irreducible in \(R[x_r]\). From \(p^2 \mid \varphi (f)\) we get \(\varphi (q)^2 \mid \varphi (f)\), i.e. \(\varphi (q^2) \mid \varphi (f)\); cancelling the content of \(f\) and applying <span class="ttfamily">IsPrimitive.dvd_of_fraction_map_dvd_fraction_map</span> gives \(q^2 \mid f\) in \(R[x_r]\), contradicting squarefreeness of \(f\). Hence \(\varphi (f)\) is squarefree in \(K[x_r]\). </p>
+<p><em>Step 2: squarefree \(\Rightarrow \) separable \(\Rightarrow \) nonzero discriminant over \(K\).</em> Over the perfect field \(K\), squarefree is equivalent to separable (<span class="ttfamily">PerfectField.separable_iff_squarefree</span>), so \(\gcd (\varphi (f), \varphi (f)') = 1\), i.e. \(\varphi (f)\) and its derivative are coprime in \(K[x_r]\). Hence \(\operatorname {res}(\varphi (f), \varphi (f)') \ne 0\) (<span class="ttfamily">Polynomial.resultant_ne_zero</span>). The identity </p>
+<div class="displaymath" id="a0000000013">
+  \[  \operatorname {res}(g, g') \; =\;  (-1)^{\binom {\deg g}{2}}\,  \operatorname {lc}(g)\, \operatorname {disc}(g)  \]
+</div>
+<p> (<span class="ttfamily">Polynomial.resultant_deriv</span>) then forces \(\operatorname {disc}(\varphi (f)) \ne 0\), using that in characteristic zero the derivative has degree exactly \(\deg f - 1\). </p>
+<p><em>Step 3: descend to \(R\).</em> Because \(\varphi \) is a ring homomorphism, the resultant commutes with it (<span class="ttfamily">Polynomial.resultant_map_map</span>), and the same equation evaluated over \(R\) gives \(\varphi (\operatorname {disc}(f)) = \operatorname {disc}(\varphi (f)) \ne 0\). Injectivity of \(\varphi \) yields \(\operatorname {disc}(f) \ne 0\). </p>
 
   </div>
 </div>
@@ -1639,7 +1661,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:root_function_factor_of_prod">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000012"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000014"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1690,7 +1712,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000012">
+<div class="proof_wrapper" id="a0000000014">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1702,7 +1724,7 @@
 
   </div>
 </div>
-<h1 id="a0000000013">1.7 Main result</h1>
+<h1 id="a0000000015">1.7 Main result</h1>
 <div class="theorem_thmwrapper theorem-style-plain" id="thm:no_common_root_of_coprime">
   <div class="theorem_thmheading">
     <span class="theorem_thmcaption">
@@ -1719,7 +1741,7 @@
 
     <a class="icon proof" href="sect0001.html#thm:no_common_root_of_coprime">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000014"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000016"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1770,7 +1792,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000014">
+<div class="proof_wrapper" id="a0000000016">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1796,7 +1818,7 @@
 
     <a class="icon proof" href="sect0001.html#thm:mccallum_3_2_3">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000015"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000017"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1893,7 +1915,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000015">
+<div class="proof_wrapper" id="a0000000017">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof

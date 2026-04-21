@@ -1,5 +1,6 @@
 import Mccalum.Basic
 import Mccalum.Delineability
+import Mccalum.DiscrNonzero
 import Mccalum.Invariance
 import Mccalum.Order
 import Mccalum.Prerequisites

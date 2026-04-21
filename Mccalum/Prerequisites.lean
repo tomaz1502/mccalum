@@ -109,12 +109,6 @@ theorem discr_degree_one_order_invariant
     (polyOrder_zero_iff n 1 b).mpr (by simp)
   rw [h1, h2]
 
-/-- Nonzero discriminant of squarefree polynomial. -/
-axiom discr_ne_zero_of_squarefree
-    (f : PolyR n)
-    (hsf : Squarefree f) (hpos : 0 < f.natDegree) :
-    Polynomial.discr f ≠ 0
-
 /-- Delineability of product implies delineability of each factor (coprime case). -/
 axiom delineable_factor_of_delineable_prod
     (S : Set (Fin n → ℝ))

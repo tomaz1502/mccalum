@@ -1,3 +1,4 @@
+import Mccalum.DiscrNonzero
 import Mccalum.Prerequisites
 import Mccalum.SquarefreeBasis
 
