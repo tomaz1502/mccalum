@@ -54,7 +54,7 @@
   <a href="sect0001.html#a0000000009"><span class="toc_ref">1.6</span> <span class="toc_entry">Prerequisites</span></a>
  </li>
 <li class="">
-  <a href="sect0001.html#a0000000015"><span class="toc_ref">1.7</span> <span class="toc_entry">Main result</span></a>
+  <a href="sect0001.html#a0000000022"><span class="toc_ref">1.7</span> <span class="toc_entry">Main result</span></a>
  </li>
 
   </ul>
@@ -1179,12 +1179,141 @@
 
   </div>
 </div>
-<div class="lemma_thmwrapper theorem-style-plain" id="lem:discr_prod_order_invariant">
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:polyOrder_mul_add">
   <div class="lemma_thmheading">
     <span class="lemma_thmcaption">
     Lemma
     </span>
     <span class="lemma_thmlabel">20</span>
+    <span class="lemma_thmtitle">Additivity of vanishing order (Lemma 3.2.2, forward)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:polyOrder_mul_add">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000010"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:polyOrder">Definition 2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/polyOrder_mul_add" class="lean_decl">polyOrder_mul_add</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>    For multivariate polynomials \(f, g \in \mathbb {R}[x_1, \ldots , x_m]\) and any point \(a \in \mathbb {R}^m\), </p>
+<div class="displaymath" id="a0000000011">
+  \[  \operatorname {polyOrder}(f \cdot g, a) = \operatorname {polyOrder}(f, a) + \operatorname {polyOrder}(g, a).  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000010">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> By translation, it suffices to prove the statement at \(a = 0\): one verifies that the Taylor shift \(\tau _a f(x) := f(x + a)\) is a ring homomorphism commuting with the iterated partial derivatives, so it preserves \(\operatorname {polyOrder}\) while sending the basepoint to the origin. </p>
+<p>At the origin, \(\operatorname {polyOrder}(f, 0)\) agrees with the formal power-series order of \(f\) viewed as an element of \(\mathbb {R}\llbracket x_1, \ldots , x_m \rrbracket \). Since \(\mathbb {R}\llbracket x_1, \ldots , x_m \rrbracket \) is an integral domain, Mathlib’s <span class="ttfamily">MvPowerSeries.order_mul</span> gives \(\operatorname {ord}(fg) = \operatorname {ord}(f) + \operatorname {ord}(g)\) at the origin, which transfers back to a general basepoint via the Taylor shift. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:discr_mul_eq">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">21</span>
+    <span class="theorem_thmtitle">Discriminant of a product (Theorem 2.3.3)</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#thm:discr_mul_eq">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/discr_mul_eq" class="lean_decl">discr_mul_eq</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(R\) be an integral domain of characteristic zero, and let \(f, g \in R[x]\) have positive degree. Then </p>
+<div class="displaymath" id="a0000000012">
+  \[  \operatorname {discr}(f \cdot g) = \operatorname {discr}(f) \cdot \operatorname {res}(f, g)^2 \cdot \operatorname {discr}(g).  \]
+</div>
+<p>The proof (McCallum, pp.&#160;11–12) factors \(f, g\) over an algebraic closure and expands using the root formulas for discriminant and resultant. This statement is currently taken as an axiom in the Lean formalization. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:discr_prod_order_invariant">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">22</span>
     <span class="lemma_thmtitle">Discriminant of product is order-invariant</span>
     <div class="thm_header_extras">
 
@@ -1194,6 +1323,9 @@
     <div class="thm_header_hidden_extras">
 
     <a class="icon proof" href="sect0001.html#lem:discr_prod_order_invariant">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000013"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
     
     
     <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
@@ -1209,6 +1341,10 @@
         <ul class="uses">
           
           <li><a href="sect0001.html#def:OrderInvariantMv">Definition 5</a></li>
+          
+          <li><a href="sect0001.html#lem:polyOrder_mul_add">Lemma 20</a></li>
+          
+          <li><a href="sect0001.html#thm:discr_mul_eq">Theorem 21</a></li>
           
         </ul>
     
@@ -1239,8 +1375,24 @@
         </div>
   </div>
   <div class="lemma_thmcontent">
-  <p>    Let \(F_1, \ldots , F_m\) be squarefree pairwise coprime polynomials, and let \(S\) be a connected set. If each \(\operatorname {discr}(F_i)\) and each \(\operatorname {res}(F_i, F_j)\) (\(i \ne j\)) is order-invariant on \(S\), then \(\operatorname {discr}(\prod F_i)\) is order-invariant on \(S\). </p>
-<p>This combines the discriminant factorization formula (Theorem&#160;2.3.3): \(\operatorname {discr}(\prod F_i) = \prod \operatorname {discr}(F_i) \cdot \prod _{i\lt j} \operatorname {res}(F_i, F_j)^2\) with Lemma&#160;3.2.2 (order-invariance of products). </p>
+  <p>    Let \(F_1, \ldots , F_m\) be squarefree pairwise coprime polynomials of positive degree, and let \(S\) be a connected set. If each \(\operatorname {discr}(F_i)\) and each \(\operatorname {res}(F_i, F_j)\) (\(i \ne j\)) is order-invariant on \(S\), then \(\operatorname {discr}(\prod F_i)\) is order-invariant on \(S\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000013">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>  By induction on the finite set \(A = \{ F_1, \ldots , F_m\} \). The empty product is \(1\), whose discriminant is \(1\), which is order-invariant on any set. </p>
+<p>For the inductive step with \(A = \{ p\}  \cup A'\) and \(p \notin A'\), apply Theorem&#160;<a href="sect0001.html#thm:discr_mul_eq">21</a> to \(p\) and \(q := \prod _{f \in A'} f\) (both of positive degree) to obtain </p>
+<div class="displaymath" id="a0000000014">
+  \[  \operatorname {discr}(p \cdot q) = \operatorname {discr}(p) \cdot \operatorname {res}(p, q)^2 \cdot \operatorname {discr}(q).  \]
+</div>
+<p> Order-invariance is preserved under products, which follows from Lemma&#160;<a href="sect0001.html#lem:polyOrder_mul_add">20</a>: if \(\operatorname {polyOrder}(f, a) = \operatorname {polyOrder}(f, b)\) and \(\operatorname {polyOrder}(g, a) = \operatorname {polyOrder}(g, b)\), then adding the two equations gives the same for \(f \cdot g\). Hence it suffices to show each factor is order-invariant: \(\operatorname {discr}(p)\) by hypothesis; \(\operatorname {discr}(q)\) by the inductive hypothesis; and \(\operatorname {res}(p, q)^2\) by expanding \(\operatorname {res}(p, q) = \prod _{g \in A'} \operatorname {res}(p, g)\) (Mathlib’s <span class="ttfamily">resultant_prod_right</span>) and applying closure under products again. </p>
 
   </div>
 </div>
@@ -1249,7 +1401,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">21</span>
+    <span class="lemma_thmlabel">23</span>
     <span class="lemma_thmtitle">Order-invariance factors from product</span>
     <div class="thm_header_extras">
 
@@ -1314,7 +1466,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">22</span>
+    <span class="lemma_thmlabel">24</span>
     <span class="lemma_thmtitle">Degree-invariance from coefficient order-invariance</span>
     <div class="thm_header_extras">
 
@@ -1324,6 +1476,9 @@
     <div class="thm_header_hidden_extras">
 
     <a class="icon proof" href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000015"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
     
     
     <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
@@ -1341,8 +1496,6 @@
           <li><a href="sect0001.html#def:DegreeInvariant">Definition 4</a></li>
           
           <li><a href="sect0001.html#def:OrderInvariantMv">Definition 5</a></li>
-          
-          <li><a href="sect0001.html#def:NotIdenticallyZeroOn">Definition 7</a></li>
           
         </ul>
     
@@ -1373,7 +1526,25 @@
         </div>
   </div>
   <div class="lemma_thmcontent">
-  <p>    If each nonzero coefficient of \(f\) (in \(x_r\)) is order-invariant on a connected set \(S\), and \(f\) is not identically zero on \(S\), then \(f\) is degree-invariant on&#160;\(S\). </p>
+  <p>    If each nonzero coefficient of \(f\) (in \(x_r\)) is order-invariant on&#160;\(S\), then \(f\) is degree-invariant on&#160;\(S\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000015">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Write \(f = \sum _k c_k(x)\,  x_r^k\) with \(c_k \in \mathbb {R}[x_1,\ldots ,x_{r-1}]\). Fix \(a, b \in S\); we show \((\operatorname {specialize} f\,  a).\operatorname {natDegree} = (\operatorname {specialize} f\,  b).\operatorname {natDegree}\). </p>
+<p>The key observation is that, under the hypothesis, the support of the specialization does not depend on the basepoint: for every index \(k\), </p>
+<div class="displaymath" id="a0000000016">
+  \[  c_k(a) \ne 0 \iff c_k(b) \ne 0.  \]
+</div>
+<p> Indeed, if \(c_k = 0\) this is vacuous; otherwise \(c_k\) is order-invariant on \(S\), so \(\operatorname {polyOrder}(c_k, a) = \operatorname {polyOrder}(c_k, b)\), and <span class="ttfamily">polyOrder_zero_iff</span> gives \(c_k(a) \ne 0 \Leftrightarrow \operatorname {polyOrder}(c_k, a) = 0 \Leftrightarrow \operatorname {polyOrder}(c_k, b) = 0 \Leftrightarrow c_k(b) \ne 0\). </p>
+<p>Since \(\operatorname {natDegree}\) is determined by the largest index of a nonzero coefficient, the two specializations have the same \(\operatorname {natDegree}\): one applies \(\texttt{le\_ natDegree\_ of\_ ne\_ zero}\) to the leading coefficient of one side and transports it to the other via the equivalence above (with the case of a zero specialization handled separately, where both sides must be zero). </p>
 
   </div>
 </div>
@@ -1382,7 +1553,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">23</span>
+    <span class="lemma_thmlabel">25</span>
     <span class="lemma_thmtitle">Squarefree product of coprime factors</span>
     <div class="thm_header_extras">
 
@@ -1393,7 +1564,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:prod_squarefree_of_coprime">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000010"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000017"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1424,7 +1595,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000010">
+<div class="proof_wrapper" id="a0000000017">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1441,7 +1612,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">24</span>
+    <span class="lemma_thmlabel">26</span>
     <span class="lemma_thmtitle">Discriminant of degree-1 polynomial is order-invariant</span>
     <div class="thm_header_extras">
 
@@ -1452,7 +1623,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:discr_degree_one_order_invariant">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000011"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000018"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1503,7 +1674,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000011">
+<div class="proof_wrapper" id="a0000000018">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1520,7 +1691,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">25</span>
+    <span class="lemma_thmlabel">27</span>
     <span class="lemma_thmtitle">Nonzero discriminant of squarefree polynomial</span>
     <div class="thm_header_extras">
 
@@ -1531,7 +1702,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:discr_ne_zero_of_squarefree">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000012"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000019"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1562,7 +1733,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000012">
+<div class="proof_wrapper" id="a0000000019">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1573,7 +1744,7 @@
   <p> Let \(K = \operatorname {Frac}(R)\) be the fraction field of \(R\) and \(\varphi : R \hookrightarrow K\) the (injective) localization map. Since \(R\) is a UFD of characteristic \(0\), \(K\) is a perfect field of characteristic \(0\). </p>
 <p><em>Step 1 (Gauss’s lemma): \(f\) remains squarefree over \(K\).</em> Suppose, for contradiction, that \(p^2 \mid \varphi (f)\) in \(K[x_r]\) for some irreducible \(p \in K[x_r]\). Clearing denominators (<span class="ttfamily">IsLocalization.integerNormalization</span>) and extracting the primitive part yields a primitive \(q \in R[x_r]\) with \(\varphi (q)\) associated to \(p\) in \(K[x_r]\); by Gauss’s lemma (<span class="ttfamily">IsPrimitive.irreducible_of_irreducible_map_of_injective</span>), \(q\) is irreducible in \(R[x_r]\). From \(p^2 \mid \varphi (f)\) we get \(\varphi (q)^2 \mid \varphi (f)\), i.e. \(\varphi (q^2) \mid \varphi (f)\); cancelling the content of \(f\) and applying <span class="ttfamily">IsPrimitive.dvd_of_fraction_map_dvd_fraction_map</span> gives \(q^2 \mid f\) in \(R[x_r]\), contradicting squarefreeness of \(f\). Hence \(\varphi (f)\) is squarefree in \(K[x_r]\). </p>
 <p><em>Step 2: squarefree \(\Rightarrow \) separable \(\Rightarrow \) nonzero discriminant over \(K\).</em> Over the perfect field \(K\), squarefree is equivalent to separable (<span class="ttfamily">PerfectField.separable_iff_squarefree</span>), so \(\gcd (\varphi (f), \varphi (f)') = 1\), i.e. \(\varphi (f)\) and its derivative are coprime in \(K[x_r]\). Hence \(\operatorname {res}(\varphi (f), \varphi (f)') \ne 0\) (<span class="ttfamily">Polynomial.resultant_ne_zero</span>). The identity </p>
-<div class="displaymath" id="a0000000013">
+<div class="displaymath" id="a0000000020">
   \[  \operatorname {res}(g, g') \; =\;  (-1)^{\binom {\deg g}{2}}\,  \operatorname {lc}(g)\, \operatorname {disc}(g)  \]
 </div>
 <p> (<span class="ttfamily">Polynomial.resultant_deriv</span>) then forces \(\operatorname {disc}(\varphi (f)) \ne 0\), using that in characteristic zero the derivative has degree exactly \(\deg f - 1\). </p>
@@ -1586,7 +1757,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">26</span>
+    <span class="lemma_thmlabel">28</span>
     <span class="lemma_thmtitle">Delineability of factor from delineability of product</span>
     <div class="thm_header_extras">
 
@@ -1650,7 +1821,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">27</span>
+    <span class="lemma_thmlabel">29</span>
     <span class="lemma_thmtitle">Root function of factor is root function of product</span>
     <div class="thm_header_extras">
 
@@ -1661,7 +1832,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:root_function_factor_of_prod">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000014"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000021"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1712,7 +1883,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000014">
+<div class="proof_wrapper" id="a0000000021">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1724,13 +1895,13 @@
 
   </div>
 </div>
-<h1 id="a0000000015">1.7 Main result</h1>
+<h1 id="a0000000022">1.7 Main result</h1>
 <div class="theorem_thmwrapper theorem-style-plain" id="thm:no_common_root_of_coprime">
   <div class="theorem_thmheading">
     <span class="theorem_thmcaption">
     Theorem
     </span>
-    <span class="theorem_thmlabel">28</span>
+    <span class="theorem_thmlabel">30</span>
     <span class="theorem_thmtitle">No common root of coprime polynomials</span>
     <div class="thm_header_extras">
 
@@ -1741,7 +1912,7 @@
 
     <a class="icon proof" href="sect0001.html#thm:no_common_root_of_coprime">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000016"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000023"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1792,7 +1963,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000016">
+<div class="proof_wrapper" id="a0000000023">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1809,7 +1980,7 @@
     <span class="theorem_thmcaption">
     Theorem
     </span>
-    <span class="theorem_thmlabel">29</span>
+    <span class="theorem_thmlabel">31</span>
     <span class="theorem_thmtitle">Theorem 3.2.3 – Reduced projection theorem</span>
     <div class="thm_header_extras">
 
@@ -1818,7 +1989,7 @@
 
     <a class="icon proof" href="sect0001.html#thm:mccallum_3_2_3">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000017"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000024"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1854,23 +2025,23 @@
           
           <li><a href="sect0001.html#thm:lifting_theorem">Theorem 19</a></li>
           
-          <li><a href="sect0001.html#lem:discr_prod_order_invariant">Lemma 20</a></li>
+          <li><a href="sect0001.html#lem:discr_prod_order_invariant">Lemma 22</a></li>
           
-          <li><a href="sect0001.html#lem:order_invariant_full_factor_of_prod">Lemma 21</a></li>
+          <li><a href="sect0001.html#lem:order_invariant_full_factor_of_prod">Lemma 23</a></li>
           
-          <li><a href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">Lemma 22</a></li>
+          <li><a href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">Lemma 24</a></li>
           
-          <li><a href="sect0001.html#lem:prod_squarefree_of_coprime">Lemma 23</a></li>
+          <li><a href="sect0001.html#lem:prod_squarefree_of_coprime">Lemma 25</a></li>
           
-          <li><a href="sect0001.html#lem:discr_ne_zero_of_squarefree">Lemma 25</a></li>
+          <li><a href="sect0001.html#lem:discr_ne_zero_of_squarefree">Lemma 27</a></li>
           
-          <li><a href="sect0001.html#lem:delineable_factor_of_delineable_prod">Lemma 26</a></li>
+          <li><a href="sect0001.html#lem:delineable_factor_of_delineable_prod">Lemma 28</a></li>
           
-          <li><a href="sect0001.html#lem:root_function_factor_of_prod">Lemma 27</a></li>
+          <li><a href="sect0001.html#lem:root_function_factor_of_prod">Lemma 29</a></li>
           
-          <li><a href="sect0001.html#thm:no_common_root_of_coprime">Theorem 28</a></li>
+          <li><a href="sect0001.html#thm:no_common_root_of_coprime">Theorem 30</a></li>
           
-          <li><a href="sect0001.html#lem:discr_degree_one_order_invariant">Lemma 24</a></li>
+          <li><a href="sect0001.html#lem:discr_degree_one_order_invariant">Lemma 26</a></li>
           
         </ul>
     
@@ -1915,7 +2086,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000017">
+<div class="proof_wrapper" id="a0000000024">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1924,10 +2095,10 @@
   </div>
   <div class="proof_content">
   <p>  Let \(F_1, \ldots , F_m\) be the elements of \(A\) and set \(f = \prod F_i\). </p>
-<p><b class="bfseries">(1) Degree-invariance.</b> Each nonzero coefficient of \(F_i\) (as a polynomial in \(x_r\)) belongs to \(\operatorname {coeff}(A) \subseteq P(A)\), hence is order-invariant on&#160;\(S\). Since \(F_i\) is not identically zero on \(S\), Lemma&#160;<a href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">22</a> gives degree-invariance. </p>
-<p><b class="bfseries">(3) Section disjointness.</b> For \(F_i \ne F_j\), coprimality in \(\mathbb {R}[x][x_r]\) implies coprimality after specialization at any \(a \in S\) (the Bézout identity specializes). By Theorem&#160;<a href="sect0001.html#thm:no_common_root_of_coprime">28</a>, \(F_i(a, \cdot )\) and \(F_j(a, \cdot )\) have no common root. </p>
-<p><b class="bfseries">(2) Delineability and (4) order-invariance in sections.</b> Since \(f = \prod F_i\) is a product of squarefree pairwise coprime polynomials, \(f\) is squarefree (Lemma&#160;<a href="sect0001.html#lem:prod_squarefree_of_coprime">23</a>) with nonzero discriminant (Lemma&#160;<a href="sect0001.html#lem:discr_ne_zero_of_squarefree">25</a>). By Theorem&#160;2.3.3, \(\operatorname {discr}(f) = \prod \operatorname {discr}(F_i) \cdot \prod _{i\lt j} \operatorname {res}(F_i, F_j)^2\). Each factor is order-invariant on \(S\) (hypothesis), so \(\operatorname {discr}(f)\) is order-invariant (Lemma&#160;<a href="sect0001.html#lem:discr_prod_order_invariant">20</a>). Also, \(f\) is degree-invariant (from&#160;(1)) and not identically zero. </p>
-<p>By the Lifting theorem (<a href="sect0001.html#thm:lifting_theorem">19</a>), \(f\) is analytically delineable on \(S\) and order-invariant in each \(f\)-section. Since the \(F_i\) are pairwise coprime, each \(F_i\)-section is an \(f\)-section, so Lemma&#160;<a href="sect0001.html#lem:delineable_factor_of_delineable_prod">26</a> gives delineability of each \(F_i\). Lemma&#160;<a href="sect0001.html#lem:order_invariant_full_factor_of_prod">21</a> gives that each \(F_i\) is order-invariant in every \(f\)-section (hence every section of&#160;\(A\)). </p>
+<p><b class="bfseries">(1) Degree-invariance.</b> Each nonzero coefficient of \(F_i\) (as a polynomial in \(x_r\)) belongs to \(\operatorname {coeff}(A) \subseteq P(A)\), hence is order-invariant on&#160;\(S\). Lemma&#160;<a href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">24</a> then gives degree-invariance. </p>
+<p><b class="bfseries">(3) Section disjointness.</b> For \(F_i \ne F_j\), coprimality in \(\mathbb {R}[x][x_r]\) implies coprimality after specialization at any \(a \in S\) (the Bézout identity specializes). By Theorem&#160;<a href="sect0001.html#thm:no_common_root_of_coprime">30</a>, \(F_i(a, \cdot )\) and \(F_j(a, \cdot )\) have no common root. </p>
+<p><b class="bfseries">(2) Delineability and (4) order-invariance in sections.</b> Since \(f = \prod F_i\) is a product of squarefree pairwise coprime polynomials, \(f\) is squarefree (Lemma&#160;<a href="sect0001.html#lem:prod_squarefree_of_coprime">25</a>) with nonzero discriminant (Lemma&#160;<a href="sect0001.html#lem:discr_ne_zero_of_squarefree">27</a>). By Theorem&#160;<a href="sect0001.html#thm:discr_mul_eq">21</a> (iterated), \(\operatorname {discr}(f) = \prod \operatorname {discr}(F_i) \cdot \prod _{i\lt j} \operatorname {res}(F_i, F_j)^2\). Each factor is order-invariant on \(S\) (hypothesis), so \(\operatorname {discr}(f)\) is order-invariant (Lemma&#160;<a href="sect0001.html#lem:discr_prod_order_invariant">22</a>). Also, \(f\) is degree-invariant (from&#160;(1)) and not identically zero. </p>
+<p>By the Lifting theorem (<a href="sect0001.html#thm:lifting_theorem">19</a>), \(f\) is analytically delineable on \(S\) and order-invariant in each \(f\)-section. Since the \(F_i\) are pairwise coprime, each \(F_i\)-section is an \(f\)-section, so Lemma&#160;<a href="sect0001.html#lem:delineable_factor_of_delineable_prod">28</a> gives delineability of each \(F_i\). Lemma&#160;<a href="sect0001.html#lem:order_invariant_full_factor_of_prod">23</a> gives that each \(F_i\) is order-invariant in every \(f\)-section (hence every section of&#160;\(A\)). </p>
 
   </div>
 </div>

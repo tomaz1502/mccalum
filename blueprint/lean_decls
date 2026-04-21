@@ -17,6 +17,8 @@ reducedProjection
 SectionsDisjoint
 OrderInvariantInAllSections
 lifting_theorem
+polyOrder_mul_add
+discr_mul_eq
 discr_prod_order_invariant
 order_invariant_full_factor_of_prod
 degree_invariant_of_coeff_order_invariant

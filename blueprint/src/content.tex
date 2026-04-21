@@ -232,21 +232,89 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
   coordinate changes on submanifolds, and Zariski's 1975 theorem on equisingularity.
 \end{theorem}
 
+\begin{lemma}[Additivity of vanishing order (Lemma 3.2.2, forward)]
+  \label{lem:polyOrder_mul_add}
+  \lean{polyOrder_mul_add}
+  \leanok
+  \uses{def:polyOrder}
+  For multivariate polynomials $f, g \in \mathbb{R}[x_1, \ldots, x_m]$ and any
+  point $a \in \mathbb{R}^m$,
+  \[
+    \operatorname{polyOrder}(f \cdot g, a)
+      = \operatorname{polyOrder}(f, a) + \operatorname{polyOrder}(g, a).
+  \]
+\end{lemma}
+\begin{proof}
+  \leanok
+  \proves{lem:polyOrder_mul_add}
+  By translation, it suffices to prove the statement at $a = 0$: one verifies
+  that the Taylor shift $\tau_a f(x) := f(x + a)$ is a ring homomorphism
+  commuting with the iterated partial derivatives, so it preserves
+  $\operatorname{polyOrder}$ while sending the basepoint to the origin.
+
+  At the origin, $\operatorname{polyOrder}(f, 0)$ agrees with the formal
+  power-series order of $f$ viewed as an element of
+  $\mathbb{R}\llbracket x_1, \ldots, x_m \rrbracket$.  Since
+  $\mathbb{R}\llbracket x_1, \ldots, x_m \rrbracket$ is an integral domain,
+  Mathlib's \texttt{MvPowerSeries.order\_mul} gives
+  $\operatorname{ord}(fg) = \operatorname{ord}(f) + \operatorname{ord}(g)$ at the
+  origin, which transfers back to a general basepoint via the Taylor shift.
+\end{proof}
+
+\begin{theorem}[Discriminant of a product (Theorem 2.3.3)]
+  \label{thm:discr_mul_eq}
+  \lean{discr_mul_eq}
+  Let $R$ be an integral domain of characteristic zero, and let
+  $f, g \in R[x]$ have positive degree.  Then
+  \[
+    \operatorname{discr}(f \cdot g)
+      = \operatorname{discr}(f) \cdot \operatorname{res}(f, g)^2
+        \cdot \operatorname{discr}(g).
+  \]
+
+  The proof (McCallum, pp.~11--12) factors $f, g$ over an algebraic closure
+  and expands using the root formulas for discriminant and resultant.  This
+  statement is currently taken as an axiom in the Lean formalization.
+\end{theorem}
+
 \begin{lemma}[Discriminant of product is order-invariant]
   \label{lem:discr_prod_order_invariant}
   \lean{discr_prod_order_invariant}
   \leanok
   \uses{def:OrderInvariantMv}
-  Let $F_1, \ldots, F_m$ be squarefree pairwise coprime polynomials, and let
-  $S$ be a connected set.  If each $\operatorname{discr}(F_i)$ and each
-  $\operatorname{res}(F_i, F_j)$ ($i \ne j$) is order-invariant on $S$, then
-  $\operatorname{discr}(\prod F_i)$ is order-invariant on $S$.
-
-  This combines the discriminant factorization formula (Theorem~2.3.3):
-  $\operatorname{discr}(\prod F_i) = \prod \operatorname{discr}(F_i)
-  \cdot \prod_{i<j} \operatorname{res}(F_i, F_j)^2$
-  with Lemma~3.2.2 (order-invariance of products).
+  Let $F_1, \ldots, F_m$ be squarefree pairwise coprime polynomials of positive
+  degree, and let $S$ be a connected set.  If each $\operatorname{discr}(F_i)$
+  and each $\operatorname{res}(F_i, F_j)$ ($i \ne j$) is order-invariant on
+  $S$, then $\operatorname{discr}(\prod F_i)$ is order-invariant on $S$.
 \end{lemma}
+\begin{proof}
+  \leanok
+  \proves{lem:discr_prod_order_invariant}
+  \uses{lem:polyOrder_mul_add, thm:discr_mul_eq}
+  By induction on the finite set $A = \{F_1, \ldots, F_m\}$.  The empty product
+  is $1$, whose discriminant is $1$, which is order-invariant on any set.
+
+  For the inductive step with $A = \{p\} \cup A'$ and $p \notin A'$, apply
+  Theorem~\ref{thm:discr_mul_eq} to $p$ and $q := \prod_{f \in A'} f$
+  (both of positive degree) to obtain
+  \[
+    \operatorname{discr}(p \cdot q)
+      = \operatorname{discr}(p) \cdot \operatorname{res}(p, q)^2
+        \cdot \operatorname{discr}(q).
+  \]
+  Order-invariance is preserved under products, which follows from
+  Lemma~\ref{lem:polyOrder_mul_add}: if
+  $\operatorname{polyOrder}(f, a) = \operatorname{polyOrder}(f, b)$ and
+  $\operatorname{polyOrder}(g, a) = \operatorname{polyOrder}(g, b)$, then
+  adding the two equations gives the same for $f \cdot g$.  Hence it suffices
+  to show each factor is order-invariant:
+  $\operatorname{discr}(p)$ by hypothesis;
+  $\operatorname{discr}(q)$ by the inductive hypothesis;
+  and $\operatorname{res}(p, q)^2$ by expanding
+  $\operatorname{res}(p, q) = \prod_{g \in A'} \operatorname{res}(p, g)$
+  (Mathlib's \texttt{resultant\_prod\_right}) and applying closure under
+  products again.
+\end{proof}
 
 \begin{lemma}[Order-invariance factors from product]
   \label{lem:order_invariant_full_factor_of_prod}
@@ -470,7 +538,8 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
   Since $f = \prod F_i$ is a product of squarefree pairwise coprime polynomials,
   $f$ is squarefree (Lemma~\ref{lem:prod_squarefree_of_coprime}) with nonzero discriminant
   (Lemma~\ref{lem:discr_ne_zero_of_squarefree}).
-  By Theorem~2.3.3, $\operatorname{discr}(f) = \prod \operatorname{discr}(F_i) \cdot
+  By Theorem~\ref{thm:discr_mul_eq} (iterated),
+  $\operatorname{discr}(f) = \prod \operatorname{discr}(F_i) \cdot
   \prod_{i<j} \operatorname{res}(F_i, F_j)^2$.  Each factor is order-invariant
   on $S$ (hypothesis), so $\operatorname{discr}(f)$ is order-invariant
   (Lemma~\ref{lem:discr_prod_order_invariant}).  Also, $f$ is degree-invariant (from~(1))

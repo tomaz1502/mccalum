@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2022/dev/Debian) (preloaded format=xelatex 2026.2.3)  17 APR 2026 16:15
+This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2022/dev/Debian) (preloaded format=xelatex 2026.2.3)  21 APR 2026 01:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -722,40 +722,108 @@ LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
 (Font)              scaled to size 6.99925pt on input line 6.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
 (Font)              scaled to size 4.99947pt on input line 6.
+
+LaTeX Warning: Reference `def:polyOrder' on page 1 undefined on input line 42.
+
+
+LaTeX Warning: Reference `def:polyOrder' on page 1 undefined on input line 64.
+
+
+LaTeX Warning: Reference `def:orderFull' on page 1 undefined on input line 73.
+
 [1
 
 ]
-Overfull \hbox (0.17058pt too wide) in paragraph at lines 185--186
-[][]\TU/lmr/bx/n/10 Definition 15 \TU/lmr/m/n/10 (Discriminant set)\TU/lmr/bx/n
+
+LaTeX Warning: Reference `def:IsRootFunction' on page 2 undefined on input line
+ 125.
+
+
+Overfull \hbox (0.17058pt too wide) in paragraph at lines 172--173
+[][]\TU/lmr/bx/n/10 Definition 14 \TU/lmr/m/n/10 (Discriminant set)\TU/lmr/bx/n
 /10 . []\TU/lmr/m/n/10 The \TU/lmr/m/it/10 discriminant set $[][][][] [] [][][]
 [][] [] [] [] [][]  [][][][] []
  []
 
+
+LaTeX Warning: Reference `def:coeffSet' on page 2 undefined on input line 188.
+
+
+LaTeX Warning: Reference `def:discrSet' on page 2 undefined on input line 188.
+
+
+LaTeX Warning: Reference `def:resSet' on page 2 undefined on input line 188.
+
 [2]
-Overfull \hbox (18.33536pt too wide) in paragraph at lines 258--262
-[]\TU/lmr/m/it/10 This combines the discriminant factorization formula (Theorem
- 2.3.3): $[][][] [][][] [] [] [][][][][] []
- []
+
+LaTeX Warning: Reference `def:OrderInvariantFull' on page 3 undefined on input 
+line 210.
 
 
-Overfull \hbox (14.08516pt too wide) in paragraph at lines 325--329
-[][]\TU/lmr/bx/n/10 Theorem 28 \TU/lmr/m/n/10 (No common root of coprime polyno
-mials)\TU/lmr/bx/n/10 . [][]\TU/lmr/m/it/10 If $[]$ and $[]$ are coprime in $[]
-[][][][] [] [] [][][][][][][]$,
- []
+LaTeX Warning: Reference `def:IsRootFunction' on page 3 undefined on input line
+ 210.
 
-[3]) [4] (/home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.aux)
-Package rerunfilecheck Info: File `print.out' has not changed.
-(rerunfilecheck)             Checksum: E924BA143251C505FEE8D9314F30CED7;1310.
- ) 
+
+LaTeX Warning: Reference `def:SectionGraph' on page 3 undefined on input line 2
+10.
+
+
+LaTeX Warning: Reference `def:IsAnalyticSubmanifold' on page 3 undefined on inp
+ut line 224.
+
+
+LaTeX Warning: Reference `def:DegreeInvariant' on page 3 undefined on input lin
+e 224.
+
+
+LaTeX Warning: Reference `def:OrderInvariantMv' on page 3 undefined on input li
+ne 224.
+
+
+LaTeX Warning: Reference `def:AnalyticDelineable' on page 3 undefined on input 
+line 224.
+
+
+LaTeX Warning: Reference `def:OrderInvariantFull' on page 3 undefined on input 
+line 224.
+
+
+LaTeX Warning: Reference `def:SectionGraph' on page 3 undefined on input line 2
+24.
+
+
+LaTeX Warning: Reference `def:IsRootFunction' on page 3 undefined on input line
+ 224.
+
+
+LaTeX Warning: Reference `def:NotIdenticallyZeroOn' on page 3 undefined on inpu
+t line 224.
+
+
+LaTeX Warning: Reference `def:polyOrder' on page 3 undefined on input line 239.
+
+
+
+LaTeX Warning: Reference `lem:polyOrder_mul_add' on page 3 undefined on input l
+ine 249.
+
+! Undefined control sequence.
+l.257   $\mathbb{R}\llbracket
+                              x_1, \ldots, x_m \rrbracket$.  Since
+? 
+! Emergency stop.
+l.257   $\mathbb{R}\llbracket
+                              x_1, \ldots, x_m \rrbracket$.  Since
+End of file on the terminal!
+
+ 
 Here is how much of TeX's memory you used:
- 16589 strings out of 476191
- 308578 string characters out of 5812073
- 818115 words of memory out of 5000000
- 37115 multiletter control sequences out of 15000+600000
- 474646 words of font info for 79 fonts, out of 8000000 for 9000
+ 16598 strings out of 476191
+ 308674 string characters out of 5812073
+ 817115 words of memory out of 5000000
+ 37128 multiletter control sequences out of 15000+600000
+ 474638 words of font info for 78 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 86i,6n,115p,332b,440s stack positions out of 5000i,500n,10000p,200000b,80000s
-
+ 86i,6n,115p,332b,424s stack positions out of 5000i,500n,10000p,200000b,80000s
 Output written on /home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.
-pdf (5 pages).
+pdf (3 pages).
