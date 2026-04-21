@@ -65,8 +65,7 @@ theorem mccallum_3_2_3
     exact ⟨f, hf, k, rfl, hk⟩
   have h_deg : ∀ f ∈ A, DegreeInvariant f S := by
     intro f hf
-    exact degree_invariant_of_coeff_order_invariant S f hS_conn hS_ne
-      (hcoeff_oi f hf) (hnonzero f hf)
+    exact degree_invariant_of_coeff_order_invariant S f (hcoeff_oi f hf)
   have h_disjoint : SectionsDisjoint A S := by
     intro F hF G hG hne a _
     rw [Set.disjoint_left]

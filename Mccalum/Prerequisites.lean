@@ -59,15 +59,6 @@ axiom order_invariant_full_factor_of_prod
     (hprod : OrderInvariantFull (∏ f ∈ A, f) T) :
     ∀ f ∈ A, OrderInvariantFull f T
 
-/-- Degree-invariance from coefficient order-invariance. -/
-axiom degree_invariant_of_coeff_order_invariant
-    (S : Set (Fin n → ℝ))
-    (f : PolyR n)
-    (hS : IsConnected S) (hS_ne : S.Nonempty)
-    (hcoeff : ∀ k : ℕ, f.coeff k ≠ 0 → OrderInvariantMv (f.coeff k) S)
-    (hnonzero : NotIdenticallyZeroOn f S) :
-    DegreeInvariant f S
-
 /-- Product of squarefree pairwise coprime polynomials is squarefree. -/
 theorem prod_squarefree_of_coprime
     (A : Finset (PolyR n))

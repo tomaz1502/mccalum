@@ -266,10 +266,36 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
   \label{lem:degree_invariant_of_coeff_order_invariant}
   \lean{degree_invariant_of_coeff_order_invariant}
   \leanok
-  \uses{def:DegreeInvariant, def:OrderInvariantMv, def:NotIdenticallyZeroOn}
-  If each nonzero coefficient of $f$ (in $x_r$) is order-invariant on a connected
-  set $S$, and $f$ is not identically zero on $S$, then $f$ is degree-invariant on~$S$.
+  \uses{def:DegreeInvariant, def:OrderInvariantMv}
+  If each nonzero coefficient of $f$ (in $x_r$) is order-invariant on~$S$,
+  then $f$ is degree-invariant on~$S$.
 \end{lemma}
+\begin{proof}
+  \leanok
+  \proves{lem:degree_invariant_of_coeff_order_invariant}
+  Write $f = \sum_k c_k(x)\, x_r^k$ with $c_k \in \mathbb{R}[x_1,\ldots,x_{r-1}]$.
+  Fix $a, b \in S$; we show
+  $(\operatorname{specialize} f\, a).\operatorname{natDegree}
+  = (\operatorname{specialize} f\, b).\operatorname{natDegree}$.
+
+  The key observation is that, under the hypothesis, the support of the
+  specialization does not depend on the basepoint: for every index $k$,
+  \[
+    c_k(a) \ne 0 \iff c_k(b) \ne 0.
+  \]
+  Indeed, if $c_k = 0$ this is vacuous; otherwise $c_k$ is order-invariant on
+  $S$, so $\operatorname{polyOrder}(c_k, a) = \operatorname{polyOrder}(c_k, b)$,
+  and \texttt{polyOrder\_zero\_iff} gives $c_k(a) \ne 0 \Leftrightarrow
+  \operatorname{polyOrder}(c_k, a) = 0 \Leftrightarrow
+  \operatorname{polyOrder}(c_k, b) = 0 \Leftrightarrow c_k(b) \ne 0$.
+
+  Since $\operatorname{natDegree}$ is determined by the largest index of a
+  nonzero coefficient, the two specializations have the same $\operatorname{natDegree}$:
+  one applies $\texttt{le\_natDegree\_of\_ne\_zero}$ to the leading coefficient
+  of one side and transports it to the other via the equivalence above
+  (with the case of a zero specialization handled separately, where both sides
+  must be zero).
+\end{proof}
 
 \begin{lemma}[Squarefree product of coprime factors]
   \label{lem:prod_squarefree_of_coprime}
@@ -431,8 +457,8 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
   \textbf{(1) Degree-invariance.}
   Each nonzero coefficient of $F_i$ (as a polynomial in $x_r$) belongs to
   $\operatorname{coeff}(A) \subseteq P(A)$, hence is order-invariant on~$S$.
-  Since $F_i$ is not identically zero on $S$, Lemma~\ref{lem:degree_invariant_of_coeff_order_invariant}
-  gives degree-invariance.
+  Lemma~\ref{lem:degree_invariant_of_coeff_order_invariant} then gives
+  degree-invariance.
 
   \textbf{(3) Section disjointness.}
   For $F_i \ne F_j$, coprimality in $\mathbb{R}[x][x_r]$ implies coprimality
