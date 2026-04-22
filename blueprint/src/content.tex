@@ -215,23 +215,6 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
 
 \section{Prerequisites}
 
-\begin{theorem}[Lifting theorem (Theorem 3.2.1)]
-  \label{thm:lifting_theorem}
-  \lean{lifting_theorem}
-  \leanok
-  \uses{def:IsAnalyticSubmanifold, def:DegreeInvariant, def:OrderInvariantMv,
-        def:AnalyticDelineable, def:OrderInvariantFull, def:SectionGraph,
-        def:IsRootFunction, def:NotIdenticallyZeroOn}
-  Let $f(x, x_r)$ be a squarefree polynomial of positive degree in $x_r$
-  with nonzero discriminant $D(x)$.  Let $S$ be a connected analytic submanifold of
-  $\mathbb{R}^n$ in which $f$ is degree-invariant and of non-negative degree, and in
-  which $D$ is order-invariant.  Then $f$ is analytically delineable on $S$ and is
-  order-invariant in each $f$-section over~$S$.
-
-  The proof (pp.~49--65) uses the Weierstrass preparation theorem, analytic
-  coordinate changes on submanifolds, and Zariski's 1975 theorem on equisingularity.
-\end{theorem}
-
 \begin{lemma}[Additivity of vanishing order (Lemma 3.2.2, forward)]
   \label{lem:polyOrder_mul_add}
   \lean{polyOrder_mul_add}
@@ -557,6 +540,71 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
   $(\prod F)(a, \theta(a)) = \prod F(a, \theta(a))$.  Since $G \in A$ and
   $G(a, \theta(a)) = 0$, one factor vanishes, so the entire product vanishes.
 \end{proof}
+
+\section{The Lifting Theorem}
+
+\begin{theorem}[Root continuity principle (Theorem 2.3.2)]
+    \label{thm:root_cont_princ}
+
+Let $f(z) = f_0 z^d + f_1 z^{d-1} + \cdots + f_d$ be a polynomial in
+    $\mathbb{C}[z]$, with $f_0 = f_1 = \cdots = f_{l-1} = 0$ and $f_l \ne 0$, for
+some $l$, $0 \le l \le d$. Let $\alpha$ be a root of $f(z)$ of
+multiplicity $m$ and let $C$ be a circle in the complex plane centered
+at $\alpha$, of radius $\epsilon > 0$, such that $f \ne 0$ in the
+punctured disc $0 < |z - \alpha| \le \epsilon$. Then there is a number
+    $\delta > 0$ such that if $g_0, g_1, \ldots, g_d \in \mathbb{C}$ and
+$|g_j - f_j| < \delta$ for $0 \le j \le d$, then the polynomial
+\begin{equation}
+g(z) = g_0 z^d + g_1 z^{d-1} + \cdots + g_d
+\end{equation}
+has exactly $m$ roots inside $C$.
+
+\end{theorem}
+
+\begin{lemma}[Nonsplitting of the roots (Assertion 2 of the Lifting Theorem)]
+    \label{lem:nonsplit}
+    \uses{def:IsAnalyticSubmanifold, def:DegreeInvariant, def:OrderInvariantFull, def:OrderInvariantMv}
+Let $f \in \mathbb{R}[x][x_r]$ with positive degree on $x_r$. Assume $D := \operatorname{discr}(f) \neq 0.$ Let $S$ be a connected analytic submanifold in which $f$ is degree invariant and in which $D$ is order invariant.
+Let $p \in S$.
+Let $\alpha_1 \cdots \alpha_k$ be the real roots of $f(p, x_r)$ and $\alpha_{k + 1} \cdots \alpha_t$ be the complex roots.
+Let $m_i$ be the multiplicity of $\alpha_i$ as a root of $f(p, x_r)$.
+Let $\kappa \in \mathbb{R}$ be the minimum separation between the $\alpha_i$.
+Let $C_i$ be a circle of radius $\frac{\kappa}{3}$ around $\alpha_i$.
+Let $N_0 \subset \mathbb{R}^n$ be a neighborhood of $p$ in which for every $x \in N_0$, every $C_i$ contains exactly $m_i$ roots of $f(x, x_r)$.
+Then, for each $i$, $1 \le i \le k$, there is a neighborhood
+$N_i \subseteq N_0$ of $p$ and an analytic function $\theta_i$ from
+$S \cap N_i$ into $(\alpha_i - \epsilon, \alpha_i + \epsilon)$ such
+that for every $x \in S \cap N_i$ and every
+$\alpha \in (\alpha_i - \epsilon, \alpha_i + \epsilon)$,
+\begin{equation}
+f(x, \alpha) = 0 \text{ if and only if } \alpha = \theta_i(x)
+\end{equation}
+and such that $f$ is order-invariant in the graph of $\theta_i$.
+\end{lemma}
+
+\begin{lemma}[Local analytic delineability (Assertion 1 of the Lifting Theorem)]
+    \label{lem:local_an_del}
+    \uses{def:IsAnalyticSubmanifold, def:DegreeInvariant, def:OrderInvariantFull, def:OrderInvariantMv, def:SectionGraph, def:AnalyticDelineable, lem:nonsplit}
+    Let $f \in \mathbb{R}[x][x_r]$ with positive degree on $x_r$. Assume $D := \operatorname{discr}(f) \neq 0.$ Let $S$ be a connected analytic submanifold in which $f$ is degree invariant and in which $D$ is order invariant. Then, for all $p \in S$, there is a neighborhood $N$ of $p$ such that $p$ is analytic delineable on $N \cap S$ and order-invariant in every $f$-section over $N \cap S$.
+\end{lemma}
+
+\begin{theorem}[Lifting theorem (Theorem 3.2.1)]
+  \label{thm:lifting_theorem}
+  \lean{lifting_theorem}
+  \leanok
+  \uses{def:IsAnalyticSubmanifold, def:DegreeInvariant, def:OrderInvariantMv,
+        def:AnalyticDelineable, def:OrderInvariantFull, def:SectionGraph,
+        def:IsRootFunction, def:NotIdenticallyZeroOn, lem:local_an_del, thm:root_cont_princ}
+  Let $f(x, x_r)$ be a squarefree polynomial of positive degree in $x_r$
+  with nonzero discriminant $D(x)$.  Let $S$ be a connected analytic submanifold of
+  $\mathbb{R}^n$ in which $f$ is degree-invariant and of non-negative degree, and in
+  which $D$ is order-invariant.  Then $f$ is analytically delineable on $S$ and is
+  order-invariant in each $f$-section over~$S$.
+
+  The proof (pp.~49--65) uses the Weierstrass preparation theorem, analytic
+  coordinate changes on submanifolds, and Zariski's 1975 theorem on equisingularity.
+\end{theorem}
+
 
 \section{Main result}
 

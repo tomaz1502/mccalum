@@ -54,7 +54,10 @@
   <a href="sect0001.html#a0000000009"><span class="toc_ref">1.6</span> <span class="toc_entry">Prerequisites</span></a>
  </li>
 <li class="">
-  <a href="sect0001.html#a0000000027"><span class="toc_ref">1.7</span> <span class="toc_entry">Main result</span></a>
+  <a href="sect0001.html#a0000000027"><span class="toc_ref">1.7</span> <span class="toc_entry">The Lifting Theorem</span></a>
+ </li>
+<li class="">
+  <a href="sect0001.html#a0000000030"><span class="toc_ref">1.8</span> <span class="toc_entry">Main result</span></a>
  </li>
 
   </ul>
@@ -1100,91 +1103,12 @@
   </div>
 </div>
 <h1 id="a0000000009">1.6 Prerequisites</h1>
-<div class="theorem_thmwrapper theorem-style-plain" id="thm:lifting_theorem">
-  <div class="theorem_thmheading">
-    <span class="theorem_thmcaption">
-    Theorem
-    </span>
-    <span class="theorem_thmlabel">19</span>
-    <span class="theorem_thmtitle">Lifting theorem (Theorem 3.2.1)</span>
-    <div class="thm_header_extras">
-
-    
-    ✓
-        </div>
-    <div class="thm_header_hidden_extras">
-
-    <a class="icon proof" href="sect0001.html#thm:lifting_theorem">#</a>
-    
-    
-    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
-</button>
-        <div class="modal-container">
-      <div class="modal-content">
-        <header>
-          <h1>Uses</h1>
-          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
-</button>
-        </header>
-        
-        <ul class="uses">
-          
-          <li><a href="sect0001.html#def:IsAnalyticSubmanifold">Definition 10</a></li>
-          
-          <li><a href="sect0001.html#def:DegreeInvariant">Definition 4</a></li>
-          
-          <li><a href="sect0001.html#def:OrderInvariantMv">Definition 5</a></li>
-          
-          <li><a href="sect0001.html#def:AnalyticDelineable">Definition 11</a></li>
-          
-          <li><a href="sect0001.html#def:OrderInvariantFull">Definition 6</a></li>
-          
-          <li><a href="sect0001.html#def:SectionGraph">Definition 8</a></li>
-          
-          <li><a href="sect0001.html#def:IsRootFunction">Definition 9</a></li>
-          
-          <li><a href="sect0001.html#def:NotIdenticallyZeroOn">Definition 7</a></li>
-          
-        </ul>
-    
-      </div>
-    </div>
-
-    
-    
-    <button class="modal lean">L∃∀N</button>
-        <div class="modal-container">
-      <div class="modal-content">
-        <header>
-          <h1>Lean declarations</h1>
-          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
-</button>
-        </header>
-        
-        <ul class="uses">
-          
-          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/lifting_theorem" class="lean_decl">lifting_theorem</a></li>
-          
-        </ul>
-    
-      </div>
-    </div>
-
-    
-        </div>
-  </div>
-  <div class="theorem_thmcontent">
-  <p>    Let \(f(x, x_r)\) be a squarefree polynomial of positive degree in \(x_r\) with nonzero discriminant \(D(x)\). Let \(S\) be a connected analytic submanifold of \(\mathbb {R}^n\) in which \(f\) is degree-invariant and of non-negative degree, and in which \(D\) is order-invariant. Then \(f\) is analytically delineable on \(S\) and is order-invariant in each \(f\)-section over&#160;\(S\). </p>
-<p>The proof (pp.&#160;49–65) uses the Weierstrass preparation theorem, analytic coordinate changes on submanifolds, and Zariski’s 1975 theorem on equisingularity. </p>
-
-  </div>
-</div>
 <div class="lemma_thmwrapper theorem-style-plain" id="lem:polyOrder_mul_add">
   <div class="lemma_thmheading">
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">20</span>
+    <span class="lemma_thmlabel">19</span>
     <span class="lemma_thmtitle">Additivity of vanishing order (Lemma 3.2.2, forward)</span>
     <div class="thm_header_extras">
 
@@ -1267,7 +1191,7 @@
     <span class="theorem_thmcaption">
     Theorem
     </span>
-    <span class="theorem_thmlabel">21</span>
+    <span class="theorem_thmlabel">20</span>
     <span class="theorem_thmtitle">Discriminant of a product (Theorem 2.3.3)</span>
     <div class="thm_header_extras">
 
@@ -1335,7 +1259,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">22</span>
+    <span class="lemma_thmlabel">21</span>
     <span class="lemma_thmtitle">Discriminant of product is order-invariant</span>
     <div class="thm_header_extras">
 
@@ -1364,9 +1288,9 @@
           
           <li><a href="sect0001.html#def:OrderInvariantMv">Definition 5</a></li>
           
-          <li><a href="sect0001.html#lem:polyOrder_mul_add">Lemma 20</a></li>
+          <li><a href="sect0001.html#lem:polyOrder_mul_add">Lemma 19</a></li>
           
-          <li><a href="sect0001.html#thm:discr_mul_eq">Theorem 21</a></li>
+          <li><a href="sect0001.html#thm:discr_mul_eq">Theorem 20</a></li>
           
         </ul>
     
@@ -1410,11 +1334,11 @@
   </div>
   <div class="proof_content">
   <p>  By induction on the finite set \(A = \{ F_1, \ldots , F_m\} \). The empty product is \(1\), whose discriminant is \(1\), which is order-invariant on any set. </p>
-<p>For the inductive step with \(A = \{ p\}  \cup A'\) and \(p \notin A'\), apply Theorem&#160;<a href="sect0001.html#thm:discr_mul_eq">21</a> to \(p\) and \(q := \prod _{f \in A'} f\) (both of positive degree) to obtain </p>
+<p>For the inductive step with \(A = \{ p\}  \cup A'\) and \(p \notin A'\), apply Theorem&#160;<a href="sect0001.html#thm:discr_mul_eq">20</a> to \(p\) and \(q := \prod _{f \in A'} f\) (both of positive degree) to obtain </p>
 <div class="displaymath" id="a0000000016">
   \[  \operatorname {discr}(p \cdot q) = \operatorname {discr}(p) \cdot \operatorname {res}(p, q)^2 \cdot \operatorname {discr}(q).  \]
 </div>
-<p> Order-invariance is preserved under products, which follows from Lemma&#160;<a href="sect0001.html#lem:polyOrder_mul_add">20</a>: if \(\operatorname {polyOrder}(f, a) = \operatorname {polyOrder}(f, b)\) and \(\operatorname {polyOrder}(g, a) = \operatorname {polyOrder}(g, b)\), then adding the two equations gives the same for \(f \cdot g\). Hence it suffices to show each factor is order-invariant: \(\operatorname {discr}(p)\) by hypothesis; \(\operatorname {discr}(q)\) by the inductive hypothesis; and \(\operatorname {res}(p, q)^2\) by expanding \(\operatorname {res}(p, q) = \prod _{g \in A'} \operatorname {res}(p, g)\) (Mathlib’s <span class="ttfamily">resultant_prod_right</span>) and applying closure under products again. </p>
+<p> Order-invariance is preserved under products, which follows from Lemma&#160;<a href="sect0001.html#lem:polyOrder_mul_add">19</a>: if \(\operatorname {polyOrder}(f, a) = \operatorname {polyOrder}(f, b)\) and \(\operatorname {polyOrder}(g, a) = \operatorname {polyOrder}(g, b)\), then adding the two equations gives the same for \(f \cdot g\). Hence it suffices to show each factor is order-invariant: \(\operatorname {discr}(p)\) by hypothesis; \(\operatorname {discr}(q)\) by the inductive hypothesis; and \(\operatorname {res}(p, q)^2\) by expanding \(\operatorname {res}(p, q) = \prod _{g \in A'} \operatorname {res}(p, g)\) (Mathlib’s <span class="ttfamily">resultant_prod_right</span>) and applying closure under products again. </p>
 
   </div>
 </div>
@@ -1423,7 +1347,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">23</span>
+    <span class="lemma_thmlabel">22</span>
     <span class="lemma_thmtitle">Order-invariance factors from product</span>
     <div class="thm_header_extras">
 
@@ -1452,7 +1376,7 @@
           
           <li><a href="sect0001.html#def:OrderInvariantFull">Definition 6</a></li>
           
-          <li><a href="sect0001.html#lem:polyOrder_mul_add">Lemma 20</a></li>
+          <li><a href="sect0001.html#lem:polyOrder_mul_add">Lemma 19</a></li>
           
         </ul>
     
@@ -1496,7 +1420,7 @@
     <span class="expand-proof">▶</span>
   </div>
   <div class="proof_content">
-  <p>  Fix \(F \in A\) and set \(R = \prod _{G \in A \setminus \{ F\} } G\), so \(\prod _{G \in A} G = F \cdot R\). By iterating Lemma&#160;<a href="sect0001.html#lem:polyOrder_mul_add">20</a> (via the algebra isomorphism <span class="ttfamily">finSuccEquiv</span> used in the definition of <span class="ttfamily">orderFull</span>), the order is additive over products: </p>
+  <p>  Fix \(F \in A\) and set \(R = \prod _{G \in A \setminus \{ F\} } G\), so \(\prod _{G \in A} G = F \cdot R\). By iterating Lemma&#160;<a href="sect0001.html#lem:polyOrder_mul_add">19</a> (via the algebra isomorphism <span class="ttfamily">finSuccEquiv</span> used in the definition of <span class="ttfamily">orderFull</span>), the order is additive over products: </p>
 <div class="displaymath" id="a0000000018">
   \[  \operatorname {ord}(F \cdot R,\;  a, y) = \operatorname {ord}(F,\;  a, y) + \operatorname {ord}(R,\;  a, y).  \]
 </div>
@@ -1518,7 +1442,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">24</span>
+    <span class="lemma_thmlabel">23</span>
     <span class="lemma_thmtitle">Degree-invariance from coefficient order-invariance</span>
     <div class="thm_header_extras">
 
@@ -1605,7 +1529,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">25</span>
+    <span class="lemma_thmlabel">24</span>
     <span class="lemma_thmtitle">Squarefree product of coprime factors</span>
     <div class="thm_header_extras">
 
@@ -1664,7 +1588,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">26</span>
+    <span class="lemma_thmlabel">25</span>
     <span class="lemma_thmtitle">Discriminant of degree-1 polynomial is order-invariant</span>
     <div class="thm_header_extras">
 
@@ -1743,7 +1667,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">27</span>
+    <span class="lemma_thmlabel">26</span>
     <span class="lemma_thmtitle">Nonzero discriminant of squarefree polynomial</span>
     <div class="thm_header_extras">
 
@@ -1809,7 +1733,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">28</span>
+    <span class="lemma_thmlabel">27</span>
     <span class="lemma_thmtitle">Delineability of factor from delineability of product</span>
     <div class="thm_header_extras">
 
@@ -1873,7 +1797,7 @@
     <span class="lemma_thmcaption">
     Lemma
     </span>
-    <span class="lemma_thmlabel">29</span>
+    <span class="lemma_thmlabel">28</span>
     <span class="lemma_thmtitle">Root function of factor is root function of product</span>
     <div class="thm_header_extras">
 
@@ -1947,13 +1871,243 @@
 
   </div>
 </div>
-<h1 id="a0000000027">1.7 Main result</h1>
+<h1 id="a0000000027">1.7 The Lifting Theorem</h1>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:root_cont_princ">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">29</span>
+    <span class="theorem_thmtitle">Root continuity principle (Theorem 2.3.2)</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#thm:root_cont_princ">#</a>
+    
+    
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  
+<p>Let \(f(z) = f_0 z^d + f_1 z^{d-1} + \cdots + f_d\) be a polynomial in \(\mathbb {C}[z]\), with \(f_0 = f_1 = \cdots = f_{l-1} = 0\) and \(f_l \ne 0\), for some \(l\), \(0 \le l \le d\). Let \(\alpha \) be a root of \(f(z)\) of multiplicity \(m\) and let \(C\) be a circle in the complex plane centered at \(\alpha \), of radius \(\epsilon \gt  0\), such that \(f \ne 0\) in the punctured disc \(0 \lt  |z - \alpha | \le \epsilon \). Then there is a number \(\delta \gt  0\) such that if \(g_0, g_1, \ldots , g_d \in \mathbb {C}\) and \(|g_j - f_j| \lt  \delta \) for \(0 \le j \le d\), then the polynomial </p>
+<div class="equation" id="a0000000028">
+<p>
+  <div class="equation_content">
+    \begin{equation}  g(z) = g_0 z^d + g_1 z^{d-1} + \cdots + g_d \end{equation}
+  </div>
+  <span class="equation_label">1</span>
+</p>
+</div>
+<p> has exactly \(m\) roots inside \(C\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:nonsplit">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">30</span>
+    <span class="lemma_thmtitle">Nonsplitting of the roots (Assertion 2 of the Lifting Theorem)</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:nonsplit">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:IsAnalyticSubmanifold">Definition 10</a></li>
+          
+          <li><a href="sect0001.html#def:DegreeInvariant">Definition 4</a></li>
+          
+          <li><a href="sect0001.html#def:OrderInvariantFull">Definition 6</a></li>
+          
+          <li><a href="sect0001.html#def:OrderInvariantMv">Definition 5</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Let \(f \in \mathbb {R}[x][x_r]\) with positive degree on \(x_r\). Assume \(D := \operatorname {discr}(f) \neq 0.\) Let \(S\) be a connected analytic submanifold in which \(f\) is degree invariant and in which \(D\) is order invariant. Let \(p \in S\). Let \(\alpha _1 \cdots \alpha _k\) be the real roots of \(f(p, x_r)\) and \(\alpha _{k + 1} \cdots \alpha _t\) be the complex roots. Let \(m_i\) be the multiplicity of \(\alpha _i\) as a root of \(f(p, x_r)\). Let \(\kappa \in \mathbb {R}\) be the minimum separation between the \(\alpha _i\). Let \(C_i\) be a circle of radius \(\frac{\kappa }{3}\) around \(\alpha _i\). Let \(N_0 \subset \mathbb {R}^n\) be a neighborhood of \(p\) in which for every \(x \in N_0\), every \(C_i\) contains exactly \(m_i\) roots of \(f(x, x_r)\). Then, for each \(i\), \(1 \le i \le k\), there is a neighborhood \(N_i \subseteq N_0\) of \(p\) and an analytic function \(\theta _i\) from \(S \cap N_i\) into \((\alpha _i - \epsilon , \alpha _i + \epsilon )\) such that for every \(x \in S \cap N_i\) and every \(\alpha \in (\alpha _i - \epsilon , \alpha _i + \epsilon )\), </p>
+<div class="equation" id="a0000000029">
+<p>
+  <div class="equation_content">
+    \begin{equation}  f(x, \alpha ) = 0 \text{ if and only if } \alpha = \theta _i(x) \end{equation}
+  </div>
+  <span class="equation_label">2</span>
+</p>
+</div>
+<p> and such that \(f\) is order-invariant in the graph of \(\theta _i\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:local_an_del">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">31</span>
+    <span class="lemma_thmtitle">Local analytic delineability (Assertion 1 of the Lifting Theorem)</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:local_an_del">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:IsAnalyticSubmanifold">Definition 10</a></li>
+          
+          <li><a href="sect0001.html#def:DegreeInvariant">Definition 4</a></li>
+          
+          <li><a href="sect0001.html#def:OrderInvariantFull">Definition 6</a></li>
+          
+          <li><a href="sect0001.html#def:OrderInvariantMv">Definition 5</a></li>
+          
+          <li><a href="sect0001.html#def:SectionGraph">Definition 8</a></li>
+          
+          <li><a href="sect0001.html#def:AnalyticDelineable">Definition 11</a></li>
+          
+          <li><a href="sect0001.html#lem:nonsplit">Lemma 30</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Let \(f \in \mathbb {R}[x][x_r]\) with positive degree on \(x_r\). Assume \(D := \operatorname {discr}(f) \neq 0.\) Let \(S\) be a connected analytic submanifold in which \(f\) is degree invariant and in which \(D\) is order invariant. Then, for all \(p \in S\), there is a neighborhood \(N\) of \(p\) such that \(p\) is analytic delineable on \(N \cap S\) and order-invariant in every \(f\)-section over \(N \cap S\). </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:lifting_theorem">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">32</span>
+    <span class="theorem_thmtitle">Lifting theorem (Theorem 3.2.1)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#thm:lifting_theorem">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:IsAnalyticSubmanifold">Definition 10</a></li>
+          
+          <li><a href="sect0001.html#def:DegreeInvariant">Definition 4</a></li>
+          
+          <li><a href="sect0001.html#def:OrderInvariantMv">Definition 5</a></li>
+          
+          <li><a href="sect0001.html#def:AnalyticDelineable">Definition 11</a></li>
+          
+          <li><a href="sect0001.html#def:OrderInvariantFull">Definition 6</a></li>
+          
+          <li><a href="sect0001.html#def:SectionGraph">Definition 8</a></li>
+          
+          <li><a href="sect0001.html#def:IsRootFunction">Definition 9</a></li>
+          
+          <li><a href="sect0001.html#def:NotIdenticallyZeroOn">Definition 7</a></li>
+          
+          <li><a href="sect0001.html#lem:local_an_del">Lemma 31</a></li>
+          
+          <li><a href="sect0001.html#thm:root_cont_princ">Theorem 29</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://tomaz1502.github.io/mccalum/docs/find/#doc/lifting_theorem" class="lean_decl">lifting_theorem</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>    Let \(f(x, x_r)\) be a squarefree polynomial of positive degree in \(x_r\) with nonzero discriminant \(D(x)\). Let \(S\) be a connected analytic submanifold of \(\mathbb {R}^n\) in which \(f\) is degree-invariant and of non-negative degree, and in which \(D\) is order-invariant. Then \(f\) is analytically delineable on \(S\) and is order-invariant in each \(f\)-section over&#160;\(S\). </p>
+<p>The proof (pp.&#160;49–65) uses the Weierstrass preparation theorem, analytic coordinate changes on submanifolds, and Zariski’s 1975 theorem on equisingularity. </p>
+
+  </div>
+</div>
+<h1 id="a0000000030">1.8 Main result</h1>
 <div class="theorem_thmwrapper theorem-style-plain" id="thm:no_common_root_of_coprime">
   <div class="theorem_thmheading">
     <span class="theorem_thmcaption">
     Theorem
     </span>
-    <span class="theorem_thmlabel">30</span>
+    <span class="theorem_thmlabel">33</span>
     <span class="theorem_thmtitle">No common root of coprime polynomials</span>
     <div class="thm_header_extras">
 
@@ -1964,7 +2118,7 @@
 
     <a class="icon proof" href="sect0001.html#thm:no_common_root_of_coprime">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000028"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000031"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -2015,7 +2169,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000028">
+<div class="proof_wrapper" id="a0000000031">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -2032,7 +2186,7 @@
     <span class="theorem_thmcaption">
     Theorem
     </span>
-    <span class="theorem_thmlabel">31</span>
+    <span class="theorem_thmlabel">34</span>
     <span class="theorem_thmtitle">Theorem 3.2.3 – Reduced projection theorem</span>
     <div class="thm_header_extras">
 
@@ -2041,7 +2195,7 @@
 
     <a class="icon proof" href="sect0001.html#thm:mccallum_3_2_3">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000029"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000032"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -2075,25 +2229,25 @@
           
           <li><a href="sect0001.html#def:OrderInvariantInAllSections">Definition 18</a></li>
           
-          <li><a href="sect0001.html#thm:lifting_theorem">Theorem 19</a></li>
+          <li><a href="sect0001.html#thm:lifting_theorem">Theorem 32</a></li>
           
-          <li><a href="sect0001.html#lem:discr_prod_order_invariant">Lemma 22</a></li>
+          <li><a href="sect0001.html#lem:discr_prod_order_invariant">Lemma 21</a></li>
           
-          <li><a href="sect0001.html#lem:order_invariant_full_factor_of_prod">Lemma 23</a></li>
+          <li><a href="sect0001.html#lem:order_invariant_full_factor_of_prod">Lemma 22</a></li>
           
-          <li><a href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">Lemma 24</a></li>
+          <li><a href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">Lemma 23</a></li>
           
-          <li><a href="sect0001.html#lem:prod_squarefree_of_coprime">Lemma 25</a></li>
+          <li><a href="sect0001.html#lem:prod_squarefree_of_coprime">Lemma 24</a></li>
           
-          <li><a href="sect0001.html#lem:discr_ne_zero_of_squarefree">Lemma 27</a></li>
+          <li><a href="sect0001.html#lem:discr_ne_zero_of_squarefree">Lemma 26</a></li>
           
-          <li><a href="sect0001.html#lem:delineable_factor_of_delineable_prod">Lemma 28</a></li>
+          <li><a href="sect0001.html#lem:delineable_factor_of_delineable_prod">Lemma 27</a></li>
           
-          <li><a href="sect0001.html#lem:root_function_factor_of_prod">Lemma 29</a></li>
+          <li><a href="sect0001.html#lem:root_function_factor_of_prod">Lemma 28</a></li>
           
-          <li><a href="sect0001.html#thm:no_common_root_of_coprime">Theorem 30</a></li>
+          <li><a href="sect0001.html#thm:no_common_root_of_coprime">Theorem 33</a></li>
           
-          <li><a href="sect0001.html#lem:discr_degree_one_order_invariant">Lemma 26</a></li>
+          <li><a href="sect0001.html#lem:discr_degree_one_order_invariant">Lemma 25</a></li>
           
         </ul>
     
@@ -2138,7 +2292,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000029">
+<div class="proof_wrapper" id="a0000000032">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -2147,10 +2301,10 @@
   </div>
   <div class="proof_content">
   <p>  Let \(F_1, \ldots , F_m\) be the elements of \(A\) and set \(f = \prod F_i\). </p>
-<p><b class="bfseries">(1) Degree-invariance.</b> Each nonzero coefficient of \(F_i\) (as a polynomial in \(x_r\)) belongs to \(\operatorname {coeff}(A) \subseteq P(A)\), hence is order-invariant on&#160;\(S\). Lemma&#160;<a href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">24</a> then gives degree-invariance. </p>
-<p><b class="bfseries">(3) Section disjointness.</b> For \(F_i \ne F_j\), coprimality in \(\mathbb {R}[x][x_r]\) implies coprimality after specialization at any \(a \in S\) (the Bézout identity specializes). By Theorem&#160;<a href="sect0001.html#thm:no_common_root_of_coprime">30</a>, \(F_i(a, \cdot )\) and \(F_j(a, \cdot )\) have no common root. </p>
-<p><b class="bfseries">(2) Delineability and (4) order-invariance in sections.</b> Since \(f = \prod F_i\) is a product of squarefree pairwise coprime polynomials, \(f\) is squarefree (Lemma&#160;<a href="sect0001.html#lem:prod_squarefree_of_coprime">25</a>) with nonzero discriminant (Lemma&#160;<a href="sect0001.html#lem:discr_ne_zero_of_squarefree">27</a>). By Theorem&#160;<a href="sect0001.html#thm:discr_mul_eq">21</a> (iterated), \(\operatorname {discr}(f) = \prod \operatorname {discr}(F_i) \cdot \prod _{i\lt j} \operatorname {res}(F_i, F_j)^2\). Each factor is order-invariant on \(S\) (hypothesis), so \(\operatorname {discr}(f)\) is order-invariant (Lemma&#160;<a href="sect0001.html#lem:discr_prod_order_invariant">22</a>). Also, \(f\) is degree-invariant (from&#160;(1)) and not identically zero. </p>
-<p>By the Lifting theorem (<a href="sect0001.html#thm:lifting_theorem">19</a>), \(f\) is analytically delineable on \(S\) and order-invariant in each \(f\)-section. Since the \(F_i\) are pairwise coprime, each \(F_i\)-section is an \(f\)-section, so Lemma&#160;<a href="sect0001.html#lem:delineable_factor_of_delineable_prod">28</a> gives delineability of each \(F_i\). Lemma&#160;<a href="sect0001.html#lem:order_invariant_full_factor_of_prod">23</a> gives that each \(F_i\) is order-invariant in every \(f\)-section (hence every section of&#160;\(A\)). </p>
+<p><b class="bfseries">(1) Degree-invariance.</b> Each nonzero coefficient of \(F_i\) (as a polynomial in \(x_r\)) belongs to \(\operatorname {coeff}(A) \subseteq P(A)\), hence is order-invariant on&#160;\(S\). Lemma&#160;<a href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">23</a> then gives degree-invariance. </p>
+<p><b class="bfseries">(3) Section disjointness.</b> For \(F_i \ne F_j\), coprimality in \(\mathbb {R}[x][x_r]\) implies coprimality after specialization at any \(a \in S\) (the Bézout identity specializes). By Theorem&#160;<a href="sect0001.html#thm:no_common_root_of_coprime">33</a>, \(F_i(a, \cdot )\) and \(F_j(a, \cdot )\) have no common root. </p>
+<p><b class="bfseries">(2) Delineability and (4) order-invariance in sections.</b> Since \(f = \prod F_i\) is a product of squarefree pairwise coprime polynomials, \(f\) is squarefree (Lemma&#160;<a href="sect0001.html#lem:prod_squarefree_of_coprime">24</a>) with nonzero discriminant (Lemma&#160;<a href="sect0001.html#lem:discr_ne_zero_of_squarefree">26</a>). By Theorem&#160;<a href="sect0001.html#thm:discr_mul_eq">20</a> (iterated), \(\operatorname {discr}(f) = \prod \operatorname {discr}(F_i) \cdot \prod _{i\lt j} \operatorname {res}(F_i, F_j)^2\). Each factor is order-invariant on \(S\) (hypothesis), so \(\operatorname {discr}(f)\) is order-invariant (Lemma&#160;<a href="sect0001.html#lem:discr_prod_order_invariant">21</a>). Also, \(f\) is degree-invariant (from&#160;(1)) and not identically zero. </p>
+<p>By the Lifting theorem (<a href="sect0001.html#thm:lifting_theorem">32</a>), \(f\) is analytically delineable on \(S\) and order-invariant in each \(f\)-section. Since the \(F_i\) are pairwise coprime, each \(F_i\)-section is an \(f\)-section, so Lemma&#160;<a href="sect0001.html#lem:delineable_factor_of_delineable_prod">27</a> gives delineability of each \(F_i\). Lemma&#160;<a href="sect0001.html#lem:order_invariant_full_factor_of_prod">22</a> gives that each \(F_i\) is order-invariant in every \(f\)-section (hence every section of&#160;\(A\)). </p>
 
   </div>
 </div>
