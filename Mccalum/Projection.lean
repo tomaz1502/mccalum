@@ -1,6 +1,7 @@
 import Mccalum.DiscrNonzero
 import Mccalum.DiscrMul
 import Mccalum.DiscrProdInvariant
+import Mccalum.OrderInvariantFactor
 import Mccalum.Prerequisites
 import Mccalum.SquarefreeBasis
 
@@ -109,7 +110,17 @@ theorem mccallum_3_2_3
       root_function_factor_of_prod S A G hG θ hθ_root
     have hprod_oi : OrderInvariantFull (∏ g ∈ A, g) (SectionGraph θ S) :=
       hf_oi_sections θ hθ_cont hθ_prod
-    exact order_invariant_full_factor_of_prod S A (SectionGraph θ S) hprod_oi F hF
+    have hT_preconn : IsPreconnected (SectionGraph θ S) := by
+      have : SectionGraph θ S = (fun a => (a, θ a)) '' S := by
+        ext p; simp [SectionGraph]; exact ⟨fun ⟨h1, h2⟩ => ⟨p.1, h1, Prod.ext rfl h2.symm⟩,
+          fun ⟨a, ha, he⟩ => ⟨he ▸ ha, by rw [← he]⟩⟩
+      rw [this]
+      exact hS_conn.isPreconnected.image _
+        (continuousOn_id.prodMk hθ_cont)
+    have hA_ne_zero : ∀ f ∈ A, f ≠ 0 :=
+      fun f hf h => by linarith [hA.pos_degree f hf, show f.natDegree = 0 from by rw [h]; simp]
+    exact order_invariant_full_factor_of_prod A (SectionGraph θ S) hT_preconn hA_ne_zero
+      hprod_oi F hF
 
 #print axioms mccallum_3_2_3
 

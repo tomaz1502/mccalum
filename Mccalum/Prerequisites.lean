@@ -39,14 +39,6 @@ axiom lifting_theorem
     (∀ (θ : (Fin n → ℝ) → ℝ), ContinuousOn θ S → IsRootFunction f θ S →
       OrderInvariantFull f (SectionGraph θ S))
 
-/-- **Lemma 3.2.2** backward: order-invariance of product implies each factor. -/
-axiom order_invariant_full_factor_of_prod
-    (S : Set (Fin n → ℝ))
-    (A : Finset (PolyR n))
-    (T : Set ((Fin n → ℝ) × ℝ))
-    (hprod : OrderInvariantFull (∏ f ∈ A, f) T) :
-    ∀ f ∈ A, OrderInvariantFull f T
-
 /-- Product of squarefree pairwise coprime polynomials is squarefree. -/
 theorem prod_squarefree_of_coprime
     (A : Finset (PolyR n))

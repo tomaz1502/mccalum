@@ -5,6 +5,7 @@ import Mccalum.DiscrNonzero
 import Mccalum.DiscrProdInvariant
 import Mccalum.Invariance
 import Mccalum.Order
+import Mccalum.OrderInvariantFactor
 import Mccalum.PolyOrderMul
 import Mccalum.Prerequisites
 import Mccalum.Projection

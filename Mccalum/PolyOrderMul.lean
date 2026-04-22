@@ -31,7 +31,7 @@ def taylorShift (m : ℕ) (f : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) :
     MvPolynomial (Fin m) ℝ :=
   MvPolynomial.aeval (R := ℝ) (fun i => MvPolynomial.X i + MvPolynomial.C (a i)) f
 
-private def taylorShiftHom (m : ℕ) (a : Fin m → ℝ) :
+def taylorShiftHom (m : ℕ) (a : Fin m → ℝ) :
     MvPolynomial (Fin m) ℝ →ₐ[ℝ] MvPolynomial (Fin m) ℝ :=
   MvPolynomial.aeval (fun i => MvPolynomial.X i + MvPolynomial.C (a i))
 
@@ -158,9 +158,7 @@ private lemma coeff_ne_zero_of_iteratedPDeriv_eval_zero (l : List (Fin m))
   rw [zero_add] at heq; rw [heq] at h
   exact right_ne_zero_of_mul h
 
-/-- Key lemma: the partial-derivative order at the origin equals
-    the `MvPowerSeries.order` of the polynomial viewed as a power series. -/
-private theorem polyOrder_zero_eq_mvPowerSeries_order
+theorem polyOrder_zero_eq_mvPowerSeries_order
     (f : MvPolynomial (Fin m) ℝ) :
     polyOrder m f 0 = (↑f : MvPowerSeries (Fin m) ℝ).order := by
   have heq_order : polyOrder m f 0 = order' m f 0 := by
@@ -230,7 +228,7 @@ private theorem iteratedPDeriv_taylorShift (l : List (Fin m))
     exact pderiv_taylorShift j (iteratedPDeriv l f) a
 
 /-- Translation invariance: `polyOrder m f a = polyOrder m (τ_a f) 0`. -/
-private theorem polyOrder_taylorShift
+theorem polyOrder_taylorShift
     (f : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) :
     polyOrder m f a = polyOrder m (taylorShift m f a) 0 := by
   -- Use order' as a bridge: order' agrees with polyOrder
