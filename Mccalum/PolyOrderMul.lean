@@ -31,18 +31,22 @@ def taylorShift (m : ℕ) (f : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) :
     MvPolynomial (Fin m) ℝ :=
   MvPolynomial.aeval (R := ℝ) (fun i => MvPolynomial.X i + MvPolynomial.C (a i)) f
 
+/-- The Taylor shift of `f` at `a` packaged as an `ℝ`-algebra homomorphism. -/
 def taylorShiftHom (m : ℕ) (a : Fin m → ℝ) :
     MvPolynomial (Fin m) ℝ →ₐ[ℝ] MvPolynomial (Fin m) ℝ :=
   MvPolynomial.aeval (fun i => MvPolynomial.X i + MvPolynomial.C (a i))
 
+/-- `taylorShift` agrees with the algebra homomorphism `taylorShiftHom` on elements. -/
 theorem taylorShift_eq_hom (f : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) :
     taylorShift m f a = taylorShiftHom m a f := rfl
 
+/-- The Taylor shift is multiplicative: `τ_a (f * g) = (τ_a f) * (τ_a g)`. -/
 @[simp]
 theorem taylorShift_mul (f g : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) :
     taylorShift m (f * g) a = taylorShift m f a * taylorShift m g a :=
   map_mul _ f g
 
+/-- Evaluation of `τ_a f` at `b` equals evaluation of `f` at `b + a`. -/
 theorem eval_taylorShift (f : MvPolynomial (Fin m) ℝ) (a b : Fin m → ℝ) :
     MvPolynomial.eval b (taylorShift m f a) = MvPolynomial.eval (fun i => b i + a i) f := by
   have h : ((MvPolynomial.aeval b).comp (taylorShiftHom m a) :
@@ -54,6 +58,7 @@ theorem eval_taylorShift (f : MvPolynomial (Fin m) ℝ) (a b : Fin m → ℝ) :
   rw [← AlgHom.comp_apply, h]
   rfl
 
+/-- Evaluation of `τ_a f` at the origin equals evaluation of `f` at `a`. -/
 theorem eval_zero_taylorShift (f : MvPolynomial (Fin m) ℝ) (a : Fin m → ℝ) :
     MvPolynomial.eval 0 (taylorShift m f a) = MvPolynomial.eval a f := by
   rw [eval_taylorShift]
@@ -158,6 +163,8 @@ private lemma coeff_ne_zero_of_iteratedPDeriv_eval_zero (l : List (Fin m))
   rw [zero_add] at heq; rw [heq] at h
   exact right_ne_zero_of_mul h
 
+/-- At the origin, `polyOrder` of a polynomial equals the `MvPowerSeries.order` of its
+    coercion to a power series. -/
 theorem polyOrder_zero_eq_mvPowerSeries_order
     (f : MvPolynomial (Fin m) ℝ) :
     polyOrder m f 0 = (↑f : MvPowerSeries (Fin m) ℝ).order := by
