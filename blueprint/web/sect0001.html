@@ -54,7 +54,7 @@
   <a href="sect0001.html#a0000000009"><span class="toc_ref">1.6</span> <span class="toc_entry">Prerequisites</span></a>
  </li>
 <li class="">
-  <a href="sect0001.html#a0000000024"><span class="toc_ref">1.7</span> <span class="toc_entry">Main result</span></a>
+  <a href="sect0001.html#a0000000027"><span class="toc_ref">1.7</span> <span class="toc_entry">Main result</span></a>
  </li>
 
   </ul>
@@ -1258,7 +1258,7 @@
   </div>
   <div class="proof_content">
   <p> By translation, it suffices to prove the statement at \(a = 0\): one verifies that the Taylor shift \(\tau _a f(x) := f(x + a)\) is a ring homomorphism commuting with the iterated partial derivatives, so it preserves \(\operatorname {polyOrder}\) while sending the basepoint to the origin. </p>
-<p>At the origin, \(\operatorname {polyOrder}(f, 0)\) agrees with the formal power-series order of \(f\) viewed as an element of \(\mathbb {R}\llbracket x_1, \ldots , x_m \rrbracket \). Since \(\mathbb {R}\llbracket x_1, \ldots , x_m \rrbracket \) is an integral domain, Mathlib’s <span class="ttfamily">MvPowerSeries.order_mul</span> gives \(\operatorname {ord}(fg) = \operatorname {ord}(f) + \operatorname {ord}(g)\) at the origin, which transfers back to a general basepoint via the Taylor shift. </p>
+<p>At the origin, \(\operatorname {polyOrder}(f, 0)\) agrees with the formal power-series order of \(f\) viewed as an element of \(\mathbb {R}[\! [x_1, \ldots , x_m]\! ]\). Since \(\mathbb {R}[\! [x_1, \ldots , x_m]\! ]\) is an integral domain, Mathlib’s <span class="ttfamily">MvPowerSeries.order_mul</span> gives \(\operatorname {ord}(fg) = \operatorname {ord}(f) + \operatorname {ord}(g)\) at the origin, which transfers back to a general basepoint via the Taylor shift. </p>
 
   </div>
 </div>
@@ -1434,6 +1434,9 @@
 
     <a class="icon proof" href="sect0001.html#lem:order_invariant_full_factor_of_prod">#</a>
     
+    <a class="icon proof" href="sect0001.html#a0000000017"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
     
     <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
 </button>
@@ -1448,6 +1451,8 @@
         <ul class="uses">
           
           <li><a href="sect0001.html#def:OrderInvariantFull">Definition 6</a></li>
+          
+          <li><a href="sect0001.html#lem:polyOrder_mul_add">Lemma 20</a></li>
           
         </ul>
     
@@ -1478,8 +1483,33 @@
         </div>
   </div>
   <div class="lemma_thmcontent">
-  <p>    If \(\prod F_i\) is order-invariant in a set \(T \subseteq \mathbb {R}^n \times \mathbb {R}\), then each \(F_i\) is order-invariant in&#160;\(T\). </p>
-<p>This is the backward direction of Lemma&#160;3.2.2 (p.&#160;47), which states that a product of nonconstant analytic functions is order-invariant if and only if each factor is. The proof uses \(\operatorname {ord}(fg, p) = \operatorname {ord}(f,p) + \operatorname {ord}(g,p)\) and upper semicontinuity of order. </p>
+  <p>    Let \(A = \{ F_1, \ldots , F_m\} \) be a finite set of nonzero polynomials in \(\mathbb {R}[x_1,\ldots ,x_n][x_r]\) and let \(T \subseteq \mathbb {R}^n \times \mathbb {R}\) be a preconnected set. If \(\prod _{i=1}^m F_i\) is order-invariant in \(T\), then each \(F_i\) is order-invariant in&#160;\(T\). </p>
+<p>This is the backward direction of Lemma&#160;3.2.2 (p.&#160;47), which states that a product of nonconstant analytic functions is order-invariant if and only if each factor is. </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000017">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>  Fix \(F \in A\) and set \(R = \prod _{G \in A \setminus \{ F\} } G\), so \(\prod _{G \in A} G = F \cdot R\). By iterating Lemma&#160;<a href="sect0001.html#lem:polyOrder_mul_add">20</a> (via the algebra isomorphism <span class="ttfamily">finSuccEquiv</span> used in the definition of <span class="ttfamily">orderFull</span>), the order is additive over products: </p>
+<div class="displaymath" id="a0000000018">
+  \[  \operatorname {ord}(F \cdot R,\;  a, y) = \operatorname {ord}(F,\;  a, y) + \operatorname {ord}(R,\;  a, y).  \]
+</div>
+<p> Since \(F\) and every \(G \in A \setminus \{ F\} \) are nonzero, both \(\operatorname {ord}(F, \cdot )\) and \(\operatorname {ord}(R, \cdot )\) are finite on all of \(\mathbb {R}^n \times \mathbb {R}\): a nonzero polynomial has a nonvanishing Taylor coefficient at any basepoint, which after the Taylor shift \(\tau _a\) corresponds to a nonzero formal power series over an integral domain, and <span class="ttfamily">MvPowerSeries.order_eq_top_iff</span> rules out infinite order. Denote the \(\mathbb {N}\)-valued orders by \(\varphi (p) := \operatorname {ord}(F, p).\operatorname {toNat}\) and \(\psi (p) := \operatorname {ord}(R, p).\operatorname {toNat}\). By hypothesis the sum \(\varphi + \psi \) is constant on \(T\); write this constant&#160;\(c\). </p>
+<p>Suppose, for contradiction, that \(\varphi (p) \lt  \varphi (q)\) for some \(p, q \in T\) (the symmetric case is identical). Set \(k := \varphi (q)\) and define the two subsets </p>
+<div class="displaymath" id="a0000000019">
+  \[  U := \{ \,  s \in \mathbb {R}^n \times \mathbb {R} : k \le \operatorname {ord}(F, s) \, \} , \qquad V := \{ \,  s : (c - k) + 1 \le \operatorname {ord}(R, s) \, \} .  \]
+</div>
+<p> <em>Both \(U\) and \(V\) are closed.</em> The condition \(k \le \operatorname {ord}(g, s)\) is equivalent to the vanishing of every iterated Fréchet derivative of \(x \mapsto g(x)\) of order \(\lt  k\) at&#160;\(s\); each such condition is the zero set of a continuous function (polynomials are \(C^\infty \), and the iterated derivatives of a \(C^\infty \) function are continuous), so \(U\) and \(V\) are intersections of closed sets. </p>
+<p><em>\(T \subseteq U \cup V\).</em> For \(s \in T\), either \(k \le \varphi (s)\) (so \(s \in U\)), or \(\varphi (s) \lt  k\); in the latter case \(\varphi (s) + \psi (s) = c\) gives \(\psi (s) \ge c - k + 1\), so \(s \in V\). </p>
+<p><em>\(T \cap U \cap V = \emptyset \).</em> If \(s \in T\) lay in both, then \(\varphi (s) + \psi (s) \ge k + (c - k + 1) = c + 1\), contradicting \(\varphi (s) + \psi (s) = c\). </p>
+<p><em>\(p \notin U\) and \(q \notin V\).</em> We have \(\varphi (p) \lt  k = \varphi (q)\), so \(p \notin U\); and \(\psi (q) = c - k \lt  c - k + 1\), so \(q \notin V\). </p>
+<p>Hence \(\{ U, V\} \) witnesses that \(T\) is not preconnected, contradicting the hypothesis. Therefore \(\varphi \) is constant on \(T\), i.e. \(F\) is order-invariant on&#160;\(T\). </p>
 
   </div>
 </div>
@@ -1499,7 +1529,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:degree_invariant_of_coeff_order_invariant">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000017"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000020"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1552,7 +1582,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000017">
+<div class="proof_wrapper" id="a0000000020">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1562,7 +1592,7 @@
   <div class="proof_content">
   <p> Write \(f = \sum _k c_k(x)\,  x_r^k\) with \(c_k \in \mathbb {R}[x_1,\ldots ,x_{r-1}]\). Fix \(a, b \in S\); we show \((\operatorname {specialize} f\,  a).\operatorname {natDegree} = (\operatorname {specialize} f\,  b).\operatorname {natDegree}\). </p>
 <p>The key observation is that, under the hypothesis, the support of the specialization does not depend on the basepoint: for every index \(k\), </p>
-<div class="displaymath" id="a0000000018">
+<div class="displaymath" id="a0000000021">
   \[  c_k(a) \ne 0 \iff c_k(b) \ne 0.  \]
 </div>
 <p> Indeed, if \(c_k = 0\) this is vacuous; otherwise \(c_k\) is order-invariant on \(S\), so \(\operatorname {polyOrder}(c_k, a) = \operatorname {polyOrder}(c_k, b)\), and <span class="ttfamily">polyOrder_zero_iff</span> gives \(c_k(a) \ne 0 \Leftrightarrow \operatorname {polyOrder}(c_k, a) = 0 \Leftrightarrow \operatorname {polyOrder}(c_k, b) = 0 \Leftrightarrow c_k(b) \ne 0\). </p>
@@ -1586,7 +1616,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:prod_squarefree_of_coprime">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000019"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000022"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1617,7 +1647,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000019">
+<div class="proof_wrapper" id="a0000000022">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1645,7 +1675,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:discr_degree_one_order_invariant">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000020"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000023"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1696,7 +1726,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000020">
+<div class="proof_wrapper" id="a0000000023">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1724,7 +1754,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:discr_ne_zero_of_squarefree">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000021"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000024"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1755,7 +1785,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000021">
+<div class="proof_wrapper" id="a0000000024">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1766,7 +1796,7 @@
   <p> Let \(K = \operatorname {Frac}(R)\) be the fraction field of \(R\) and \(\varphi : R \hookrightarrow K\) the (injective) localization map. Since \(R\) is a UFD of characteristic \(0\), \(K\) is a perfect field of characteristic \(0\). </p>
 <p><em>Step 1 (Gauss’s lemma): \(f\) remains squarefree over \(K\).</em> Suppose, for contradiction, that \(p^2 \mid \varphi (f)\) in \(K[x_r]\) for some irreducible \(p \in K[x_r]\). Clearing denominators (<span class="ttfamily">IsLocalization.integerNormalization</span>) and extracting the primitive part yields a primitive \(q \in R[x_r]\) with \(\varphi (q)\) associated to \(p\) in \(K[x_r]\); by Gauss’s lemma (<span class="ttfamily">IsPrimitive.irreducible_of_irreducible_map_of_injective</span>), \(q\) is irreducible in \(R[x_r]\). From \(p^2 \mid \varphi (f)\) we get \(\varphi (q)^2 \mid \varphi (f)\), i.e. \(\varphi (q^2) \mid \varphi (f)\); cancelling the content of \(f\) and applying <span class="ttfamily">IsPrimitive.dvd_of_fraction_map_dvd_fraction_map</span> gives \(q^2 \mid f\) in \(R[x_r]\), contradicting squarefreeness of \(f\). Hence \(\varphi (f)\) is squarefree in \(K[x_r]\). </p>
 <p><em>Step 2: squarefree \(\Rightarrow \) separable \(\Rightarrow \) nonzero discriminant over \(K\).</em> Over the perfect field \(K\), squarefree is equivalent to separable (<span class="ttfamily">PerfectField.separable_iff_squarefree</span>), so \(\gcd (\varphi (f), \varphi (f)') = 1\), i.e. \(\varphi (f)\) and its derivative are coprime in \(K[x_r]\). Hence \(\operatorname {res}(\varphi (f), \varphi (f)') \ne 0\) (<span class="ttfamily">Polynomial.resultant_ne_zero</span>). The identity </p>
-<div class="displaymath" id="a0000000022">
+<div class="displaymath" id="a0000000025">
   \[  \operatorname {res}(g, g') \; =\;  (-1)^{\binom {\deg g}{2}}\,  \operatorname {lc}(g)\, \operatorname {disc}(g)  \]
 </div>
 <p> (<span class="ttfamily">Polynomial.resultant_deriv</span>) then forces \(\operatorname {disc}(\varphi (f)) \ne 0\), using that in characteristic zero the derivative has degree exactly \(\deg f - 1\). </p>
@@ -1854,7 +1884,7 @@
 
     <a class="icon proof" href="sect0001.html#lem:root_function_factor_of_prod">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000023"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000026"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1905,7 +1935,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000023">
+<div class="proof_wrapper" id="a0000000026">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -1917,7 +1947,7 @@
 
   </div>
 </div>
-<h1 id="a0000000024">1.7 Main result</h1>
+<h1 id="a0000000027">1.7 Main result</h1>
 <div class="theorem_thmwrapper theorem-style-plain" id="thm:no_common_root_of_coprime">
   <div class="theorem_thmheading">
     <span class="theorem_thmcaption">
@@ -1934,7 +1964,7 @@
 
     <a class="icon proof" href="sect0001.html#thm:no_common_root_of_coprime">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000025"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000028"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -1985,7 +2015,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000025">
+<div class="proof_wrapper" id="a0000000028">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof
@@ -2011,7 +2041,7 @@
 
     <a class="icon proof" href="sect0001.html#thm:mccallum_3_2_3">#</a>
     
-    <a class="icon proof" href="sect0001.html#a0000000026"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+    <a class="icon proof" href="sect0001.html#a0000000029"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
 </a>
     
     
@@ -2108,7 +2138,7 @@
 
   </div>
 </div>
-<div class="proof_wrapper" id="a0000000026">
+<div class="proof_wrapper" id="a0000000029">
   <div class="proof_heading">
     <span class="proof_caption">
     Proof

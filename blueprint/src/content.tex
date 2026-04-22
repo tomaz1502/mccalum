@@ -351,14 +351,68 @@ We set $n = r - 1$ and write $x = (x_1, \ldots, x_n)$.
   \lean{order_invariant_full_factor_of_prod}
   \leanok
   \uses{def:OrderInvariantFull}
-  If $\prod F_i$ is order-invariant in a set $T \subseteq \mathbb{R}^n \times \mathbb{R}$,
-  then each $F_i$ is order-invariant in~$T$.
+  Let $A = \{F_1, \ldots, F_m\}$ be a finite set of nonzero polynomials in
+  $\mathbb{R}[x_1,\ldots,x_n][x_r]$ and let
+  $T \subseteq \mathbb{R}^n \times \mathbb{R}$ be a preconnected set.
+  If $\prod_{i=1}^m F_i$ is order-invariant in $T$, then each $F_i$ is
+  order-invariant in~$T$.
 
   This is the backward direction of Lemma~3.2.2 (p.~47), which states that a product
   of nonconstant analytic functions is order-invariant if and only if each factor is.
-  The proof uses $\operatorname{ord}(fg, p) = \operatorname{ord}(f,p) + \operatorname{ord}(g,p)$
-  and upper semicontinuity of order.
 \end{lemma}
+\begin{proof}
+  \leanok
+  \proves{lem:order_invariant_full_factor_of_prod}
+  \uses{lem:polyOrder_mul_add}
+  Fix $F \in A$ and set $R = \prod_{G \in A \setminus \{F\}} G$, so
+  $\prod_{G \in A} G = F \cdot R$.  By iterating
+  Lemma~\ref{lem:polyOrder_mul_add} (via the algebra isomorphism
+  \texttt{finSuccEquiv} used in the definition of \texttt{orderFull}), the order
+  is additive over products:
+  \[
+    \operatorname{ord}(F \cdot R,\; a, y)
+      = \operatorname{ord}(F,\; a, y) + \operatorname{ord}(R,\; a, y).
+  \]
+  Since $F$ and every $G \in A \setminus \{F\}$ are nonzero, both
+  $\operatorname{ord}(F, \cdot)$ and $\operatorname{ord}(R, \cdot)$ are finite
+  on all of $\mathbb{R}^n \times \mathbb{R}$: a nonzero polynomial has a
+  nonvanishing Taylor coefficient at any basepoint, which after the Taylor
+  shift $\tau_a$ corresponds to a nonzero formal power series over an integral
+  domain, and \texttt{MvPowerSeries.order\_eq\_top\_iff} rules out infinite
+  order.  Denote the $\mathbb{N}$-valued orders by
+  $\varphi(p) := \operatorname{ord}(F, p).\operatorname{toNat}$ and
+  $\psi(p) := \operatorname{ord}(R, p).\operatorname{toNat}$.  By hypothesis
+  the sum $\varphi + \psi$ is constant on $T$; write this constant~$c$.
+
+  Suppose, for contradiction, that $\varphi(p) < \varphi(q)$ for some
+  $p, q \in T$ (the symmetric case is identical).  Set $k := \varphi(q)$ and
+  define the two subsets
+  \[
+    U := \{\, s \in \mathbb{R}^n \times \mathbb{R} : k \le \operatorname{ord}(F, s) \,\}, \qquad
+    V := \{\, s : (c - k) + 1 \le \operatorname{ord}(R, s) \,\}.
+  \]
+  \emph{Both $U$ and $V$ are closed.}  The condition $k \le \operatorname{ord}(g, s)$
+  is equivalent to the vanishing of every iterated Fr\'echet derivative of
+  $x \mapsto g(x)$ of order $< k$ at~$s$; each such condition is the zero set
+  of a continuous function (polynomials are $C^\infty$, and the iterated
+  derivatives of a $C^\infty$ function are continuous), so $U$ and $V$ are
+  intersections of closed sets.
+
+  \emph{$T \subseteq U \cup V$.}  For $s \in T$, either $k \le \varphi(s)$
+  (so $s \in U$), or $\varphi(s) < k$; in the latter case
+  $\varphi(s) + \psi(s) = c$ gives $\psi(s) \ge c - k + 1$, so $s \in V$.
+
+  \emph{$T \cap U \cap V = \emptyset$.}  If $s \in T$ lay in both, then
+  $\varphi(s) + \psi(s) \ge k + (c - k + 1) = c + 1$, contradicting
+  $\varphi(s) + \psi(s) = c$.
+
+  \emph{$p \notin U$ and $q \notin V$.}  We have $\varphi(p) < k = \varphi(q)$,
+  so $p \notin U$; and $\psi(q) = c - k < c - k + 1$, so $q \notin V$.
+
+  Hence $\{U, V\}$ witnesses that $T$ is not preconnected, contradicting the
+  hypothesis.  Therefore $\varphi$ is constant on $T$, i.e.\ $F$ is
+  order-invariant on~$T$.
+\end{proof}
 
 \begin{lemma}[Degree-invariance from coefficient order-invariance]
   \label{lem:degree_invariant_of_coeff_order_invariant}

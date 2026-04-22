@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2022/dev/Debian) (preloaded format=xelatex 2026.2.3)  21 APR 2026 22:58
+This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2022/dev/Debian) (preloaded format=xelatex 2026.2.3)  22 APR 2026 10:22
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -370,7 +370,7 @@ LaTeX Font Info:    Redeclaring font encoding TS1 on input line 47.
 (./macros/common.tex
 \c@theorem=\count308
 ) (./macros/print.tex)
-(/home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.aux)
+(/home/tomaz/Projects/blueprint/mccalum_stable/blueprint/print/print.aux)
 \openout1 = `print.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 30.
@@ -473,8 +473,8 @@ LaTeX Info: Redefining \ref on input line 30.
 LaTeX Info: Redefining \pageref on input line 30.
 LaTeX Info: Redefining \nameref on input line 30.
 
-(/home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.out)
-(/home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.out)
+(/home/tomaz/Projects/blueprint/mccalum_stable/blueprint/print/print.out)
+(/home/tomaz/Projects/blueprint/mccalum_stable/blueprint/print/print.out)
 \@outlinefile=\write3
 \openout3 = `print.out'.
 
@@ -732,27 +732,65 @@ Overfull \hbox (0.17058pt too wide) in paragraph at lines 172--173
  []
 
 [2]
+Overfull \hbox (22.66394pt too wide) in paragraph at lines 255--262
+\TU/lmr/m/n/10 ment of $[][] [][][][] [] [] [][][] []$. Since $[][] [][][][] []
+ [] [][][] []$ is an integral domain, Mathlib’s \TU/lmtt/m/n/10 MvPowerSeries.o
+rder_mul
+ []
 
-LaTeX Warning: Reference `lem:polyOrder_mul_add' on page 3 undefined on input l
-ine 249.
+[3]
+Overfull \hbox (37.93167pt too wide) in paragraph at lines 373--378
+[][]\TU/lmr/m/n/10 Write $[] [] [][] [][][][][] [][]$ with $[][] [] [][][][][] 
+[] [] [][][]$. Fix $[][] [] [] []$; we show $[][] [] [][][] [] []
+ []
 
-! Undefined control sequence.
-l.257   $\mathbb{R}\llbracket
-                              x_1, \ldots, x_m \rrbracket$.  Since
-? 
-! Emergency stop.
-l.257   $\mathbb{R}\llbracket
-                              x_1, \ldots, x_m \rrbracket$.  Since
-End of file on the terminal!
 
- 
+Overfull \hbox (36.6868pt too wide) in paragraph at lines 383--389
+[][][][][] [][]$\TU/lmr/m/n/10 , and \TU/lmtt/m/n/10 polyOrder_zero_iff \TU/lmr
+/m/n/10 gives $[][][][][] [] [] [] [][][][][] [][] [] [] [] [][][][][] [][] []
+ []
+
+[4]
+Overfull \hbox (68.88235pt too wide) in paragraph at lines 445--458
+[][][][]$ \TU/lmr/m/n/10 in $[][][][][]$ for some irreducible $[] [] [][][][][]
+$. Clearing denominators (\TU/lmtt/m/n/10 IsLocalization.integerNormalization\T
+U/lmr/m/n/10 )
+ []
+
+
+Overfull \hbox (37.05211pt too wide) in paragraph at lines 460--466
+\TU/lmr/m/n/10 squarefree is equivalent to separable (\TU/lmtt/m/n/10 PerfectFi
+eld.separable_iff_squarefree\TU/lmr/m/n/10 ), so $[][][][][][][] [][][][][][] [
+]
+ []
+
+
+Overfull \hbox (74.53012pt too wide) in paragraph at lines 460--466
+[]$\TU/lmr/m/n/10 , i.e. $[][][][]$ and its derivative are coprime in $[][][][]
+[]$. Hence $[][][][][][][] [][][][][][] [] []$ (\TU/lmtt/m/n/10 Polynomial.resu
+ltant_ne_zero\TU/lmr/m/n/10 ).
+ []
+
+
+Overfull \hbox (14.08516pt too wide) in paragraph at lines 513--517
+[][]\TU/lmr/bx/n/10 Theorem 30 \TU/lmr/m/n/10 (No common root of coprime polyno
+mials)\TU/lmr/bx/n/10 . [][]\TU/lmr/m/it/10 If $[]$ and $[]$ are coprime in $[]
+[][][][] [] [] [][][][][][][]$,
+ []
+
+[5]) [6]
+(/home/tomaz/Projects/blueprint/mccalum_stable/blueprint/print/print.aux)
+Package rerunfilecheck Info: File `print.out' has not changed.
+(rerunfilecheck)             Checksum: E924BA143251C505FEE8D9314F30CED7;1310.
+ ) 
 Here is how much of TeX's memory you used:
- 16571 strings out of 476191
- 308142 string characters out of 5812073
- 817115 words of memory out of 5000000
- 37101 multiletter control sequences out of 15000+600000
- 474638 words of font info for 78 fonts, out of 8000000 for 9000
+ 16593 strings out of 476191
+ 308894 string characters out of 5812073
+ 825115 words of memory out of 5000000
+ 37118 multiletter control sequences out of 15000+600000
+ 474654 words of font info for 80 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 86i,6n,115p,332b,424s stack positions out of 5000i,500n,10000p,200000b,80000s
-Output written on /home/tomaz/Projects/blueprint/mccalum/blueprint/print/print.
-pdf (3 pages).
+ 86i,8n,115p,332b,519s stack positions out of 5000i,500n,10000p,200000b,80000s
+
+Output written on /home/tomaz/Projects/blueprint/mccalum_stable/blueprint/print
+/print.pdf (7 pages).
