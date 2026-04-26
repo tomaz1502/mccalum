@@ -1,5 +1,6 @@
 import Mathlib.Algebra.Polynomial.Div
 import Mathlib.Topology.MetricSpace.Pseudo.Defs
+import Mathlib.Analysis.Analytic.Basic
 import Mccalum.Basic
 
 /-!
@@ -22,12 +23,12 @@ def IsRootFunction (G : PolyR n) (θ : (Fin n → ℝ) → ℝ) (S : Set (Fin n 
     Prop :=
   ∀ a ∈ S, (specialize G a).IsRoot (θ a)
 
-/-- `f` is **analytically delineable** on `S`: there exist finitely many continuous
+/-- `f` is **analytically delineable** on `S`: there exist finitely many analytic
 root functions `θ₀ < … < θ_{k-1}` on `S` whose graphs cover all roots of the specializations
 `specialize f a`, with constant multiplicities `m i > 0`. -/
 def AnalyticDelineable (f : PolyR n) (S : Set (Fin n → ℝ)) : Prop :=
   ∃ (k : ℕ) (θ : Fin k → ((Fin n → ℝ) → ℝ)) (m : Fin k → ℕ),
-    (∀ i, ContinuousOn (θ i) S) ∧
+    (∀ i, AnalyticOn ℝ (θ i) S) ∧
     (∀ a ∈ S, ∀ i j : Fin k, i < j → θ i a < θ j a) ∧
     (∀ a ∈ S, ∀ y : ℝ,
       (specialize f a).IsRoot y ↔ ∃ i : Fin k, y = θ i a) ∧
