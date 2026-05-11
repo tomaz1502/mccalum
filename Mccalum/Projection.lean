@@ -104,7 +104,8 @@ theorem mccallum_3_2_3
   obtain ⟨hf_delin, hf_oi_sections⟩ := lifting_theorem S f hS_submfld hS_conn hf_pos hf_sf
     hf_discr_ne hf_nz hf_deg hf_discr_oi
   refine ⟨h_deg, ?_, h_disjoint, ?_⟩
-  · exact delineable_factor_of_delineable_prod S A hA.pairwise_coprime hf_delin
+  · exact delineable_factor_of_delineable_prod S hS_conn.isPreconnected A
+      hA.pairwise_coprime hf_delin
   · intro F hF G hG θ hθ_cont hθ_root
     have hθ_prod : IsRootFunction (∏ g ∈ A, g) θ S :=
       root_function_factor_of_prod S A G hG θ hθ_root
