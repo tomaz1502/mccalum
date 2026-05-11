@@ -18,4 +18,4 @@ rev = "main"
 [[require]]
 name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4"
-rev = "v4.30.0-rc1"
+rev = "v4.28.0"

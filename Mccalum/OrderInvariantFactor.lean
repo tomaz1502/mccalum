@@ -131,7 +131,7 @@ private lemma orderFull_factor_false
   have hr_fin : ∀ (s : (Fin n → ℝ) × ℝ), orderFull rest s.1 s.2 < ⊤ := by
     intro s; show orderFull (∏ g ∈ A.erase f, g) s.1 s.2 < ⊤
     rw [orderFull_prod_sum]
-    exact ENat.sum_lt_top.mpr fun g hg => orderFull_lt_top (hne_rest g hg) s.1 s.2
+    exact WithTop.sum_lt_top.mpr fun g hg => orderFull_lt_top (hne_rest g hg) s.1 s.2
   -- ℕ extraction helpers
   have hvf (s : (Fin n → ℝ) × ℝ) :
       orderFull f s.1 s.2 = ↑((orderFull f s.1 s.2).toNat) :=

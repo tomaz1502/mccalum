@@ -61,13 +61,12 @@ private lemma squarefree_map_fractionRing (f : Polynomial (MvPolynomial (Fin n) 
   -- Step 1: integer normalization of p
   set q₀ := IsLocalization.integerNormalization
     (nonZeroDivisors (MvPolynomial (Fin n) ℝ)) p
-  obtain ⟨c, hc_mem, hc_eq⟩ := IsLocalization.integerNormalization_spec
+  obtain ⟨⟨c, hc_mem⟩, hc_eq⟩ := IsLocalization.integerNormalization_map_to_map
     (nonZeroDivisors (MvPolynomial (Fin n) ℝ)) p
   -- q₀.map φ = c • p, with c ∈ R⁰ (nonzero)
   have hq₀ne : q₀ ≠ 0 := by
     intro h
-    have := (IsLocalization.integerNormalization_eq_zero_iff
-      (M := nonZeroDivisors (MvPolynomial (Fin n) ℝ)) (le_refl _) p).mp h
+    have := IsFractionRing.integerNormalization_eq_zero_iff.mp h
     exact hp.ne_zero this
   -- Step 2: primPart
   have : NormalizedGCDMonoid (MvPolynomial (Fin n) ℝ) := Classical.arbitrary _

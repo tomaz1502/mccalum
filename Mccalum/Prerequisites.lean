@@ -1,6 +1,7 @@
 import Mathlib.Algebra.MvPolynomial.Division
 import Mathlib.Algebra.Squarefree.Basic
 import Mathlib.RingTheory.Polynomial.Resultant.Basic
+import Mathlib.RingTheory.Polynomial.UniqueFactorization
 import Mathlib.RingTheory.SimpleRing.Principal
 import Mathlib.Topology.Algebra.Polynomial
 import Mathlib.Topology.Algebra.MvPolynomial
