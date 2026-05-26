@@ -1,0 +1,19 @@
+\contentsline {section}{\numberline {1}Setup and notation}{1}{section.1}%
+\contentsline {section}{\numberline {2}The generalized projection map $P'(A)$}{2}{section.2}%
+\contentsline {section}{\numberline {3}Prerequisite: order-invariance of products (Lemma~3.2.2)}{2}{section.3}%
+\contentsline {section}{\numberline {4}New prerequisite: order additivity lemma}{2}{section.4}%
+\contentsline {section}{\numberline {5}New prerequisite: elimination ideal for Weierstrass polynomials}{3}{section.5}%
+\contentsline {section}{\numberline {6}The Generalized Lifting Theorem (Theorem~3.2.1')}{4}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Proof structure}{4}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Case $s = r - 1$ (S is open)}{4}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Case $1 \le s \le r - 2$ (S has positive codimension)}{5}{subsection.6.3}%
+\contentsline {subsubsection}{\numberline {6.3.1}Coordinate change (unchanged)}{5}{subsubsection.6.3.1}%
+\contentsline {subsubsection}{\numberline {6.3.2}Transform of $P$ (changed)}{5}{subsubsection.6.3.2}%
+\contentsline {subsubsection}{\numberline {6.3.3}Complexification and order-invariance on $T^*$ (unchanged in method)}{5}{subsubsection.6.3.3}%
+\contentsline {subsubsection}{\numberline {6.3.4}Weierstrass preparation (unchanged)}{6}{subsubsection.6.3.4}%
+\contentsline {subsubsection}{\numberline {6.3.5}Recovering order-invariance of $\disc (h)$ (changed --- key new step)}{6}{subsubsection.6.3.5}%
+\contentsline {subsubsection}{\numberline {6.3.6}Application of Zariski's theorem (unchanged)}{7}{subsubsection.6.3.6}%
+\contentsline {subsubsection}{\numberline {6.3.7}Return to the real domain (unchanged)}{7}{subsubsection.6.3.7}%
+\contentsline {section}{\numberline {7}The Generalized Projection Theorem (Theorem~3.2.3')}{7}{section.7}%
+\contentsline {section}{\numberline {8}Summary of changes from the thesis}{9}{section.8}%
+\contentsline {section}{\numberline {9}Status relative to the Lean formalization}{9}{section.9}%

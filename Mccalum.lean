@@ -3,7 +3,9 @@ import Mccalum.Delineability
 import Mccalum.DiscrMul
 import Mccalum.DiscrNonzero
 import Mccalum.DiscrProdInvariant
-import Mccalum.GeneralizedProjection
+import Mccalum.Generalized.Lifting
+import Mccalum.Generalized.Projection
+import Mccalum.Generalized.SimpleRoots
 import Mccalum.Invariance
 import Mccalum.Order
 import Mccalum.OrderInvariantFactor

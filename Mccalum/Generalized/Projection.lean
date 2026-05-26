@@ -3,6 +3,7 @@ import Mccalum.DiscrProdInvariant
 import Mccalum.OrderInvariantFactor
 import Mccalum.SquarefreeBasis
 import Mccalum.Projection
+import Mccalum.Generalized.Lifting
 
 /-!
 # Generalized Projection Theorem (Theorem 3.2.3')
@@ -14,7 +15,8 @@ corresponding elimination ideals `⟨F, F'⟩ ∩ R[x]` and `⟨F, G⟩ ∩ R[x]
 
 ## Main results
 
-- `lifting_theorem_generalized` (axiom): Theorem 3.2.1' — the generalized lifting theorem.
+- `lifting_theorem_generalized` (theorem): Theorem 3.2.1' — the generalized lifting theorem,
+  proved from the open case + codimension case axiom in `Mccalum.Generalized.Lifting`.
 - `nullstellensatz_elim` (theorem): a power of the product of elimination ideal elements
   belongs to `⟨f, f'⟩ ∩ R[x]`, proved via the radical-equals-intersection-of-primes
   characterization.
@@ -33,14 +35,17 @@ open Polynomial MvPolynomial Set Classical
 
 variable {n : ℕ}
 
-/-! ### Axiom: Generalized Lifting Theorem (Theorem 3.2.1') -/
+/-! ### Generalized Lifting Theorem (Theorem 3.2.1') — from Lifting.lean -/
 
 /-- **Theorem 3.2.1'** (Generalized Lifting Theorem).
 
 This generalizes `lifting_theorem` by replacing the discriminant hypothesis with an
 arbitrary nonzero element `P ∈ ⟨f, ∂f/∂xᵣ⟩ ∩ R[x]` that is order-invariant on `S`.
-The discriminant is one such element, so the original theorem is a special case. -/
-axiom lifting_theorem_generalized
+The discriminant is one such element, so the original theorem is a special case.
+
+Proved in `Mccalum.Generalized.Lifting` from the open case (fully proved from
+`simple_roots_delineable`) and the codimension case (axiom). -/
+theorem lifting_theorem_generalized
     (S : Set (Fin n → ℝ))
     (f : PolyR n)
     (hS_submfld : IsAnalyticSubmanifold S)
@@ -56,7 +61,8 @@ axiom lifting_theorem_generalized
     (hP_oi : OrderInvariantMv P S) :
     AnalyticDelineable f S ∧
     (∀ (θ : (Fin n → ℝ) → ℝ), ContinuousOn θ S → IsRootFunction f θ S →
-      OrderInvariantFull f (SectionGraph θ S))
+      OrderInvariantFull f (SectionGraph θ S)) :=
+  lifting_theorem_generalized' S f hS_submfld hS_conn hpos hsf hnonzero hdeg P hP_ne hP_mem hP_oi
 
 /-! ### Elimination product -/
 
