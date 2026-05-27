@@ -530,7 +530,7 @@ theorem separable_locally_delineable
 
 /-- Two strictly increasing functions `Fin k → ℝ` with the same range are equal.
 This follows from `StrictMono.range_inj` (Fin k has WellFoundedLT). -/
-private theorem strictMono_fin_eq_of_range_eq {k : ℕ}
+theorem strictMono_fin_eq_of_range_eq {k : ℕ}
     (f g : Fin k → ℝ) (hf : StrictMono f) (hg : StrictMono g)
     (hrange : Set.range f = Set.range g) :
     f = g :=
@@ -538,7 +538,7 @@ private theorem strictMono_fin_eq_of_range_eq {k : ℕ}
 
 /-- Two strictly increasing functions `Fin k₁ → α` and `Fin k₂ → α` with the same
 range must have `k₁ = k₂`. -/
-private theorem strictMono_fin_card_eq {k₁ k₂ : ℕ} [LinearOrder α]
+theorem strictMono_fin_card_eq {k₁ k₂ : ℕ} [LinearOrder α]
     (f : Fin k₁ → α) (g : Fin k₂ → α) (hf : StrictMono f) (hg : StrictMono g)
     (hrange : Set.range f = Set.range g) :
     k₁ = k₂ := by
@@ -551,7 +551,7 @@ private theorem strictMono_fin_card_eq {k₁ k₂ : ℕ} [LinearOrder α]
 
 /-- The root sets of two delineations on overlapping domains are equal at any
 shared point. -/
-private theorem delineable_root_range_eq
+theorem delineable_root_range_eq
     (T₁ T₂ : Set (Fin n → ℝ))
     (f : PolyR n) {k₁ k₂ : ℕ}
     (θ₁ : Fin k₁ → (Fin n → ℝ) → ℝ) (θ₂ : Fin k₂ → (Fin n → ℝ) → ℝ)
