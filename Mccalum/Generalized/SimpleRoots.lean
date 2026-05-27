@@ -4,6 +4,11 @@ import Mathlib.FieldTheory.Separable
 import Mathlib.Topology.MetricSpace.Pseudo.Pi
 import Mathlib.Analysis.Polynomial.CauchyBound
 import Mathlib.Topology.Compactness.Compact
+import Mathlib.Analysis.Analytic.Polynomial
+import Mathlib.Analysis.Calculus.InverseFunctionTheorem.FDeriv
+import Mathlib.Analysis.Calculus.FDeriv.Analytic
+import Mathlib.Topology.Algebra.Module.FiniteDimension
+import Mathlib.Analysis.Calculus.Deriv.Polynomial
 
 /-!
 # Simple roots are delineable (Theorem: `simple_roots_delineable`)
@@ -49,27 +54,198 @@ variable {n : ℕ}
 
 /-! ### Axiom 1: Implicit Function Theorem for polynomial roots -/
 
-/-- **Axiom** (IFT for simple polynomial roots).
+/-- **Theorem** (IFT for simple polynomial roots).
 
 If `f(a₀, y₀) = 0` and `f'(a₀, y₀) ≠ 0` (i.e., `y₀` is a simple root of `f(a₀, ·)`),
-then there exist a neighborhood `U` of `a₀` and an analytic function `φ : U → ℝ` with
-`φ(a₀) = y₀` such that `φ(a)` is a root of `f(a, ·)` for all `a ∈ U`, and `φ` is the
-unique root of `f(a, ·)` near `y₀`.
+then there exist a neighborhood `U` of `a₀`, an analytic function `φ : U → ℝ` with
+`φ(a₀) = y₀`, and `ε > 0` such that `φ(a)` is a root of `f(a, ·)` for all `a ∈ U`,
+and `φ` is the unique root of `f(a, ·)` within distance `ε` of `y₀`.
 
 This follows from the analytic IFT applied to the analytic function
 `(a, y) ↦ f(a, y)` at the regular point `(a₀, y₀)`. -/
-axiom ift_local_root_section
+theorem ift_local_root_section
     (f : PolyR n)
     (a₀ : Fin n → ℝ)
     (y₀ : ℝ)
     (hroot : (specialize f a₀).IsRoot y₀)
     (hsimple : (specialize (Polynomial.derivative f) a₀).eval y₀ ≠ 0) :
-    ∃ (U : Set (Fin n → ℝ)) (φ : (Fin n → ℝ) → ℝ),
+    ∃ (U : Set (Fin n → ℝ)) (φ : (Fin n → ℝ) → ℝ) (ε : ℝ),
       IsOpen U ∧ a₀ ∈ U ∧
       AnalyticOn ℝ φ U ∧
       φ a₀ = y₀ ∧
+      0 < ε ∧
       (∀ a ∈ U, (specialize f a).IsRoot (φ a)) ∧
-      (∀ a ∈ U, ∀ y, (specialize f a).IsRoot y → |y - y₀| < |y₀| + 1 → y = φ a)
+      (∀ a ∈ U, ∀ y, (specialize f a).IsRoot y → |y - y₀| < ε → y = φ a) := by
+  -- Step 1: Define evaluation F(a,y) = (specialize f a).eval y and G(a,y) = (a, F(a,y))
+  let Ep := (Fin n → ℝ) × ℝ
+  let F : Ep → ℝ := fun p => (specialize f p.1).eval p.2
+  let G : Ep → Ep := fun p => (p.1, F p)
+  set c := (Polynomial.derivative (specialize f a₀)).eval y₀ with hc_def
+  have hc_ne : c ≠ 0 := by
+    rw [hc_def, show Polynomial.derivative (specialize f a₀) = specialize (Polynomial.derivative f) a₀
+      from by simp [specialize, Polynomial.derivative_map]]
+    exact hsimple
+  -- Step 2: F is analytic at (a₀, y₀) — via toMvPoly and Fin.cons composition
+  have hF_mv : ∀ a y, F (a, y) = MvPolynomial.eval (Fin.cons y a) (toMvPoly f) := by
+    intro a y; show (specialize f a).eval y = MvPolynomial.eval (Fin.cons y a) (toMvPoly f)
+    unfold toMvPoly specialize
+    rw [MvPolynomial.eval_eq_eval_mv_eval',
+      (MvPolynomial.finSuccEquiv ℝ n).apply_symm_apply f]
+  have hF_an : AnalyticAt ℝ F (a₀, y₀) := by
+    suffices h : AnalyticAt ℝ (fun p : Ep => MvPolynomial.eval
+        (fun i : Fin (n + 1) => Fin.cons p.2 p.1 i) (toMvPoly f)) (a₀, y₀) by
+      exact h.congr (Filter.Eventually.of_forall fun p => (hF_mv p.1 p.2).symm)
+    have hcons : AnalyticAt ℝ (fun p : Ep => fun i : Fin (n + 1) =>
+        (Fin.cons p.2 p.1 : Fin (n + 1) → ℝ) i) (a₀, y₀) := by
+      apply AnalyticAt.pi; intro i; refine Fin.cases ?_ (fun j => ?_) i
+      · change AnalyticAt ℝ (fun p : (Fin n → ℝ) × ℝ => p.2) (a₀, y₀)
+        exact analyticAt_snd
+      · change AnalyticAt ℝ (fun p : (Fin n → ℝ) × ℝ => p.1 j) (a₀, y₀)
+        exact (analyticAt_pi_iff.mp analyticAt_fst) j
+    have heval : AnalyticAt ℝ (fun v : Fin (n + 1) → ℝ =>
+        MvPolynomial.eval v (toMvPoly f)) (Fin.cons y₀ a₀) :=
+      AnalyticOnNhd.eval_mvPolynomial (𝕜 := ℝ) (toMvPoly f) _ (Set.mem_univ _)
+    exact heval.comp_of_eq' hcons rfl
+  -- Step 3: G is analytic at (a₀, y₀)
+  have hG_an : AnalyticAt ℝ G (a₀, y₀) := analyticAt_fst.prod hF_an
+  -- Step 4: Partial derivative of F w.r.t. y equals c
+  have hF_diff : DifferentiableAt ℝ F (a₀, y₀) := hF_an.differentiableAt
+  have hF_partial : ∀ k : ℝ, fderiv ℝ F (a₀, y₀) (0, k) = c * k := by
+    intro k
+    have hderiv : HasDerivAt (fun y => F (a₀, y)) c y₀ :=
+      (specialize f a₀).hasDerivAt y₀
+    have hι : DifferentiableAt ℝ (fun y : ℝ => ((a₀ : Fin n → ℝ), y)) y₀ :=
+      DifferentiableAt.prodMk (differentiableAt_const a₀) differentiableAt_id
+    have hfk : fderiv ℝ (fun y => F (a₀, y)) y₀ k = c * k := by
+      rw [hderiv.hasFDerivAt.fderiv, ContinuousLinearMap.toSpanSingleton_apply,
+        smul_eq_mul, mul_comm]
+    have hchain : fderiv ℝ (fun y => F (a₀, y)) y₀ =
+        (fderiv ℝ F (a₀, y₀)).comp (fderiv ℝ (fun y : ℝ => ((a₀ : Fin n → ℝ), y)) y₀) :=
+      (hF_diff.hasFDerivAt.comp y₀ hι.hasFDerivAt).fderiv
+    have hι_k : fderiv ℝ (fun y : ℝ => ((a₀ : Fin n → ℝ), y)) y₀ k = (0, k) := by
+      have hfd : HasFDerivAt (fun y : ℝ => ((a₀ : Fin n → ℝ), y))
+          ((0 : ℝ →L[ℝ] (Fin n → ℝ)).prod (ContinuousLinearMap.id ℝ ℝ)) y₀ :=
+        HasFDerivAt.prodMk (hasFDerivAt_const a₀ y₀) (hasFDerivAt_id y₀)
+      rw [hfd.fderiv]; simp
+    calc fderiv ℝ F (a₀, y₀) (0, k)
+        = fderiv ℝ F (a₀, y₀) (fderiv ℝ (fun y : ℝ => ((a₀ : Fin n → ℝ), y)) y₀ k) := by
+            rw [hι_k]
+      _ = ((fderiv ℝ F (a₀, y₀)).comp
+              (fderiv ℝ (fun y : ℝ => ((a₀ : Fin n → ℝ), y)) y₀)) k := rfl
+      _ = fderiv ℝ (fun y => F (a₀, y)) y₀ k := by rw [← hchain]
+      _ = c * k := hfk
+  -- Step 5: fderiv of G at (a₀, y₀) is bijective
+  have hG_fderiv_eq : fderiv ℝ G (a₀, y₀) =
+      (ContinuousLinearMap.fst ℝ (Fin n → ℝ) ℝ).prod (fderiv ℝ F (a₀, y₀)) := by
+    show fderiv ℝ (fun x : Ep => (x.1, F x)) (a₀, y₀) = _
+    rw [DifferentiableAt.fderiv_prodMk differentiableAt_fst hF_diff, fderiv_fst]
+  have hDG_val : ∀ u : Ep, fderiv ℝ G (a₀, y₀) u = (u.1, fderiv ℝ F (a₀, y₀) u) := by
+    intro u; rw [hG_fderiv_eq]; rfl
+  have hDG_bij : Function.Bijective (fderiv ℝ G (a₀, y₀)) := by
+    constructor
+    · -- Injective
+      intro v w hvw
+      rw [hDG_val v, hDG_val w] at hvw
+      have h1 : v.1 = w.1 := (Prod.mk.inj hvw).1
+      have h2 : fderiv ℝ F (a₀, y₀) v = fderiv ℝ F (a₀, y₀) w := (Prod.mk.inj hvw).2
+      have h3 : fderiv ℝ F (a₀, y₀) (0, v.2 - w.2) = 0 := by
+        rw [show ((0 : Fin n → ℝ), v.2 - w.2) = v - w from
+          Prod.ext (sub_eq_zero.mpr h1).symm rfl, map_sub, sub_eq_zero.mpr h2]
+      rw [hF_partial] at h3
+      exact Prod.ext h1 (sub_eq_zero.mp ((mul_eq_zero.mp h3).resolve_left hc_ne))
+    · -- Surjective
+      intro ⟨v, w⟩
+      refine ⟨(v, (w - fderiv ℝ F (a₀, y₀) (v, 0)) / c), ?_⟩
+      rw [hDG_val]; exact Prod.ext rfl (by
+        show fderiv ℝ F (a₀, y₀) (v, (w - fderiv ℝ F (a₀, y₀) (v, 0)) / c) = w
+        rw [show (v, (w - fderiv ℝ F (a₀, y₀) (v, 0)) / c) =
+          ((v : Fin n → ℝ), (0 : ℝ)) + ((0 : Fin n → ℝ),
+            (w - fderiv ℝ F (a₀, y₀) (v, 0)) / c) from Prod.ext (by simp) (by simp),
+          map_add, hF_partial]
+        field_simp; linarith)
+  -- Step 6: Get ContinuousLinearEquiv from bijective fderiv
+  let i : Ep ≃L[ℝ] Ep :=
+    (LinearEquiv.ofBijective (fderiv ℝ G (a₀, y₀)).toLinearMap hDG_bij).toContinuousLinearEquiv
+  have hi : fderiv ℝ G (a₀, y₀) = i.toContinuousLinearMap :=
+    ContinuousLinearMap.ext fun _ => rfl
+  -- Step 7: Build OpenPartialHomeomorph from analytic IFT
+  have hG_strict : HasStrictFDerivAt G (i : Ep →L[ℝ] Ep) (a₀, y₀) :=
+    hi ▸ hG_an.hasStrictFDerivAt
+  let R := hG_strict.toOpenPartialHomeomorph G
+  have hR_source : (a₀, y₀) ∈ R.source := HasStrictFDerivAt.mem_toOpenPartialHomeomorph_source _
+  -- Step 8: G(a₀, y₀) = (a₀, 0) since y₀ is a root
+  have hG_val : G (a₀, y₀) = (a₀, (0 : ℝ)) := Prod.ext rfl hroot
+  -- Step 9: Analyticity of R.symm at (a₀, 0)
+  have hR_target_mem : (a₀, (0 : ℝ)) ∈ R.target := by
+    have : G (a₀, y₀) ∈ R.target := R.map_source hR_source
+    rwa [hG_val] at this
+  have hR_an_symm : AnalyticAt ℝ R.symm (a₀, (0 : ℝ)) := by
+    have : AnalyticAt ℝ R.symm (G (a₀, y₀)) := R.analyticAt_symm' hR_source hG_an hi
+    rwa [hG_val] at this
+  -- Step 10: Extract analyticity ball for R.symm
+  obtain ⟨r_an, hr_an_pos, hR_ball_an⟩ := hR_an_symm.exists_ball_analyticOnNhd
+  -- Step 11: Extract product balls from R.source and R.target
+  obtain ⟨δ_a, δ_y, hδ_a, hδ_y, hball_src⟩ : ∃ δ_a δ_y : ℝ, 0 < δ_a ∧ 0 < δ_y ∧
+      Metric.ball a₀ δ_a ×ˢ Metric.ball y₀ δ_y ⊆ R.source := by
+    obtain ⟨δ, hδ, hball⟩ := Metric.isOpen_iff.mp R.open_source (a₀, y₀) hR_source
+    exact ⟨δ / 2, δ / 2, half_pos hδ, half_pos hδ, fun ⟨a, y⟩ ⟨ha, hy⟩ => hball (
+      max_lt (lt_trans (Metric.mem_ball.mp ha) (half_lt_self hδ))
+             (lt_trans (Metric.mem_ball.mp hy) (half_lt_self hδ)))⟩
+  obtain ⟨δ_ta, δ_t0, hδ_ta, hδ_t0, hball_tgt⟩ : ∃ δ_ta δ_t0 : ℝ, 0 < δ_ta ∧ 0 < δ_t0 ∧
+      Metric.ball a₀ δ_ta ×ˢ Metric.ball (0 : ℝ) δ_t0 ⊆ R.target := by
+    obtain ⟨δ, hδ, hball⟩ := Metric.isOpen_iff.mp R.open_target (a₀, 0) hR_target_mem
+    exact ⟨δ / 2, δ / 2, half_pos hδ, half_pos hδ, fun ⟨a, y⟩ ⟨ha, hy⟩ => hball (
+      max_lt (lt_trans (Metric.mem_ball.mp ha) (half_lt_self hδ))
+             (lt_trans (Metric.mem_ball.mp hy) (half_lt_self hδ)))⟩
+  -- Step 12: Define φ and U
+  let φ₀ : (Fin n → ℝ) → ℝ := fun a => (R.symm (a, 0)).2
+  let U₀ := Metric.ball a₀ (min (min δ_ta δ_a) r_an)
+  -- Step 13: φ₀(a₀) = y₀
+  have hφ₀_val : φ₀ a₀ = y₀ := by
+    show (R.symm (a₀, 0)).2 = y₀
+    have h : R.symm (G (a₀, y₀)) = (a₀, y₀) := R.left_inv hR_source
+    rw [hG_val] at h; exact congrArg Prod.snd h
+  -- Step 14: Root property — G(R.symm(a, 0)) = (a, 0) gives F(a, φ₀(a)) = 0
+  have hφ₀_root : ∀ a, (a, (0 : ℝ)) ∈ R.target → (specialize f a).IsRoot (φ₀ a) := by
+    intro a hmem
+    have hright : G (R.symm (a, 0)) = (a, 0) := R.right_inv hmem
+    have h1 : (R.symm (a, 0)).1 = a := congrArg Prod.fst hright
+    have h2 : F (R.symm (a, 0)) = 0 := congrArg Prod.snd hright
+    show (specialize f a).eval (R.symm (a, 0)).2 = 0
+    change (specialize f (R.symm (a, 0)).1).eval (R.symm (a, 0)).2 = 0 at h2
+    rwa [h1] at h2
+  -- Step 15: φ₀ is analytic on U₀
+  have hφ₀_an : AnalyticOn ℝ φ₀ U₀ := by
+    intro a ha
+    have ha_r : dist a a₀ < r_an :=
+      lt_of_lt_of_le (Metric.mem_ball.mp ha) (min_le_right _ _)
+    have hR_an_local : AnalyticAt ℝ R.symm (a, (0 : ℝ)) := by
+      apply hR_ball_an; rw [Metric.mem_ball, Prod.dist_eq]
+      exact max_lt ha_r (by rw [dist_self]; exact hr_an_pos)
+    have hpair : AnalyticAt ℝ (fun x : Fin n → ℝ => (x, (0 : ℝ))) a :=
+      (analyticAt_id (𝕜 := ℝ)).prod analyticAt_const
+    exact (analyticAt_snd.comp (hR_an_local.comp_of_eq' hpair rfl)).analyticWithinAt
+  -- Step 16: Uniqueness — if (a, y) ∈ R.source and F(a,y)=0, then y = φ₀(a)
+  have hφ₀_unique : ∀ a ∈ U₀, ∀ y, (specialize f a).IsRoot y →
+      |y - y₀| < δ_y → y = φ₀ a := by
+    intro a ha y hy_root hy_close
+    have ha_ball : a ∈ Metric.ball a₀ δ_a :=
+      Metric.mem_ball.mpr (lt_of_lt_of_le (lt_of_lt_of_le (Metric.mem_ball.mp ha)
+        (min_le_left _ _)) (min_le_right _ _))
+    have hy_ball : y ∈ Metric.ball y₀ δ_y := Metric.mem_ball.mpr (by rwa [Real.dist_eq])
+    have ha_source : (a, y) ∈ R.source := hball_src ⟨ha_ball, hy_ball⟩
+    have hGay : G (a, y) = (a, (0 : ℝ)) := Prod.ext rfl hy_root
+    show y = (R.symm (a, 0)).2
+    have hinv : R.symm (G (a, y)) = (a, y) := R.left_inv ha_source
+    rw [hGay] at hinv; exact (congrArg Prod.snd hinv).symm
+  -- Step 17: Assemble the result
+  exact ⟨U₀, φ₀, δ_y, Metric.isOpen_ball,
+    Metric.mem_ball_self (lt_min (lt_min hδ_ta hδ_a) hr_an_pos),
+    hφ₀_an, hφ₀_val, hδ_y,
+    fun a ha => hφ₀_root a (hball_tgt ⟨Metric.mem_ball.mpr (lt_of_lt_of_le
+      (lt_of_lt_of_le (Metric.mem_ball.mp ha) (min_le_left _ _)) (min_le_left _ _)),
+      Metric.mem_ball_self hδ_t0⟩),
+    hφ₀_unique⟩
 
 /-! ### Theorem 2: Separable implies locally delineable -/
 
@@ -121,7 +297,7 @@ theorem separable_locally_delineable
       by simp [hp_def, specialize, Polynomial.derivative_map]] at h
     linarith [(Polynomial.one_lt_rootMultiplicity_iff_isRoot hp_ne).mpr ⟨hyr_root i, h⟩,
       hyr_mult i]
-  choose Ui φ hUi_open ha₀_Ui hφ_an hφ_val hφ_root hφ_unique using
+  choose Ui φ ε hUi_open ha₀_Ui hφ_an hφ_val hε_pos hφ_root hφ_unique using
     fun i => ift_local_root_section f a₀ (yr i) (hyr_root i) (hder_spec i)
   -- Continuity of IFT sections at a₀
   have hφ_cont : ∀ i, ContinuousAt (φ i) a₀ := fun i =>
@@ -149,17 +325,17 @@ theorem separable_locally_delineable
           Polynomial.sum_def]
       rw [this]; exact continuous_finset_sum _ fun i _ =>
         ((MvPolynomial.continuous_eval _).comp continuous_fst).mul (continuous_snd.pow i)
-    -- IFT uniqueness balls: Ioo (yr i - (|yr i| + 1)) (yr i + (|yr i| + 1))
-    let iftBall (i : Fin k) := Set.Ioo (yr i - (|yr i| + 1)) (yr i + (|yr i| + 1))
+    -- IFT uniqueness balls: Ioo (yr i - ε i) (yr i + ε i)
+    let iftBall (i : Fin k) := Set.Ioo (yr i - ε i) (yr i + ε i)
     have hyr_in_ball : ∀ i, yr i ∈ iftBall i := fun i =>
-      Set.mem_Ioo.mpr ⟨by linarith [abs_nonneg (yr i)], by linarith [abs_nonneg (yr i)]⟩
+      Set.mem_Ioo.mpr ⟨by linarith [hε_pos i], by linarith [hε_pos i]⟩
     -- R: large enough for IFT balls and root bound
     let coeffSum := ∑ i ∈ Finset.range p.natDegree, |p.coeff i|
     let lcAbs := |p.leadingCoeff|
     set R := max (coeffSum / lcAbs + 2)
         (if h : k = 0 then 1 else (Finset.univ.sup'
           ⟨⟨0, Nat.pos_of_ne_zero h⟩, Finset.mem_univ _⟩
-          (fun i : Fin k => |yr i| + |yr i| + 2)) + 1) with hR_def
+          (fun i : Fin k => |yr i| + ε i)) + 1) with hR_def
     have hR_pos : (0 : ℝ) < R := lt_max_of_lt_left (by positivity)
     -- All roots of p are in (-R, R)
     have hyr_in_R : ∀ i, |yr i| < R := by
@@ -169,9 +345,9 @@ theorem separable_locally_delineable
       rw [dif_neg hk_ne]
       have hne : (Finset.univ : Finset (Fin k)).Nonempty :=
         ⟨⟨0, Nat.pos_of_ne_zero hk_ne⟩, Finset.mem_univ _⟩
-      calc |yr i| < |yr i| + |yr i| + 2 := by linarith [abs_nonneg (yr i)]
-        _ ≤ Finset.univ.sup' hne (fun j : Fin k => |yr j| + |yr j| + 2) :=
-            Finset.le_sup' (fun j : Fin k => |yr j| + |yr j| + 2) (Finset.mem_univ i)
+      calc |yr i| < |yr i| + ε i := by linarith [hε_pos i]
+        _ ≤ Finset.univ.sup' hne (fun j : Fin k => |yr j| + ε j) :=
+            Finset.le_sup' (fun j : Fin k => |yr j| + ε j) (Finset.mem_univ i)
         _ < _ + 1 := by linarith
     -- Compact set K = [-R, R] \ ⋃ iftBall i: has no roots of p
     set K := Set.Icc (-R) R \ ⋃ i, iftBall i
