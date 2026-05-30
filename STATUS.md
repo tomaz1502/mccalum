@@ -316,12 +316,34 @@ Weierstrass-divide `Γ,Δ` → analytic quotients + degree-`<m` remainder polys 
 Support: `remPoly` + lemmas; `AnalyticCoeffs` predicate closed under `+,−,*,C,derivative,/ₘ` (all
 proved, via the `AnalyticAtSubring` + `coeff_mul`/`Finset.analyticAt_fun_sum` machinery).
 
-**Descent status: foundation + core step + Step 3a (membership descent) DONE.** The genuinely hard
-assembly is complete. Remaining: **Step 2** the `u`-transfer (produces the `Γ,Δ` germ membership input
-to `membership_descent`, from `g = u·h` + the analytic-cofactor membership — a `=ᶠ` manipulation), and
-**Step 3b** the norm identity (from `membership_descent`'s output + `polyToFun_coeff_eventuallyEq_zero`
-⟹ exact `𝒪ₙ[t]` membership over the germ ring on `CParam` ⟹ `norm_identity_elim` ⟹ `P^m =ᶠ
-weierstrassResFun·Q`, the input to `DiscOrder`'s `weierstrassDisc_order_const_along_section`).
+### D1 descent — STEP 2 (`u`-transfer) DONE (2026-05-30): `MembershipDescent.lean`
+`theorem u_transfer` (axiom-clean, pure algebra) + `theorem descent_membership` (combines Step 2 +
+Step 3a; depends only on the two Weierstrass-division axioms). `u_transfer`: from the analytic-cofactor
+membership `C P = A·g + B·g'` and the **differentiated Weierstrass factorization** `polyToFun g =ᶠ u·H`,
+`polyToFun g' =ᶠ uder·H + u·H'` (the prep axiom + Leibniz in `t`, taken as hypotheses), produces the
+germ membership `polyToFun (C P) =ᶠ Γ·H + Δ·H'` (`Γ := polyToFun A·u + polyToFun B·uder`,
+`Δ := polyToFun B·u`). `descent_membership` chains it into `membership_descent` for the full output
+`polyToFun (C P) =ᶠ polyToFun (A'·h + B'·h')` with analytic cofactors.
+
+### D1 descent — STEP 3b FULLY PROVEN (2026-05-30): `DescentNormIdentity.lean` — 0 sorries, axiom-clean
+`theorem descent_norm_identity` is **fully proven**; `#print axioms` → `[propext, Classical.choice,
+Quot.sound]` only (NO `sorryAx`, no custom axioms — it takes the descent membership as a hypothesis and
+uses the proven `norm_identity_elim`). From `descent_membership`'s `=ᶠ` membership it produces
+`P^m =ᶠ weierstrassResFun·Q` (`Q` analytic) — the exact `hnorm` input of
+`DiscOrder.weierstrassDisc_order_const_along_section`. Built: the **analytic-germ ring `AnalyticGermP`
+on `CParam`** (Subring of `Germ (𝓝 0) ℂ`; + `CharZero` instance) + `germHom` + `analyticCoeffs_germ_mem`.
+Proof chain: `polyToFun`-injectivity ⟹ coefficient-wise germ equality ⟹ `toSubring` to `𝒪[X]` ⟹
+`norm_identity_elim` over `𝒪` ⟹ map back via `𝒪.subtype` + `resultant_map_map`(×2) + `Germ.coe_eq`
+cast. The two former bookkeeping gaps are now discharged: `hdSnd` (`(derivative hS).natDegree = m−1`
+via `CharZero ↥𝒪`) and `hres` (resultant degree-arg `(m,m−1)` matching via `resultant_map_map`).
+
+**DESCENT STATUS — COMPLETE end-to-end, FULLY PROVEN, SORRY-FREE.** Chain:
+`descent_membership` (Steps 2+3a, axiom-clean modulo the C-division axioms) → `descent_norm_identity`
+(Step 3b, axiom-clean) → `DiscOrder.weierstrassDisc_order_const_along_section` (D3-app, ✅) → Zariski's
+`hdisc`. **The entire Phase-D pipeline is built, sorry-free, and type-checks against the C/E axioms.**
+Remaining for the whole theorem: wire **A2/A3** (complexification + localization at real roots) to
+*instantiate* the descent's hypotheses, then F3 assembly — and the two research-scale axioms C (now
+prep+division) and E (Zariski).
 
 ### Connective chain — D3-APPLICATION PROVED (2026-05-30): `DiscOrder.lean` (option-1 validation)
 New file `Mccalum/Generalized/DiscOrder.lean`, **sorry-free**, 0 custom axioms.

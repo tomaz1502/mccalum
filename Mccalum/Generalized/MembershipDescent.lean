@@ -180,4 +180,58 @@ theorem membership_descent {m : ℕ} (hm : 0 < m) (a : Fin m → (CParam s e →
   have hP0z := congrFun hP0exp zt
   rw [← hcz, hkz', hP0z]; ring
 
+/-- **`u`-transfer (Step 2).** From the analytic-cofactor membership `C P = A·g + B·g'` and the
+**differentiated Weierstrass factorization** `polyToFun g =ᶠ u·H`,
+`polyToFun g' =ᶠ uder·H + u·H'` (with `u, uder` analytic — the prep axiom + Leibniz in `t`), produce
+the germ membership `polyToFun (C P) =ᶠ Γ·H + Δ·H'` feeding `membership_descent`:
+`Γ := polyToFun A · u + polyToFun B · uder`, `Δ := polyToFun B · u`. -/
+theorem u_transfer {m : ℕ} (a : Fin m → (CParam s e → ℂ))
+    (P : CParam s e → ℂ) (g A B : (CParam s e → ℂ)[X])
+    (hA : AnalyticCoeffs A) (hB : AnalyticCoeffs B)
+    (hmem_g : Polynomial.C P = A * g + B * derivative g)
+    (u uder : CParam s e × ℂ → ℂ) (hu : AnalyticAt ℂ u 0) (huder : AnalyticAt ℂ uder 0)
+    (hfac : polyToFun s e g =ᶠ[𝓝 0]
+        fun zt => u zt * polyToFun s e (weierstrassPolyFun m a) zt)
+    (hfac' : polyToFun s e (derivative g) =ᶠ[𝓝 0] fun zt =>
+        uder zt * polyToFun s e (weierstrassPolyFun m a) zt
+      + u zt * polyToFun s e (derivative (weierstrassPolyFun m a)) zt) :
+    ∃ Γ Δ : CParam s e × ℂ → ℂ, AnalyticAt ℂ Γ 0 ∧ AnalyticAt ℂ Δ 0 ∧
+      polyToFun s e (Polynomial.C P) =ᶠ[𝓝 0] fun zt =>
+        Γ zt * polyToFun s e (weierstrassPolyFun m a) zt
+      + Δ zt * polyToFun s e (derivative (weierstrassPolyFun m a)) zt := by
+  refine ⟨fun zt => polyToFun s e A zt * u zt + polyToFun s e B zt * uder zt,
+          fun zt => polyToFun s e B zt * u zt,
+          ((polyToFun_analyticAt A hA).mul hu).add ((polyToFun_analyticAt B hB).mul huder),
+          (polyToFun_analyticAt B hB).mul hu, ?_⟩
+  have hCP : polyToFun s e (Polynomial.C P)
+      = polyToFun s e A * polyToFun s e g + polyToFun s e B * polyToFun s e (derivative g) := by
+    rw [hmem_g, map_add, map_mul, map_mul]
+  filter_upwards [hfac, hfac'] with zt hf hf'
+  have hcpz := congrFun hCP zt
+  simp only [Pi.add_apply, Pi.mul_apply] at hcpz
+  rw [hcpz, hf, hf']
+  ring
+
+/-- **Descent (Steps 2 + 3a combined).** From the analytic-cofactor membership of `g` and the
+differentiated Weierstrass factorization, produce polynomial cofactors `A',B'` (analytic) with
+`polyToFun (C P) =ᶠ polyToFun (A'·h + B'·h')` — the full germ-to-`𝒪ₙ[t]` descent (the `=ᶠ` form). -/
+theorem descent_membership {m : ℕ} (hm : 0 < m) (a : Fin m → (CParam s e → ℂ))
+    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
+    (P : CParam s e → ℂ) (hP_an : AnalyticAt ℂ P 0)
+    (g A B : (CParam s e → ℂ)[X]) (hA : AnalyticCoeffs A) (hB : AnalyticCoeffs B)
+    (hmem_g : Polynomial.C P = A * g + B * derivative g)
+    (u uder : CParam s e × ℂ → ℂ) (hu : AnalyticAt ℂ u 0) (huder : AnalyticAt ℂ uder 0)
+    (hfac : polyToFun s e g =ᶠ[𝓝 0]
+        fun zt => u zt * polyToFun s e (weierstrassPolyFun m a) zt)
+    (hfac' : polyToFun s e (derivative g) =ᶠ[𝓝 0] fun zt =>
+        uder zt * polyToFun s e (weierstrassPolyFun m a) zt
+      + u zt * polyToFun s e (derivative (weierstrassPolyFun m a)) zt) :
+    ∃ (A' B' : (CParam s e → ℂ)[X]),
+      AnalyticCoeffs A' ∧ AnalyticCoeffs B' ∧
+      polyToFun s e (Polynomial.C P) =ᶠ[𝓝 0]
+        polyToFun s e (A' * weierstrassPolyFun m a + B' * derivative (weierstrassPolyFun m a)) := by
+  obtain ⟨Γ, Δ, hΓ, hΔ, hmem⟩ :=
+    u_transfer a P g A B hA hB hmem_g u uder hu huder hfac hfac'
+  exact membership_descent hm a ha_an ha0 P hP_an Γ Δ hΓ hΔ hmem
+
 end
