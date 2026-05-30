@@ -3,6 +3,7 @@ import Mccalum.DiscrProdInvariant
 import Mccalum.OrderComp
 import Mccalum.SquarefreeBasis
 import Mccalum.Generalized.SimpleRoots
+import Mccalum.OrderMulAnalytic
 import Mathlib.Algebra.MvPolynomial.Funext
 import Mathlib.Topology.MetricSpace.Pseudo.Pi
 import Mathlib.Analysis.Complex.Basic
@@ -216,381 +217,7 @@ section OrderAdditivity
 open scoped Topology
 open Filter
 
-/-- If `h` is eventually zero near `x₀`, then `order h x₀ = ⊤`. -/
-private lemma order_eq_top_of_eventuallyEq_zero
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (h : E → ℂ) (x₀ : E) (hev : h =ᶠ[𝓝 x₀] 0) :
-    order ℂ h x₀ = ⊤ := by
-  rw [order_eq_top_iff (𝕜 := ℂ)]; intro n
-  have := (hev.iteratedFDeriv ℂ n).self_of_nhds
-  rw [this]
-  rcases n with _ | n
-  · ext m; simp [iteratedFDeriv_zero_apply]
-  · exact congr_fun (iteratedFDeriv_const_of_ne (Nat.succ_ne_zero n) (0 : ℂ)) x₀
 
-/-- If `order ℂ f x₀ = ⊤` and `f` is analytic at `x₀`, then `f` is eventually zero. -/
-private lemma eventuallyEq_zero_of_order_eq_top
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (f : E → ℂ) (x₀ : E) (hf : AnalyticAt ℂ f x₀)
-    (hord : order ℂ f x₀ = ⊤) :
-    f =ᶠ[𝓝 x₀] 0 := by
-  have hderiv_zero := (order_eq_top_iff (𝕜 := ℂ)).mp hord
-  obtain ⟨p, r, hp⟩ := hf
-  rw [eventuallyEq_iff_exists_mem]
-  refine ⟨{z | z - x₀ ∈ Metric.eball 0 r}, ?_, fun z hz => ?_⟩
-  · exact mem_nhds_iff.mpr ⟨_, le_refl _, Metric.isOpen_eball.preimage
-      (continuous_id.sub continuous_const), by simp [Metric.mem_eball, hp.r_pos]⟩
-  · have hsum := hp.hasSum_iteratedFDeriv hz
-    simp only [hderiv_zero, ContinuousMultilinearMap.zero_apply, smul_zero,
-      Pi.zero_apply] at hsum
-    rw [show x₀ + (z - x₀) = z from by abel] at hsum
-    exact hsum.unique hasSum_zero
-
-/-- Polarization for symmetric continuous multilinear maps over ℂ: if `T` is symmetric
-and vanishes on the diagonal, then `T = 0`. Proved via `iteratedFDeriv_comp_diagonal`
-which gives `n! · T(v) = 0` from the diagonal vanishing. -/
-private lemma symmetric_multilinear_eq_zero_of_diagonal_zero
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    {n : ℕ} (T : E [×n]→L[ℂ] ℂ)
-    (hsymm : ∀ (v : Fin n → E) (σ : Equiv.Perm (Fin n)), T (v ∘ σ) = T v)
-    (hdiag : ∀ w : E, T (fun _ => w) = 0) :
-    T = 0 := by
-  ext v
-  rcases n with _ | n
-  · convert hdiag 0 using 1; congr 1; exact Subsingleton.elim _ _
-  · have h := T.iteratedFDeriv_comp_diagonal 0 v
-    have h_lhs : iteratedFDeriv ℂ (n + 1) (fun _ : E => (0 : ℂ)) 0 v = 0 := by
-      simp [iteratedFDeriv_const_of_ne (Nat.succ_ne_zero n)]
-    rw [show (fun x : E => T (fun _ => x)) = (fun _ => (0 : ℂ)) from funext hdiag,
-      h_lhs] at h
-    simp only [fun σ : Equiv.Perm (Fin (n + 1)) =>
-      show T (fun i => v (σ i)) = T v from hsymm v σ] at h
-    rw [Finset.sum_const, Finset.card_univ, Fintype.card_perm, Fintype.card_fin,
-      nsmul_eq_mul] at h
-    exact (mul_eq_zero.mp h.symm).resolve_left
-      (Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero _))
-
-/-- The line restriction `t ↦ f(x₀ + t • w)` is analytic at 0 when `f` is analytic at `x₀`. -/
-private lemma analyticAt_line_restriction
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (f : E → ℂ) (x₀ w : E) (hf : AnalyticAt ℂ f x₀) :
-    AnalyticAt ℂ (fun t : ℂ => f (x₀ + t • w)) 0 := by
-  apply AnalyticAt.comp (f := fun t : ℂ => x₀ + t • w)
-  · simpa using hf
-  · fun_prop
-
-/-- Chain rule for line restrictions: the `k`-th iterated derivative of `t ↦ f(x₀ + t•w)`
-at `t = 0` equals the `k`-th iterated Fréchet derivative of `f` at `x₀` evaluated
-on the diagonal `(w, w, …, w)`. Both sides equal `k! · pₖ(w,…,w)` where `p` is
-the power series of `f`. -/
-private lemma iteratedDeriv_line_eq_iteratedFDeriv_diag
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (f : E → ℂ) (x₀ w : E) (k : ℕ)
-    (hf : AnalyticAt ℂ f x₀) :
-    iteratedDeriv k (fun t : ℂ => f (x₀ + t • w)) 0 =
-      (iteratedFDeriv ℂ k f x₀) (fun _ => w) := by
-  obtain ⟨p, r, hp⟩ := hf
-  have hND := hp.iteratedFDeriv_eq_sum_of_completeSpace (n := k) (fun _ => w)
-  have hp0 : HasFPowerSeriesOnBall (fun y => f (y + x₀)) p 0 r := by
-    have := hp.comp_sub (-x₀)
-    simp only [sub_neg_eq_add, add_neg_cancel] at this; exact this
-  let L_w : ℂ →L[ℂ] E := ContinuousLinearMap.smulRight (ContinuousLinearMap.id ℂ ℂ) w
-  have hL_zero : L_w 0 = 0 := map_zero L_w
-  have hp_line : HasFPowerSeriesOnBall (fun t => f (x₀ + t • w))
-      (p.compContinuousLinearMap L_w) 0 (r / ‖L_w‖ₑ) := by
-    have h1 : HasFPowerSeriesOnBall ((fun y => f (y + x₀)) ∘ L_w)
-        (p.compContinuousLinearMap L_w) 0 (r / ‖L_w‖ₑ) := by
-      have hp0' : HasFPowerSeriesOnBall (fun y => f (y + x₀)) p (L_w (0 : ℂ)) r := by
-        rwa [show L_w (0 : ℂ) = (0 : E) from map_zero L_w]
-      exact hp0'.compContinuousLinearMap
-    convert h1 using 1
-    ext t; simp [Function.comp_def, L_w, add_comm]
-  have h1D := hp_line.iteratedFDeriv_eq_sum_of_completeSpace (n := k) (fun _ => (1 : ℂ))
-  rw [show iteratedDeriv k (fun t : ℂ => f (x₀ + t • w)) 0 =
-    (iteratedFDeriv ℂ k (fun t : ℂ => f (x₀ + t • w)) 0) (fun _ => (1 : ℂ)) from by
-    rw [iteratedFDeriv_apply_eq_iteratedDeriv_mul_prod]; simp]
-  rw [h1D, hND]
-  congr 1; ext σ
-  simp [FormalMultilinearSeries.compContinuousLinearMap,
-    ContinuousMultilinearMap.compContinuousLinearMap_apply, L_w]
-
-/-- Vanishing order is additive for products of analytic functions:
-`order(f · g) = order(f) + order(g)`. The proof reduces to the 1-variable case via
-line restrictions and polarization. -/
-private lemma order_mul_analytic
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (f g : E → ℂ) (x₀ : E)
-    (hf : AnalyticAt ℂ f x₀) (hg : AnalyticAt ℂ g x₀) :
-    order ℂ (fun z => f z * g z) x₀ = order ℂ f x₀ + order ℂ g x₀ := by
-  by_cases hf_top : order ℂ f x₀ = ⊤
-  · have hfg : order ℂ (fun z => f z * g z) x₀ = ⊤ :=
-      order_eq_top_of_eventuallyEq_zero _ x₀ <| by
-        filter_upwards [eventuallyEq_zero_of_order_eq_top f x₀ hf hf_top] with z hz
-        simp [hz]
-    simp [hfg, hf_top]
-  by_cases hg_top : order ℂ g x₀ = ⊤
-  · have hfg : order ℂ (fun z => f z * g z) x₀ = ⊤ :=
-      order_eq_top_of_eventuallyEq_zero _ x₀ <| by
-        filter_upwards [eventuallyEq_zero_of_order_eq_top g x₀ hg hg_top] with z hz
-        simp [hz]
-    simp [hfg, hg_top]
-  -- Both orders are finite: extract natural numbers m, n
-  obtain ⟨m, hm⟩ := ENat.ne_top_iff_exists.mp hf_top
-  obtain ⟨nn, hnn⟩ := ENat.ne_top_iff_exists.mp hg_top
-  rw [← hm, ← hnn, ← ENat.coe_add]
-  -- Characterize: iteratedFDeriv vanishes below order, nonzero at order
-  have hf_below : ∀ j < m, iteratedFDeriv ℂ j f x₀ = 0 := fun j hj =>
-    iteratedFDeriv_eq_zero_of_lt_order (by rw [← hm]; exact_mod_cast hj)
-  have hf_at : iteratedFDeriv ℂ m f x₀ ≠ 0 :=
-    ((order_eq_natCast_iff (𝕜 := ℂ) (n := m)).mp hm.symm).2
-  have hg_below : ∀ j < nn, iteratedFDeriv ℂ j g x₀ = 0 := fun j hj =>
-    iteratedFDeriv_eq_zero_of_lt_order (by rw [← hnn]; exact_mod_cast hj)
-  have hg_at : iteratedFDeriv ℂ nn g x₀ ≠ 0 :=
-    ((order_eq_natCast_iff (𝕜 := ℂ) (n := nn)).mp hnn.symm).2
-  -- Diagonal vanishing for f and g
-  have hf_diag : ∀ j < m, ∀ w : E, (iteratedFDeriv ℂ j f x₀) (fun _ => w) = 0 :=
-    fun j hj w => by simp [hf_below j hj]
-  have hg_diag : ∀ j < nn, ∀ w : E, (iteratedFDeriv ℂ j g x₀) (fun _ => w) = 0 :=
-    fun j hj w => by simp [hg_below j hj]
-  -- By polarization: ∃ w₀ with diagonal nonzero at order
-  have hf_diag_ne : ∃ w₀ : E, (iteratedFDeriv ℂ m f x₀) (fun _ => w₀) ≠ 0 := by
-    by_contra h; push_neg at h
-    exact hf_at (symmetric_multilinear_eq_zero_of_diagonal_zero _
-      (fun v σ => hf.contDiffAt.iteratedFDeriv_comp_perm v σ) h)
-  have hg_diag_ne : ∃ w₀ : E, (iteratedFDeriv ℂ nn g x₀) (fun _ => w₀) ≠ 0 := by
-    by_contra h; push_neg at h
-    exact hg_at (symmetric_multilinear_eq_zero_of_diagonal_zero _
-      (fun v σ => hg.contDiffAt.iteratedFDeriv_comp_perm v σ) h)
-  -- Line restriction orders
-  have hf_line : ∀ w, (m : ℕ∞) ≤ analyticOrderAt (fun t : ℂ => f (x₀ + t • w)) 0 := by
-    intro w
-    rw [natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero
-      (analyticAt_line_restriction f x₀ w hf)]
-    exact fun i hi => by rw [iteratedDeriv_line_eq_iteratedFDeriv_diag f x₀ w i hf]; exact hf_diag i hi w
-  have hg_line : ∀ w, (nn : ℕ∞) ≤ analyticOrderAt (fun t : ℂ => g (x₀ + t • w)) 0 := by
-    intro w
-    rw [natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero
-      (analyticAt_line_restriction g x₀ w hg)]
-    exact fun i hi => by rw [iteratedDeriv_line_eq_iteratedFDeriv_diag g x₀ w i hg]; exact hg_diag i hi w
-  -- Analyticity of the product
-  have hfg : AnalyticAt ℂ (fun z => f z * g z) x₀ := hf.mul hg
-  -- ≥ direction: order(fg) ≥ m + nn via 1D analyticOrderAt_mul + polarization
-  have h_ge : (↑(m + nn) : ℕ∞) ≤ order ℂ (fun z => f z * g z) x₀ := by
-    by_contra hlt
-    push_neg at hlt
-    obtain ⟨j, hj⟩ := ENat.ne_top_iff_exists.mp (ne_top_of_lt hlt)
-    have hjlt : j < m + nn := by exact_mod_cast (hj ▸ hlt : (↑j : ℕ∞) < ↑(m + nn))
-    have hj_ne := ((order_eq_natCast_iff (𝕜 := ℂ) (n := j)).mp hj.symm).2
-    apply hj_ne
-    apply symmetric_multilinear_eq_zero_of_diagonal_zero _
-      (fun v σ => hfg.contDiffAt.iteratedFDeriv_comp_perm v σ)
-    intro w
-    rw [← iteratedDeriv_line_eq_iteratedFDeriv_diag _ x₀ w j hfg]
-    have h_anal := analyticAt_line_restriction (fun z => f z * g z) x₀ w hfg
-    have h_fg_ord : ↑(m + nn) ≤
-        analyticOrderAt (fun t : ℂ => f (x₀ + t • w) * g (x₀ + t • w)) 0 := by
-      calc (↑(m + nn) : ℕ∞) = ↑m + ↑nn := by push_cast; ring
-        _ ≤ analyticOrderAt (fun t => f (x₀ + t • w)) 0 +
-            analyticOrderAt (fun t => g (x₀ + t • w)) 0 := add_le_add (hf_line w) (hg_line w)
-        _ = analyticOrderAt (fun t : ℂ => f (x₀ + t • w) * g (x₀ + t • w)) 0 :=
-            (analyticOrderAt_mul (analyticAt_line_restriction f x₀ w hf)
-              (analyticAt_line_restriction g x₀ w hg)).symm
-    exact ((natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero h_anal).mp h_fg_ord) j hjlt
-  -- ≤ direction: find w with both T_f(w,...,w) ≠ 0 and T_g(w,...,w) ≠ 0
-  have h_le : order ℂ (fun z => f z * g z) x₀ ≤ ↑(m + nn) := by
-    suffices h : iteratedFDeriv ℂ (m + nn) (fun z => f z * g z) x₀ ≠ 0 by
-      have hex : ∃ n, iteratedFDeriv ℂ n (fun z => f z * g z) x₀ ≠ 0 := ⟨m + nn, h⟩
-      unfold order; rw [dif_pos hex]; exact_mod_cast Nat.find_min' hex h
-    obtain ⟨v₀, hv₀⟩ := hf_diag_ne
-    obtain ⟨w₀, hw₀⟩ := hg_diag_ne
-    -- Find w with both T_f(fun _ => w) ≠ 0 and T_g(fun _ => w) ≠ 0
-    -- (using 1D analytic argument on the line v₀ + t•w₀)
-    obtain ⟨w, hw_f, hw_g⟩ : ∃ w : E,
-        (iteratedFDeriv ℂ m f x₀) (fun _ => w) ≠ 0 ∧
-        (iteratedFDeriv ℂ nn g x₀) (fun _ => w) ≠ 0 := by
-      -- D_g(w) := T_g(w,...,w) is analytic (multilinear map composed with diagonal)
-      have hDg_anal : AnalyticAt ℂ
-          (fun w : E => (iteratedFDeriv ℂ nn g x₀) (fun _ => w)) v₀ :=
-        (iteratedFDeriv ℂ nn g x₀).analyticAt.comp
-          (AnalyticAt.pi (fun _ : Fin nn => analyticAt_id))
-      -- ψ(t) := T_g(v₀+t•w₀,...) is analytic at 0
-      have hψ_anal := analyticAt_line_restriction
-        (fun w => (iteratedFDeriv ℂ nn g x₀) (fun _ => w)) v₀ w₀ hDg_anal
-      -- nn-th derivative of ψ at 0 is nn! • T_g(w₀,...,w₀) ≠ 0
-      have hψ_deriv : iteratedDeriv nn (fun t : ℂ =>
-          (iteratedFDeriv ℂ nn g x₀) (fun _ => v₀ + t • w₀)) 0 ≠ 0 := by
-        rw [iteratedDeriv_line_eq_iteratedFDeriv_diag _ v₀ w₀ nn hDg_anal,
-            (iteratedFDeriv ℂ nn g x₀).iteratedFDeriv_comp_diagonal v₀ (fun _ => w₀)]
-        rw [Finset.sum_const, Finset.card_univ, Fintype.card_perm, Fintype.card_fin, nsmul_eq_mul]
-        exact mul_ne_zero (Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero nn)) hw₀
-      -- analyticOrderAt ψ 0 ≠ ⊤ (since nn-th derivative is nonzero)
-      have hψ_ne_top : analyticOrderAt (fun t : ℂ =>
-          (iteratedFDeriv ℂ nn g x₀) (fun _ => v₀ + t • w₀)) 0 ≠ ⊤ := by
-        intro h_top; apply hψ_deriv
-        have h_le : ↑(nn + 1) ≤ analyticOrderAt (fun t : ℂ =>
-            (iteratedFDeriv ℂ nn g x₀) (fun _ => v₀ + t • w₀)) 0 := by
-          rw [h_top]; exact le_top
-        exact (natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero hψ_anal).mp h_le nn (by omega)
-      -- ∃ᶠ t near 0, T_g(v₀+t•w₀,...) ≠ 0
-      have hψ_freq : ∃ᶠ t in 𝓝 (0 : ℂ),
-          (iteratedFDeriv ℂ nn g x₀) (fun _ => v₀ + t • w₀) ≠ 0 :=
-        Filter.not_eventually.mp (analyticOrderAt_eq_top.not.mp hψ_ne_top)
-      -- ∀ᶠ t near 0, T_f(v₀+t•w₀,...) ≠ 0 (continuity + nonvanishing at 0)
-      have hφ_ev : ∀ᶠ t in 𝓝 (0 : ℂ),
-          (iteratedFDeriv ℂ m f x₀) (fun _ => v₀ + t • w₀) ≠ 0 := by
-        refine ContinuousAt.eventually_ne ?_ ?_
-        · exact (iteratedFDeriv ℂ m f x₀).cont.continuousAt.comp (by fun_prop)
-        · simpa using hv₀
-      -- Combine: ∃ t with both nonzero
-      obtain ⟨t, hψt, hφt⟩ := (hψ_freq.and_eventually hφ_ev).exists
-      exact ⟨v₀ + t • w₀, hφt, hψt⟩
-    -- w gives exact analyticOrderAt: f_w has order m, g_w has order nn
-    have hf_w_eq : analyticOrderAt (fun t : ℂ => f (x₀ + t • w)) 0 = ↑m := by
-      apply le_antisymm
-      · by_contra hgt; push_neg at hgt
-        have h_succ : (↑(m + 1) : ℕ∞) ≤ analyticOrderAt (fun t : ℂ => f (x₀ + t • w)) 0 := by
-          rwa [show (↑(m + 1) : ℕ∞) = ↑m + 1 from by push_cast; ring,
-            ENat.add_one_le_iff (ENat.coe_ne_top m)]
-        apply hw_f
-        rw [← iteratedDeriv_line_eq_iteratedFDeriv_diag f x₀ w m hf]
-        exact ((natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero
-          (analyticAt_line_restriction f x₀ w hf)).mp h_succ) m (by omega)
-      · exact hf_line w
-    have hg_w_eq : analyticOrderAt (fun t : ℂ => g (x₀ + t • w)) 0 = ↑nn := by
-      apply le_antisymm
-      · by_contra hgt; push_neg at hgt
-        have h_succ : (↑(nn + 1) : ℕ∞) ≤ analyticOrderAt (fun t : ℂ => g (x₀ + t • w)) 0 := by
-          rwa [show (↑(nn + 1) : ℕ∞) = ↑nn + 1 from by push_cast; ring,
-            ENat.add_one_le_iff (ENat.coe_ne_top nn)]
-        apply hw_g
-        rw [← iteratedDeriv_line_eq_iteratedFDeriv_diag g x₀ w nn hg]
-        exact ((natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero
-          (analyticAt_line_restriction g x₀ w hg)).mp h_succ) nn (by omega)
-      · exact hg_line w
-    -- Product has analyticOrderAt = m + nn
-    have hfg_w_eq : analyticOrderAt (fun t : ℂ => f (x₀ + t • w) * g (x₀ + t • w)) 0 =
-        ↑(m + nn) := by
-      calc analyticOrderAt (fun t : ℂ => f (x₀ + t • w) * g (x₀ + t • w)) 0
-          = analyticOrderAt (fun t => f (x₀ + t • w)) 0 +
-            analyticOrderAt (fun t => g (x₀ + t • w)) 0 :=
-            analyticOrderAt_mul (analyticAt_line_restriction f x₀ w hf)
-              (analyticAt_line_restriction g x₀ w hg)
-        _ = ↑m + ↑nn := by rw [hf_w_eq, hg_w_eq]
-        _ = ↑(m + nn) := by push_cast; ring
-    -- The (m+nn)-th iteratedDeriv of the line restriction is nonzero
-    intro h_eq
-    have h_diag_zero : (iteratedFDeriv ℂ (m + nn) (fun z => f z * g z) x₀) (fun _ => w) = 0 :=
-      by simp [h_eq]
-    rw [← iteratedDeriv_line_eq_iteratedFDeriv_diag _ x₀ w _ hfg] at h_diag_zero
-    -- But analyticOrderAt = m+nn means iteratedDeriv (m+nn) ≠ 0
-    have h_below : ∀ i < m + nn + 1,
-        iteratedDeriv i (fun t : ℂ => f (x₀ + t • w) * g (x₀ + t • w)) 0 = 0 := by
-      intro i hi
-      rcases Nat.lt_succ_iff_lt_or_eq.mp hi with hi' | hi'
-      · exact ((natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero
-          (analyticAt_line_restriction _ x₀ w hfg)).mp (le_of_eq hfg_w_eq.symm)) i hi'
-      · exact hi' ▸ h_diag_zero
-    have h_succ := (natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero
-      (analyticAt_line_restriction _ x₀ w hfg)).mpr h_below
-    rw [hfg_w_eq] at h_succ
-    exact absurd (by exact_mod_cast h_succ : m + nn + 1 ≤ m + nn) (by omega)
-  exact le_antisymm h_le h_ge
-
-/-- Identity theorem for multi-variable analytic functions: if `f` is analytic on a
-connected open set and not identically zero, then `f` has finite vanishing order everywhere.
-
-The proof shows `{z ∈ U : order f z = ⊤}` is clopen: closed because it is
-`⋂_n {iteratedFDeriv n f = 0}`, and open because at a point of infinite order the
-power series is identically zero, so `f = 0` on a ball, hence all derivatives vanish
-throughout that ball. -/
-private lemma order_ne_top_of_ne_zero
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (U : Set E) (hU_open : IsOpen U) (hU_conn : IsConnected U)
-    (f : E → ℂ) (hf : AnalyticOnNhd ℂ f U)
-    (hne : ∃ z ∈ U, f z ≠ 0) :
-    ∀ z ∈ U, order ℂ f z ≠ ⊤ := by
-  -- Contrapositive: if order = ⊤ somewhere, f = 0 on all of U.
-  by_contra hpush
-  push_neg at hpush
-  obtain ⟨z₀, hz₀, hord⟩ := hpush
-  -- order = ⊤ means all iteratedFDeriv vanish at z₀
-  have hderiv_zero : ∀ n, iteratedFDeriv ℂ n f z₀ = 0 :=
-    (order_eq_top_iff (𝕜 := ℂ)).mp hord
-  -- f is analytic at z₀, so it has a convergent power series
-  obtain ⟨p, r, hp⟩ := hf z₀ hz₀
-  -- All terms of ∑ (n!)⁻¹ • iteratedFDeriv n f z₀ (fun _ => y) vanish
-  -- so the sum (= f(z₀ + y)) is 0 for y near 0
-  have hf_zero : f =ᶠ[𝓝 z₀] 0 := by
-    rw [eventuallyEq_iff_exists_mem]
-    refine ⟨{z | z - z₀ ∈ Metric.eball 0 r}, ?_, fun z hz => ?_⟩
-    · apply mem_nhds_iff.mpr
-      refine ⟨{z | z - z₀ ∈ Metric.eball 0 r}, le_refl _, ?_, ?_⟩
-      · exact Metric.isOpen_eball.preimage (continuous_id.sub continuous_const)
-      · simp [Metric.mem_eball, hp.r_pos]
-    · have hsum := hp.hasSum_iteratedFDeriv hz
-      simp only [hderiv_zero, ContinuousMultilinearMap.zero_apply, smul_zero,
-        Pi.zero_apply] at hsum
-      rw [show z₀ + (z - z₀) = z from by abel] at hsum
-      exact hsum.unique hasSum_zero
-  -- By identity principle: f = 0 on all of U
-  have hf_eq : Set.EqOn f 0 U :=
-    hf.eqOn_zero_of_preconnected_of_eventuallyEq_zero
-      hU_conn.isPreconnected hz₀ hf_zero
-  -- This contradicts the existence of z with f z ≠ 0
-  obtain ⟨z, hzU, hfz⟩ := hne
-  exact hfz (hf_eq hzU)
-
-/-- Upper semi-continuity of vanishing order: `{z ∈ U | order f z ≤ n}` is open
-for `f` analytic on open `U`. At a point where `order ≤ n`, some `iteratedFDeriv k f`
-is nonzero. By continuity of `iteratedFDeriv` (analytic ⟹ C^∞), this persists nearby. -/
-private lemma isOpen_order_le_inter
-    (s : ℕ) (U : Set (Fin s → ℂ)) (hU_open : IsOpen U)
-    (f : (Fin s → ℂ) → ℂ) (hf : AnalyticOnNhd ℂ f U) (n : ℕ∞) :
-    IsOpen {z ∈ U | order ℂ f z ≤ n} := by
-  -- Handle n = ⊤: {order ≤ ⊤} = U, which is open
-  rcases eq_or_ne n ⊤ with rfl | hn_ne
-  · convert hU_open using 1; ext z; simp [Set.mem_sep_iff]
-  apply isOpen_iff_forall_mem_open.mpr
-  intro z₀ ⟨hz₀U, hz₀_le⟩
-  -- order ℂ f z₀ ≤ n < ⊤ means order is finite
-  have hfin : ∃ m, iteratedFDeriv ℂ m f z₀ ≠ 0 := by
-    rw [order] at hz₀_le
-    split_ifs at hz₀_le with h
-    · exact h
-    · exact absurd (le_antisymm hz₀_le le_top).symm hn_ne
-  set k := Nat.find hfin
-  have hk_ne : iteratedFDeriv ℂ k f z₀ ≠ 0 := Nat.find_spec hfin
-  have hk_le : (k : ℕ∞) ≤ n := by
-    have hord : order ℂ f z₀ = ↑k := by rw [order, dif_pos hfin]
-    rw [← hord]; exact hz₀_le
-  -- U ∩ {iteratedFDeriv k f ≠ 0} is open and contains z₀
-  have hcont : ContinuousOn (iteratedFDeriv ℂ k f) U :=
-    (hf.iteratedFDeriv_of_isOpen hU_open k).continuousOn
-  set W := U ∩ (iteratedFDeriv ℂ k f) ⁻¹' {x | x ≠ 0}
-  have hW_open : IsOpen W := hcont.isOpen_inter_preimage hU_open isOpen_ne
-  have hW_sub : W ⊆ {z ∈ U | order ℂ f z ≤ n} := by
-    intro z ⟨hzU, hzk⟩
-    refine ⟨hzU, le_trans ?_ hk_le⟩
-    rw [order, dif_pos ⟨k, hzk⟩]
-    exact Nat.cast_le.mpr (Nat.find_min' _ hzk)
-  exact ⟨W, hW_sub, hW_open, hz₀U, hk_ne⟩
-
-/-- The set `{z ∈ U | order f z < b}` is open for `f` analytic on open `U`. -/
-private lemma isOpen_order_lt_inter
-    (s : ℕ) (U : Set (Fin s → ℂ)) (hU_open : IsOpen U)
-    (f : (Fin s → ℂ) → ℂ) (hf : AnalyticOnNhd ℂ f U) (b : ℕ∞) :
-    IsOpen {z ∈ U | order ℂ f z < b} := by
-  -- {order < b} = ⋃ (n : ℕ) (hn : ↑n < b), {order ≤ n} (since order takes values in ℕ∞)
-  -- But more directly: at z₀ with order < b, order(z₀) = k for some k < b.
-  -- Then {order ≤ k} ∩ U is open (isOpen_order_le_inter) and z₀ ∈ it ⊆ {order < b}.
-  apply isOpen_iff_forall_mem_open.mpr
-  intro z₀ ⟨hz₀U, hz₀_lt⟩
-  have hfin : order ℂ f z₀ ≠ ⊤ := ne_top_of_lt hz₀_lt
-  set k := (order ℂ f z₀).toNat
-  have hk : order ℂ f z₀ = ↑k := (ENat.coe_toNat hfin).symm
-  refine ⟨{z ∈ U | order ℂ f z ≤ ↑k}, fun z ⟨hzU, hle⟩ => ⟨hzU, lt_of_le_of_lt hle ?_⟩,
-         isOpen_order_le_inter s U hU_open f hf ↑k, hz₀U, hk ▸ le_refl _⟩
-  rw [← hk]; exact hz₀_lt
 
 /-- **Order additivity lemma** (Thesis Lemma 4.1).
 
@@ -659,8 +286,8 @@ theorem order_additivity_holomorphic
     set A' := {z ∈ U | order ℂ f z ≤ a}
     set B' := {z ∈ U | order ℂ g z < b}
     -- A' and B' are open, cover U, have empty intersection in U
-    have hA'_open := isOpen_order_le_inter s U hU_open f hf_an a
-    have hB'_open := isOpen_order_lt_inter s U hU_open g hg_an b
+    have hA'_open := isOpen_order_le_inter U hU_open f hf_an a
+    have hB'_open := isOpen_order_lt_inter U hU_open g hg_an b
     have hcov : U ⊆ A' ∪ B' := by
       intro z hz
       by_cases h : order ℂ f z ≤ a
@@ -680,8 +307,8 @@ theorem order_additivity_holomorphic
     obtain ⟨z₁, hz₁, hlt⟩ := hpush
     set A' := {z ∈ U | order ℂ g z ≤ b}
     set B' := {z ∈ U | order ℂ f z < a}
-    have hA'_open := isOpen_order_le_inter s U hU_open g hg_an b
-    have hB'_open := isOpen_order_lt_inter s U hU_open f hf_an a
+    have hA'_open := isOpen_order_le_inter U hU_open g hg_an b
+    have hB'_open := isOpen_order_lt_inter U hU_open f hf_an a
     have hcov : U ⊆ A' ∪ B' := by
       intro z hz
       by_cases h : order ℂ g z ≤ b
@@ -947,6 +574,41 @@ theorem norm_identity_elim
     Algebra.norm_algebraMap_of_basis (AdjoinRoot.powerBasis' hm).basis] at hnorm
   simp only [Fintype.card_fin, AdjoinRoot.powerBasis'_dim] at hnorm
   exact ⟨Algebra.norm R (AdjoinRoot.mk h b), hnorm.symm⟩
+
+/-- **D2 wiring (Phase D validation).** Given a monic `h` (the Weierstrass polynomial — here
+arbitrary, i.e. a *stub* Weierstrass output) and a witness `P ∈ ⟨h, h'⟩` of constant vanishing
+order on a connected `S`, the resultant `res(h, h')` (= discriminant up to leading coefficient)
+has constant order on `S`.
+
+This is the algebraic spine of Phase D, assembled entirely from **proven** lemmas:
+`norm_identity_elim` (`P^m = res(h,h')·Q`, generic over any `CommRing`) + the reverse-order bridge
+`order_invariant_factor_of_mul`. It validates that "witness order-invariance ⟹ discriminant
+order-invariance" closes. The eventual proof instantiates `h` with the Weierstrass polynomial over
+the holomorphic germ ring (Phase B); here the wiring is checked over `MvPolynomial`, where the
+bridge already exists. -/
+theorem disc_order_invariant_of_witness {n : ℕ}
+    (S : Set (Fin n → ℝ)) (hS : IsPreconnected S)
+    (h : Polynomial (MvPolyR n)) (hh_monic : h.Monic)
+    (P : MvPolyR n) (hP_ne : P ≠ 0)
+    (hP_mem : Polynomial.C P ∈
+      Ideal.span ({h, Polynomial.derivative h} : Set (Polynomial (MvPolyR n))))
+    (hres_ne : Polynomial.resultant h (Polynomial.derivative h) ≠ 0)
+    (hP_oi : OrderInvariantMv P S) :
+    OrderInvariantMv (Polynomial.resultant h (Polynomial.derivative h)) S := by
+  obtain ⟨Q, hQ⟩ := norm_identity_elim (MvPolyR n) h (Polynomial.derivative h) hh_monic P hP_mem
+  have hpow : ∀ m : ℕ, OrderInvariantMv (P ^ m) S := by
+    intro m
+    induction m with
+    | zero =>
+      intro a _ b _
+      rw [pow_zero, (polyOrder_zero_iff n 1 a).mpr (by simp),
+        (polyOrder_zero_iff n 1 b).mpr (by simp)]
+    | succ k ih => rw [pow_succ]; exact order_invariant_mul_mv S _ P ih hP_oi
+  have hPdeg_oi : OrderInvariantMv (Polynomial.resultant h (Polynomial.derivative h) * Q) S := by
+    rw [← hQ]; exact hpow h.natDegree
+  have hQ_ne : Q ≠ 0 := fun hQ0 =>
+    pow_ne_zero h.natDegree hP_ne (by rw [hQ, hQ0, mul_zero])
+  exact (order_invariant_factor_of_mul S hS _ Q hres_ne hQ_ne hPdeg_oi).1
 
 /-! ### Complexification of real-analytic functions
 
@@ -1333,7 +995,7 @@ theorem complexify_order_invariant {s : ℕ}
     ∀ᶠ z in 𝓝 (0 : Fin s → ℂ), order ℂ f_ℂ z = ↑μ := by
   -- Step 1: order ≤ μ near 0 (upper semi-continuity)
   have h_le : ∀ᶠ z in 𝓝 (0 : Fin s → ℂ), order ℂ f_ℂ z ≤ ↑μ := by
-    have h_open := isOpen_order_le_inter s Set.univ isOpen_univ f_ℂ hf_an ↑μ
+    have h_open := isOpen_order_le_inter Set.univ isOpen_univ f_ℂ hf_an ↑μ
     exact Filter.Eventually.mono (h_open.mem_nhds ⟨Set.mem_univ _, le_of_eq hf_order_zero⟩)
       fun z ⟨_, h⟩ => h
   -- Step 2: order ≥ μ near 0 (identity theorem on each derivative of order < μ)
@@ -1438,6 +1100,26 @@ theorem real_restriction_analytic {s : ℕ}
   have h2 : AnalyticAt ℝ (fun x => ψ (realEmbedding s x)) x₀ :=
     h1.comp ((realEmbedding s).analyticAt x₀)
   exact (Complex.reCLM.analyticAt _).comp h2
+
+/-- **Phase F1 (Schwarz real recovery).** A holomorphic section `ψ` that is **real-valued on the
+real slice** near `x₀` restricts to a real-analytic `η := Re ∘ ψ ∘ realEmbedding`, and `ψ` is
+recovered from `η` on the real slice: `(η x : ℂ) = ψ (realEmbedding s x)` for `x` near `x₀`.
+
+This packages `real_restriction_analytic` (the Schwarz-reflection content) with the trivial
+"real part recovers the value" fact, giving F3 exactly the real root functions plus the bridge that
+turns the complex Zariski factorization into a statement about the real roots of `g(·,0)`. -/
+theorem real_section_of_real_valued {s : ℕ}
+    (ψ : (Fin s → ℂ) → ℂ) (x₀ : Fin s → ℝ)
+    (hψ : AnalyticAt ℂ ψ (realEmbedding s x₀))
+    (hreal : ∀ᶠ x in 𝓝 x₀, (ψ (realEmbedding s x)).im = 0) :
+    AnalyticAt ℝ (fun x : Fin s → ℝ => (ψ (realEmbedding s x)).re) x₀ ∧
+    (∀ᶠ x in 𝓝 x₀,
+      ((ψ (realEmbedding s x)).re : ℂ) = ψ (realEmbedding s x)) := by
+  refine ⟨real_restriction_analytic ψ x₀ hψ, ?_⟩
+  filter_upwards [hreal] with x hx
+  have h := Complex.re_add_im (ψ (realEmbedding s x))
+  rw [hx] at h
+  simpa using h
 
 /-- **Complexification of a pseudopolynomial family** (decomposition, hypothesis side, PROVED).
 
@@ -1555,7 +1237,34 @@ The proof requires (eventual decomposition): complexification (`analyticAt_compl
 NOT in Mathlib; norm identity on the monic `h` (`norm_identity_elim` — proved) feeding the
 reverse-order bridge `order_invariant_factor_of_mul` (proved); Zariski's 1975 root sections —
 NOT in Mathlib; Schwarz reflection to real-analytic. -/
-axiom analytic_pseudopoly_delineable
+axiom analytic_pseudopoly_delineable_nonsep
+    (s e : ℕ)
+    (g : (Fin s → ℝ) × (Fin e → ℝ) → Polynomial ℝ)
+    (hg_coeff_an : ∀ i : ℕ, AnalyticAt ℝ (fun w => (g w).coeff i) 0)
+    (hg_pos : 0 < (g 0).natDegree)
+    (hg_deg : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), (g (y, 0)).natDegree = (g 0).natDegree)
+    (P : (Fin s → ℝ) × (Fin e → ℝ) → ℝ)
+    (hP_an : AnalyticAt ℝ P 0)
+    (hP_ne : order ℝ P 0 ≠ ⊤)
+    (hP_elim : ∀ᶠ w in 𝓝 (0 : (Fin s → ℝ) × (Fin e → ℝ)),
+      Polynomial.C (P w) ∈
+        Ideal.span ({g w, Polynomial.derivative (g w)} : Set (Polynomial ℝ)))
+    (hP_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), order ℝ P (y, 0) = order ℝ P 0)
+    (hnonsep : ¬ (g 0).Separable) :
+    ∃ (V : Set (Fin s → ℝ)), IsOpen V ∧ (0 : Fin s → ℝ) ∈ V ∧
+      ∃ (k : ℕ) (η : Fin k → (Fin s → ℝ) → ℝ) (mult : Fin k → ℕ),
+        (∀ i, AnalyticOn ℝ (η i) V) ∧
+        (∀ y ∈ V, ∀ i j : Fin k, i < j → η i y < η j y) ∧
+        (∀ y ∈ V, ∀ α : ℝ, (g (y, 0)).IsRoot α ↔ ∃ i : Fin k, α = η i y) ∧
+        (∀ i, 0 < mult i) ∧
+        (∀ y ∈ V, ∀ i, (g (y, 0)).rootMultiplicity (η i y) = mult i)
+
+/-- **Weierstrass–Zariski delineation** (full statement). The separable case (`g 0` squarefree)
+is the easy case — all roots simple, handled by the analytic IFT
+(`separable_family_locally_delineable`). The genuinely deep case (`¬ (g 0).Separable`, i.e.
+`g(0,0)` has a multiple root) is `analytic_pseudopoly_delineable_nonsep`. This case-split narrows
+the remaining axiom to the multiple-root case. -/
+theorem analytic_pseudopoly_delineable
     (s e : ℕ)
     (g : (Fin s → ℝ) × (Fin e → ℝ) → Polynomial ℝ)
     (hg_coeff_an : ∀ i : ℕ, AnalyticAt ℝ (fun w => (g w).coeff i) 0)
@@ -1574,7 +1283,13 @@ axiom analytic_pseudopoly_delineable
         (∀ y ∈ V, ∀ i j : Fin k, i < j → η i y < η j y) ∧
         (∀ y ∈ V, ∀ α : ℝ, (g (y, 0)).IsRoot α ↔ ∃ i : Fin k, α = η i y) ∧
         (∀ i, 0 < mult i) ∧
-        (∀ y ∈ V, ∀ i, (g (y, 0)).rootMultiplicity (η i y) = mult i)
+        (∀ y ∈ V, ∀ i, (g (y, 0)).rootMultiplicity (η i y) = mult i) := by
+  by_cases hsep : (g 0).Separable
+  · have hcoeff' : ∀ i, AnalyticAt ℝ (fun y => (g (y, 0)).coeff i) 0 := fun i =>
+      (hg_coeff_an i).comp_of_eq (analyticAt_id.prod analyticAt_const) rfl
+    exact separable_family_locally_delineable (fun y => g (y, 0)) 0 hg_deg hg_pos hcoeff' hsep
+  · exact analytic_pseudopoly_delineable_nonsep s e g hg_coeff_an hg_pos hg_deg P hP_an hP_ne
+      hP_elim hP_oi hsep
 
 /-- The full vanishing order at a delineable root equals the root multiplicity.
 

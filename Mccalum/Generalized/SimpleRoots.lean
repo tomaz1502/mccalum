@@ -52,6 +52,138 @@ open Polynomial MvPolynomial Set Classical
 
 variable {n : ℕ}
 
+/-! ### Generic analytic implicit function theorem for a scalar equation -/
+
+/-- **Analytic IFT for a scalar equation** (generic root section).
+
+If `F : (ℝⁿ × ℝ) → ℝ` is analytic at `(y₀, t₀)`, `F(y₀, t₀) = 0`, and the partial derivative
+`∂F/∂t` at `(y₀, t₀)` (i.e. `fderiv F (y₀,t₀) (0,1)`) is nonzero, then `F(y, t) = 0` has a unique
+local analytic solution `t = φ(y)`: there are a neighborhood `U ∋ y₀`, an analytic `φ` with
+`φ(y₀) = t₀`, and `ε > 0` such that `F(y, φ y) = 0` on `U`, and `φ(y)` is the unique root within
+`ε` of `t₀`.
+
+`ift_local_root_section` is the special case `F(y, t) = (specialize f y).eval t`. The proof is the
+analytic inverse function theorem applied to `G(y,t) = (y, F(y,t))`. -/
+theorem analytic_root_section
+    (F : (Fin n → ℝ) × ℝ → ℝ) (y₀ : Fin n → ℝ) (t₀ : ℝ)
+    (hF_an : AnalyticAt ℝ F (y₀, t₀))
+    (hroot : F (y₀, t₀) = 0)
+    (hsimple : fderiv ℝ F (y₀, t₀) (0, 1) ≠ 0) :
+    ∃ (U : Set (Fin n → ℝ)) (φ : (Fin n → ℝ) → ℝ) (ε : ℝ),
+      IsOpen U ∧ y₀ ∈ U ∧
+      AnalyticOn ℝ φ U ∧
+      φ y₀ = t₀ ∧
+      0 < ε ∧
+      (∀ y ∈ U, F (y, φ y) = 0) ∧
+      (∀ y ∈ U, ∀ t, F (y, t) = 0 → |t - t₀| < ε → t = φ y) := by
+  let Ep := (Fin n → ℝ) × ℝ
+  let G : Ep → Ep := fun p => (p.1, F p)
+  set c := fderiv ℝ F (y₀, t₀) (0, 1) with hc_def
+  have hc_ne : c ≠ 0 := hsimple
+  have hF_diff : DifferentiableAt ℝ F (y₀, t₀) := hF_an.differentiableAt
+  have hF_partial : ∀ k : ℝ, fderiv ℝ F (y₀, t₀) (0, k) = c * k := by
+    intro k
+    have hk : ((0 : Fin n → ℝ), k) = k • ((0 : Fin n → ℝ), (1 : ℝ)) := by
+      ext i <;> simp
+    rw [hk, map_smul, ← hc_def, smul_eq_mul, mul_comm]
+  have hG_an : AnalyticAt ℝ G (y₀, t₀) := analyticAt_fst.prod hF_an
+  have hG_fderiv_eq : fderiv ℝ G (y₀, t₀) =
+      (ContinuousLinearMap.fst ℝ (Fin n → ℝ) ℝ).prod (fderiv ℝ F (y₀, t₀)) := by
+    show fderiv ℝ (fun x : Ep => (x.1, F x)) (y₀, t₀) = _
+    rw [DifferentiableAt.fderiv_prodMk differentiableAt_fst hF_diff, fderiv_fst]
+  have hDG_val : ∀ u : Ep, fderiv ℝ G (y₀, t₀) u = (u.1, fderiv ℝ F (y₀, t₀) u) := by
+    intro u; rw [hG_fderiv_eq]; rfl
+  have hDG_bij : Function.Bijective (fderiv ℝ G (y₀, t₀)) := by
+    constructor
+    · intro v w hvw
+      rw [hDG_val v, hDG_val w] at hvw
+      have h1 : v.1 = w.1 := (Prod.mk.inj hvw).1
+      have h2 : fderiv ℝ F (y₀, t₀) v = fderiv ℝ F (y₀, t₀) w := (Prod.mk.inj hvw).2
+      have h3 : fderiv ℝ F (y₀, t₀) (0, v.2 - w.2) = 0 := by
+        rw [show ((0 : Fin n → ℝ), v.2 - w.2) = v - w from
+          Prod.ext (sub_eq_zero.mpr h1).symm rfl, map_sub, sub_eq_zero.mpr h2]
+      rw [hF_partial] at h3
+      exact Prod.ext h1 (sub_eq_zero.mp ((mul_eq_zero.mp h3).resolve_left hc_ne))
+    · intro ⟨v, w⟩
+      refine ⟨(v, (w - fderiv ℝ F (y₀, t₀) (v, 0)) / c), ?_⟩
+      rw [hDG_val]; exact Prod.ext rfl (by
+        show fderiv ℝ F (y₀, t₀) (v, (w - fderiv ℝ F (y₀, t₀) (v, 0)) / c) = w
+        rw [show (v, (w - fderiv ℝ F (y₀, t₀) (v, 0)) / c) =
+          ((v : Fin n → ℝ), (0 : ℝ)) + ((0 : Fin n → ℝ),
+            (w - fderiv ℝ F (y₀, t₀) (v, 0)) / c) from Prod.ext (by simp) (by simp),
+          map_add, hF_partial]
+        field_simp; linarith)
+  let i : Ep ≃L[ℝ] Ep :=
+    (LinearEquiv.ofBijective (fderiv ℝ G (y₀, t₀)).toLinearMap hDG_bij).toContinuousLinearEquiv
+  have hi : fderiv ℝ G (y₀, t₀) = i.toContinuousLinearMap :=
+    ContinuousLinearMap.ext fun _ => rfl
+  have hG_strict : HasStrictFDerivAt G (i : Ep →L[ℝ] Ep) (y₀, t₀) :=
+    hi ▸ hG_an.hasStrictFDerivAt
+  let R := hG_strict.toOpenPartialHomeomorph G
+  have hR_source : (y₀, t₀) ∈ R.source := HasStrictFDerivAt.mem_toOpenPartialHomeomorph_source _
+  have hG_val : G (y₀, t₀) = (y₀, (0 : ℝ)) := Prod.ext rfl hroot
+  have hR_target_mem : (y₀, (0 : ℝ)) ∈ R.target := by
+    have : G (y₀, t₀) ∈ R.target := R.map_source hR_source
+    rwa [hG_val] at this
+  have hR_an_symm : AnalyticAt ℝ R.symm (y₀, (0 : ℝ)) := by
+    have : AnalyticAt ℝ R.symm (G (y₀, t₀)) := R.analyticAt_symm' hR_source hG_an hi
+    rwa [hG_val] at this
+  obtain ⟨r_an, hr_an_pos, hR_ball_an⟩ := hR_an_symm.exists_ball_analyticOnNhd
+  obtain ⟨δ_a, δ_y, hδ_a, hδ_y, hball_src⟩ : ∃ δ_a δ_y : ℝ, 0 < δ_a ∧ 0 < δ_y ∧
+      Metric.ball y₀ δ_a ×ˢ Metric.ball t₀ δ_y ⊆ R.source := by
+    obtain ⟨δ, hδ, hball⟩ := Metric.isOpen_iff.mp R.open_source (y₀, t₀) hR_source
+    exact ⟨δ / 2, δ / 2, half_pos hδ, half_pos hδ, fun ⟨a, y⟩ ⟨ha, hy⟩ => hball (
+      max_lt (lt_trans (Metric.mem_ball.mp ha) (half_lt_self hδ))
+             (lt_trans (Metric.mem_ball.mp hy) (half_lt_self hδ)))⟩
+  obtain ⟨δ_ta, δ_t0, hδ_ta, hδ_t0, hball_tgt⟩ : ∃ δ_ta δ_t0 : ℝ, 0 < δ_ta ∧ 0 < δ_t0 ∧
+      Metric.ball y₀ δ_ta ×ˢ Metric.ball (0 : ℝ) δ_t0 ⊆ R.target := by
+    obtain ⟨δ, hδ, hball⟩ := Metric.isOpen_iff.mp R.open_target (y₀, 0) hR_target_mem
+    exact ⟨δ / 2, δ / 2, half_pos hδ, half_pos hδ, fun ⟨a, y⟩ ⟨ha, hy⟩ => hball (
+      max_lt (lt_trans (Metric.mem_ball.mp ha) (half_lt_self hδ))
+             (lt_trans (Metric.mem_ball.mp hy) (half_lt_self hδ)))⟩
+  let φ₀ : (Fin n → ℝ) → ℝ := fun a => (R.symm (a, 0)).2
+  let U₀ := Metric.ball y₀ (min (min δ_ta δ_a) r_an)
+  have hφ₀_val : φ₀ y₀ = t₀ := by
+    show (R.symm (y₀, 0)).2 = t₀
+    have h : R.symm (G (y₀, t₀)) = (y₀, t₀) := R.left_inv hR_source
+    rw [hG_val] at h; exact congrArg Prod.snd h
+  have hφ₀_root : ∀ a, (a, (0 : ℝ)) ∈ R.target → F (a, φ₀ a) = 0 := by
+    intro a hmem
+    have hright : G (R.symm (a, 0)) = (a, 0) := R.right_inv hmem
+    have h1 : (R.symm (a, 0)).1 = a := congrArg Prod.fst hright
+    have h2 : F (R.symm (a, 0)) = 0 := congrArg Prod.snd hright
+    show F (a, (R.symm (a, 0)).2) = 0
+    rw [show (a, (R.symm (a, 0)).2) = R.symm (a, 0) from Prod.ext h1.symm rfl]; exact h2
+  have hφ₀_an : AnalyticOn ℝ φ₀ U₀ := by
+    intro a ha
+    have ha_r : dist a y₀ < r_an :=
+      lt_of_lt_of_le (Metric.mem_ball.mp ha) (min_le_right _ _)
+    have hR_an_local : AnalyticAt ℝ R.symm (a, (0 : ℝ)) := by
+      apply hR_ball_an; rw [Metric.mem_ball, Prod.dist_eq]
+      exact max_lt ha_r (by rw [dist_self]; exact hr_an_pos)
+    have hpair : AnalyticAt ℝ (fun x : Fin n → ℝ => (x, (0 : ℝ))) a :=
+      (analyticAt_id (𝕜 := ℝ)).prod analyticAt_const
+    exact (analyticAt_snd.comp (hR_an_local.comp_of_eq' hpair rfl)).analyticWithinAt
+  have hφ₀_unique : ∀ a ∈ U₀, ∀ y, F (a, y) = 0 →
+      |y - t₀| < δ_y → y = φ₀ a := by
+    intro a ha y hy_root hy_close
+    have ha_ball : a ∈ Metric.ball y₀ δ_a :=
+      Metric.mem_ball.mpr (lt_of_lt_of_le (lt_of_lt_of_le (Metric.mem_ball.mp ha)
+        (min_le_left _ _)) (min_le_right _ _))
+    have hy_ball : y ∈ Metric.ball t₀ δ_y := Metric.mem_ball.mpr (by rwa [Real.dist_eq])
+    have ha_source : (a, y) ∈ R.source := hball_src ⟨ha_ball, hy_ball⟩
+    have hGay : G (a, y) = (a, (0 : ℝ)) := Prod.ext rfl hy_root
+    show y = (R.symm (a, 0)).2
+    have hinv : R.symm (G (a, y)) = (a, y) := R.left_inv ha_source
+    rw [hGay] at hinv; exact (congrArg Prod.snd hinv).symm
+  exact ⟨U₀, φ₀, δ_y, Metric.isOpen_ball,
+    Metric.mem_ball_self (lt_min (lt_min hδ_ta hδ_a) hr_an_pos),
+    hφ₀_an, hφ₀_val, hδ_y,
+    fun a ha => hφ₀_root a (hball_tgt ⟨Metric.mem_ball.mpr (lt_of_lt_of_le
+      (lt_of_lt_of_le (Metric.mem_ball.mp ha) (min_le_left _ _)) (min_le_left _ _)),
+      Metric.mem_ball_self hδ_t0⟩),
+    hφ₀_unique⟩
+
 /-! ### Axiom 1: Implicit Function Theorem for polynomial roots -/
 
 /-- **Theorem** (IFT for simple polynomial roots).
@@ -246,6 +378,318 @@ theorem ift_local_root_section
       (lt_of_lt_of_le (Metric.mem_ball.mp ha) (min_le_left _ _)) (min_le_left _ _)),
       Metric.mem_ball_self hδ_t0⟩),
     hφ₀_unique⟩
+
+/-! ### Analytic families of polynomials -/
+
+/-- Joint analyticity of the evaluation of an analytic family of polynomials.
+If the coefficients of `fam y` are analytic at `y₀` and `deg (fam y) ≤ N` near `y₀`, then
+`(y, t) ↦ (fam y).eval t` is analytic at `(y₀, t₀)`. -/
+theorem fam_eval_analyticAt {s : ℕ} (fam : (Fin s → ℝ) → Polynomial ℝ) (N : ℕ)
+    (y₀ : Fin s → ℝ) (t₀ : ℝ)
+    (hdeg : ∀ᶠ y in nhds y₀, (fam y).natDegree ≤ N)
+    (hcoeff : ∀ i, AnalyticAt ℝ (fun y => (fam y).coeff i) y₀) :
+    AnalyticAt ℝ (fun p : (Fin s → ℝ) × ℝ => (fam p.1).eval p.2) (y₀, t₀) := by
+  have hsum_an : AnalyticAt ℝ
+      (fun p : (Fin s → ℝ) × ℝ => ∑ i ∈ Finset.range (N + 1), (fam p.1).coeff i * p.2 ^ i)
+      (y₀, t₀) := by
+    apply Finset.analyticAt_fun_sum
+    intro i _
+    have hc : AnalyticAt ℝ (fun p : (Fin s → ℝ) × ℝ => (fam p.1).coeff i) (y₀, t₀) :=
+      (hcoeff i).comp_of_eq analyticAt_fst rfl
+    exact hc.mul (analyticAt_snd.pow i)
+  refine hsum_an.congr ?_
+  have htend : Filter.Tendsto (Prod.fst : (Fin s → ℝ) × ℝ → (Fin s → ℝ))
+      (nhds (y₀, t₀)) (nhds y₀) := continuousAt_fst
+  have hdeg' : ∀ᶠ p : (Fin s → ℝ) × ℝ in nhds (y₀, t₀), (fam p.1).natDegree ≤ N :=
+    htend.eventually hdeg
+  filter_upwards [hdeg'] with p hp
+  exact (Polynomial.eval_eq_sum_range' (Nat.lt_succ_of_le hp) p.2).symm
+
+/-- The `t`-partial derivative of the evaluation of an analytic family equals the evaluation of
+the derivative polynomial: `∂ₜ[(fam y).eval t] = (fam y₀)'.eval t₀` at `(y₀, t₀)`. -/
+theorem fam_eval_fderiv_t {s : ℕ} (fam : (Fin s → ℝ) → Polynomial ℝ) (y₀ : Fin s → ℝ) (t₀ : ℝ)
+    (hH_diff : DifferentiableAt ℝ (fun p : (Fin s → ℝ) × ℝ => (fam p.1).eval p.2) (y₀, t₀)) :
+    fderiv ℝ (fun p : (Fin s → ℝ) × ℝ => (fam p.1).eval p.2) (y₀, t₀) (0, 1)
+      = (Polynomial.derivative (fam y₀)).eval t₀ := by
+  set H : (Fin s → ℝ) × ℝ → ℝ := fun p => (fam p.1).eval p.2 with hH_def
+  set c := (Polynomial.derivative (fam y₀)).eval t₀ with hc_def
+  have hderiv : HasDerivAt (fun t => H (y₀, t)) c t₀ := (fam y₀).hasDerivAt t₀
+  have hι : DifferentiableAt ℝ (fun t : ℝ => ((y₀ : Fin s → ℝ), t)) t₀ :=
+    DifferentiableAt.prodMk (differentiableAt_const y₀) differentiableAt_id
+  have hchain : fderiv ℝ (fun t => H (y₀, t)) t₀ =
+      (fderiv ℝ H (y₀, t₀)).comp (fderiv ℝ (fun t : ℝ => ((y₀ : Fin s → ℝ), t)) t₀) :=
+    (hH_diff.hasFDerivAt.comp t₀ hι.hasFDerivAt).fderiv
+  have hι_1 : fderiv ℝ (fun t : ℝ => ((y₀ : Fin s → ℝ), t)) t₀ 1 = (0, 1) := by
+    have hfd : HasFDerivAt (fun t : ℝ => ((y₀ : Fin s → ℝ), t))
+        ((0 : ℝ →L[ℝ] (Fin s → ℝ)).prod (ContinuousLinearMap.id ℝ ℝ)) t₀ :=
+      HasFDerivAt.prodMk (hasFDerivAt_const y₀ t₀) (hasFDerivAt_id t₀)
+    rw [hfd.fderiv]; simp
+  have hc1 : fderiv ℝ (fun t => H (y₀, t)) t₀ 1 = c := by
+    rw [hderiv.hasFDerivAt.fderiv, ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul, one_mul]
+  calc fderiv ℝ H (y₀, t₀) (0, 1)
+      = fderiv ℝ H (y₀, t₀) (fderiv ℝ (fun t : ℝ => ((y₀ : Fin s → ℝ), t)) t₀ 1) := by rw [hι_1]
+    _ = ((fderiv ℝ H (y₀, t₀)).comp
+          (fderiv ℝ (fun t : ℝ => ((y₀ : Fin s → ℝ), t)) t₀)) 1 := rfl
+    _ = fderiv ℝ (fun t => H (y₀, t)) t₀ 1 := by rw [← hchain]
+    _ = c := hc1
+
+/-- The evaluation of an analytic family is continuous on `W ×ˢ univ` for some open `W ∋ y₀`
+(where the coefficients are analytic and the degree is `≤ d`). -/
+theorem fam_eval_continuousOn {s : ℕ} (fam : (Fin s → ℝ) → Polynomial ℝ) (y₀ : Fin s → ℝ) (d : ℕ)
+    (hdeg : ∀ᶠ y in nhds y₀, (fam y).natDegree ≤ d)
+    (hcoeff : ∀ i, AnalyticAt ℝ (fun y => (fam y).coeff i) y₀) :
+    ∃ W : Set (Fin s → ℝ), IsOpen W ∧ y₀ ∈ W ∧
+      ContinuousOn (fun p : (Fin s → ℝ) × ℝ => (fam p.1).eval p.2) (W ×ˢ Set.univ) := by
+  have hcoeff_nbhd : ∀ i, ∃ W : Set (Fin s → ℝ), IsOpen W ∧ y₀ ∈ W ∧
+      ContinuousOn (fun y => (fam y).coeff i) W := fun i => by
+    obtain ⟨W, hW_sub, hW_open, hW_mem⟩ := eventually_nhds_iff.mp (hcoeff i).eventually_analyticAt
+    exact ⟨W, hW_open, hW_mem, fun y hy => (hW_sub y hy).continuousAt.continuousWithinAt⟩
+  choose Wc hWc_open hWc_mem hWc_cont using hcoeff_nbhd
+  obtain ⟨Wd, hWd_sub, hWd_open, hWd_mem⟩ := eventually_nhds_iff.mp hdeg
+  refine ⟨Wd ∩ ⋂ i ∈ Finset.range (d + 1), Wc i,
+    hWd_open.inter (isOpen_biInter_finset fun i _ => hWc_open i),
+    ⟨hWd_mem, Set.mem_iInter₂.mpr fun i _ => hWc_mem i⟩, ?_⟩
+  have hsum_cont : ContinuousOn
+      (fun p : (Fin s → ℝ) × ℝ => ∑ i ∈ Finset.range (d + 1), (fam p.1).coeff i * p.2 ^ i)
+      ((Wd ∩ ⋂ i ∈ Finset.range (d + 1), Wc i) ×ˢ Set.univ) := by
+    apply continuousOn_finset_sum
+    intro i hi
+    apply ContinuousOn.mul _ (continuous_snd.continuousOn.pow i)
+    exact (hWc_cont i).comp continuous_fst.continuousOn
+      (fun p hp => (Set.mem_iInter₂.mp hp.1.2) i hi)
+  exact hsum_cont.congr fun p hp =>
+    Polynomial.eval_eq_sum_range' (Nat.lt_succ_of_le (hWd_sub p.1 hp.1.1)) p.2
+
+/-- **Separable analytic family is locally delineable.**
+If the family `fam : ℝˢ → ℝ[t]` has analytic coefficients, constant positive degree near `y₀`, and
+`fam y₀` is separable, then on a neighborhood `V` of `y₀` its roots are given by finitely many
+analytic functions, strictly ordered, with multiplicity `1`. This is the analytic-family analogue
+of `separable_locally_delineable`, built on `analytic_root_section`, `fam_eval_analyticAt`,
+`fam_eval_fderiv_t`, `fam_eval_continuousOn`. -/
+theorem separable_family_locally_delineable {s : ℕ}
+    (fam : (Fin s → ℝ) → Polynomial ℝ)
+    (y₀ : Fin s → ℝ)
+    (hdeg : ∀ᶠ y in nhds y₀, (fam y).natDegree = (fam y₀).natDegree)
+    (hpos : 0 < (fam y₀).natDegree)
+    (hcoeff : ∀ i, AnalyticAt ℝ (fun y => (fam y).coeff i) y₀)
+    (hsep : (fam y₀).Separable) :
+    ∃ (V : Set (Fin s → ℝ)), IsOpen V ∧ y₀ ∈ V ∧
+      ∃ (k : ℕ) (η : Fin k → (Fin s → ℝ) → ℝ) (mult : Fin k → ℕ),
+        (∀ i, AnalyticOn ℝ (η i) V) ∧
+        (∀ y ∈ V, ∀ i j : Fin k, i < j → η i y < η j y) ∧
+        (∀ y ∈ V, ∀ α : ℝ, (fam y).IsRoot α ↔ ∃ i : Fin k, α = η i y) ∧
+        (∀ i, 0 < mult i) ∧
+        (∀ y ∈ V, ∀ i, (fam y).rootMultiplicity (η i y) = mult i) := by
+  set d := (fam y₀).natDegree with hd_def
+  set H : (Fin s → ℝ) × ℝ → ℝ := fun p => (fam p.1).eval p.2 with hH_def
+  have hdeg_le : ∀ᶠ y in nhds y₀, (fam y).natDegree ≤ d := hdeg.mono fun y h => h.le
+  set p := fam y₀ with hp_def
+  have hp_sep : p.Separable := hsep
+  have hp_ne : p ≠ 0 := hp_sep.ne_zero
+  set k := p.roots.toFinset.card with hk_def
+  let yiso := p.roots.toFinset.orderIsoOfFin rfl
+  let yr : Fin k → ℝ := fun i => ↑(yiso i)
+  have hyr_root : ∀ i, p.IsRoot (yr i) := fun i =>
+    Polynomial.isRoot_of_mem_roots (Multiset.mem_toFinset.mp (yiso i).2)
+  have hyr_sorted : StrictMono yr := fun _ _ h => yiso.strictMono h
+  have hyr_complete : ∀ z, p.IsRoot z → ∃ i : Fin k, z = yr i := by
+    intro z hz
+    obtain ⟨i, hi⟩ := yiso.surjective
+      ⟨z, Multiset.mem_toFinset.mpr ((Polynomial.mem_roots hp_ne).mpr hz)⟩
+    exact ⟨i, (congr_arg Subtype.val hi).symm⟩
+  have hyr_mult : ∀ i, p.rootMultiplicity (yr i) = 1 := fun i => by
+    have := Polynomial.rootMultiplicity_le_one_of_separable hp_sep (yr i)
+    have := (Polynomial.rootMultiplicity_pos hp_ne).mpr (hyr_root i)
+    omega
+  have hder_spec : ∀ i, (Polynomial.derivative p).eval (yr i) ≠ 0 := by
+    intro i h
+    linarith [(Polynomial.one_lt_rootMultiplicity_iff_isRoot hp_ne).mpr ⟨hyr_root i, h⟩,
+      hyr_mult i]
+  -- IFT at each simple root
+  have hift : ∀ i, ∃ (U : Set (Fin s → ℝ)) (φ : (Fin s → ℝ) → ℝ) (ε : ℝ),
+      IsOpen U ∧ y₀ ∈ U ∧ AnalyticOn ℝ φ U ∧ φ y₀ = yr i ∧ 0 < ε ∧
+      (∀ y ∈ U, (fam y).IsRoot (φ y)) ∧
+      (∀ y ∈ U, ∀ t, (fam y).IsRoot t → |t - yr i| < ε → t = φ y) := fun i => by
+    have hH_an : AnalyticAt ℝ H (y₀, yr i) := fam_eval_analyticAt fam d y₀ (yr i) hdeg_le hcoeff
+    have hsimple' : fderiv ℝ H (y₀, yr i) (0, 1) ≠ 0 := by
+      rw [fam_eval_fderiv_t fam y₀ (yr i) hH_an.differentiableAt]; exact hder_spec i
+    exact analytic_root_section H y₀ (yr i) hH_an (hyr_root i) hsimple'
+  choose Ui φ ε hUi_open ha₀_Ui hφ_an hφ_val hε_pos hφ_root hφ_unique using hift
+  have hφ_cont : ∀ i, ContinuousAt (φ i) y₀ := fun i =>
+    (hφ_an i).continuousOn.continuousAt ((hUi_open i).mem_nhds (ha₀_Ui i))
+  -- (a) all IFT sections defined
+  have h_ift : ∀ᶠ a in nhds y₀, a ∈ ⋂ i, Ui i :=
+    (isOpen_iInter_of_finite fun i => hUi_open i).mem_nhds (Set.mem_iInter.mpr ha₀_Ui)
+  -- (b) ordering preserved
+  have h_ord : ∀ᶠ a in nhds y₀, ∀ i j : Fin k, i < j → φ i a < φ j a := by
+    simp only [Filter.eventually_all]
+    intro i j hij
+    exact (((hφ_cont j).sub (hφ_cont i)).eventually
+      (Ioi_mem_nhds (sub_pos.mpr (by
+        show φ i y₀ < φ j y₀; rw [hφ_val i, hφ_val j]; exact hyr_sorted hij)))).mono
+      fun _ h => sub_pos.mp h
+  -- (c) no extra roots
+  have h_roots : ∀ᶠ a in nhds y₀, ∀ z, (fam a).IsRoot z → ∃ i : Fin k, z = φ i a := by
+    obtain ⟨W, hW_open, hW_mem, hW_cont⟩ := fam_eval_continuousOn fam y₀ d hdeg_le hcoeff
+    let iftBall (i : Fin k) := Set.Ioo (yr i - ε i) (yr i + ε i)
+    have hyr_in_ball : ∀ i, yr i ∈ iftBall i := fun i =>
+      Set.mem_Ioo.mpr ⟨by linarith [hε_pos i], by linarith [hε_pos i]⟩
+    let coeffSum := ∑ i ∈ Finset.range d, |p.coeff i|
+    let lcAbs := |p.leadingCoeff|
+    set R := max (coeffSum / lcAbs + 2)
+        (if h : k = 0 then 1 else (Finset.univ.sup'
+          ⟨⟨0, Nat.pos_of_ne_zero h⟩, Finset.mem_univ _⟩
+          (fun i : Fin k => |yr i| + ε i)) + 1) with hR_def
+    have hR_pos : (0 : ℝ) < R := lt_max_of_lt_left (by positivity)
+    have hyr_in_R : ∀ i, |yr i| < R := by
+      intro i
+      have hk_ne : k ≠ 0 := by have := i.isLt; omega
+      apply lt_of_lt_of_le _ (le_max_right _ _)
+      rw [dif_neg hk_ne]
+      have hne : (Finset.univ : Finset (Fin k)).Nonempty :=
+        ⟨⟨0, Nat.pos_of_ne_zero hk_ne⟩, Finset.mem_univ _⟩
+      calc |yr i| < |yr i| + ε i := by linarith [hε_pos i]
+        _ ≤ Finset.univ.sup' hne (fun j : Fin k => |yr j| + ε j) :=
+            Finset.le_sup' (fun j : Fin k => |yr j| + ε j) (Finset.mem_univ i)
+        _ < _ + 1 := by linarith
+    set K := Set.Icc (-R) R \ ⋃ i, iftBall i
+    have hK_compact : IsCompact K :=
+      (isCompact_Icc).diff (isOpen_iUnion fun i => isOpen_Ioo)
+    have hK_no_root : ∀ y ∈ K, ¬ p.IsRoot y := by
+      intro y ⟨_, hy_not⟩ hroot
+      obtain ⟨i, rfl⟩ := hyr_complete y hroot
+      exact hy_not (Set.mem_iUnion.mpr ⟨i, hyr_in_ball i⟩)
+    -- open set in W ×ˢ univ where H ≠ 0
+    have hopen_ne : IsOpen ((W ×ˢ Set.univ) ∩ H ⁻¹' {x | x ≠ 0}) :=
+      hW_cont.isOpen_inter_preimage (hW_open.prod isOpen_univ) isOpen_ne
+    have hprod_sub : {y₀} ×ˢ K ⊆ (W ×ˢ Set.univ) ∩ H ⁻¹' {x | x ≠ 0} := by
+      intro ⟨a, y⟩ ⟨ha, hy⟩
+      simp only [Set.mem_singleton_iff] at ha; subst ha
+      exact ⟨⟨hW_mem, Set.mem_univ _⟩, hK_no_root y hy⟩
+    have h_tube : ∀ᶠ a in nhds y₀, ∀ y ∈ K, (fam a).eval y ≠ 0 := by
+      rcases Set.eq_empty_or_nonempty K with hKe | hKne
+      · exact Filter.Eventually.of_forall fun a y hy =>
+          absurd hy (hKe ▸ (Set.mem_empty_iff_false y).mp)
+      · obtain ⟨u, v, hu_open, _, ha₀u, hKv, huv⟩ := generalized_tube_lemma isCompact_singleton
+            hK_compact hopen_ne hprod_sub
+        exact Filter.Eventually.mono (hu_open.mem_nhds (Set.singleton_subset_iff.mp ha₀u))
+          fun a ha y hy => (huv (Set.mk_mem_prod ha (hKv hy))).2
+    -- root bound via Cauchy bound, eventually < R
+    have h_bound : ∀ᶠ a in nhds y₀,
+        ∀ z, (fam a).IsRoot z → z ∈ Set.Ioo (-R) R := by
+      have hlc_ne : p.leadingCoeff ≠ 0 := Polynomial.leadingCoeff_ne_zero.mpr hp_ne
+      have hlc_eq : (fam y₀).coeff d = p.leadingCoeff := rfl
+      let gbnd : (Fin s → ℝ) → ℝ := fun a =>
+        (∑ i ∈ Finset.range d, |(fam a).coeff i|) / |(fam a).coeff d| + 1
+      have hg_cont : ContinuousAt gbnd y₀ := by
+        apply ContinuousAt.add _ continuousAt_const
+        apply ContinuousAt.div
+        · exact tendsto_finset_sum _ fun i _ => (hcoeff i).continuousAt.abs
+        · exact (hcoeff d).continuousAt.abs
+        · rw [hlc_eq]; exact abs_ne_zero.mpr hlc_ne
+      have hg_val : gbnd y₀ = coeffSum / lcAbs + 1 := by
+        show (∑ i ∈ Finset.range d, |(fam y₀).coeff i|) / |(fam y₀).coeff d| + 1 = _
+        rw [hlc_eq]
+      have hg_lt_R : coeffSum / lcAbs + 1 < R := by
+        have : coeffSum / lcAbs + 2 ≤ R := le_max_left _ _
+        linarith
+      have hg_ev : ∀ᶠ a in nhds y₀, gbnd a < R :=
+        hg_cont.eventually (gt_mem_nhds (hg_val ▸ hg_lt_R))
+      have hlc_ne' : (fam y₀).coeff d ≠ 0 := by rw [hlc_eq]; exact hlc_ne
+      have h_lc_ev : ∀ᶠ a in nhds y₀, (fam a).coeff d ≠ 0 :=
+        (hcoeff d).continuousAt.eventually (isOpen_ne.mem_nhds hlc_ne')
+      filter_upwards [hg_ev, h_lc_ev, hdeg] with a hga ha_lc ha_deg z hroot
+      have hfa_ne : fam a ≠ 0 := fun h => ha_lc (by rw [h]; simp)
+      have hcb := hroot.norm_lt_cauchyBound hfa_ne
+      have hd_eq : (fam a).natDegree = d := ha_deg
+      have hcb_le : (Polynomial.cauchyBound (fam a) : ℝ) ≤ gbnd a := by
+        have hcb_nn : Polynomial.cauchyBound (fam a) ≤
+            (∑ i ∈ Finset.range d, ‖(fam a).coeff i‖₊) / ‖(fam a).leadingCoeff‖₊ + 1 := by
+          simp only [Polynomial.cauchyBound, hd_eq]
+          gcongr
+          exact Finset.sup_le fun i hi =>
+            Finset.single_le_sum (f := fun i => ‖(fam a).coeff i‖₊) (fun _ _ => zero_le _) hi
+        calc (↑(Polynomial.cauchyBound (fam a)) : ℝ)
+            ≤ ↑((∑ i ∈ Finset.range d, ‖(fam a).coeff i‖₊) /
+                ‖(fam a).leadingCoeff‖₊ + 1) := by exact_mod_cast hcb_nn
+          _ = gbnd a := by
+              simp only [NNReal.coe_div, NNReal.coe_add, NNReal.coe_one, NNReal.coe_sum]
+              have hlc : (↑‖(fam a).leadingCoeff‖₊ : ℝ) = |(fam a).coeff d| := by
+                have hlc' : (fam a).leadingCoeff = (fam a).coeff d := by
+                  show (fam a).coeff (fam a).natDegree = (fam a).coeff d; rw [hd_eq]
+                rw [hlc', coe_nnnorm, Real.norm_eq_abs]
+              have hnum : (∑ i ∈ Finset.range d, (↑‖(fam a).coeff i‖₊ : ℝ)) =
+                  ∑ i ∈ Finset.range d, |(fam a).coeff i| :=
+                Finset.sum_congr rfl fun i _ => by rw [coe_nnnorm, Real.norm_eq_abs]
+              show (∑ i ∈ Finset.range d, (↑‖(fam a).coeff i‖₊ : ℝ)) /
+                  ↑‖(fam a).leadingCoeff‖₊ + 1
+                = (∑ i ∈ Finset.range d, |(fam a).coeff i|) / |(fam a).coeff d| + 1
+              rw [hnum, hlc]
+      have hz_lt : |z| < R := calc
+        |z| = ↑‖z‖₊ := by simp [coe_nnnorm, Real.norm_eq_abs]
+        _ < ↑(Polynomial.cauchyBound (fam a)) := by exact_mod_cast hcb
+        _ ≤ gbnd a := hcb_le
+        _ < R := hga
+      exact Set.mem_Ioo.mpr (abs_lt.mp hz_lt)
+    exact (h_ift.and (h_tube.and h_bound)).mono fun a ⟨ha_ift, ha_tube, ha_bound⟩ z hroot => by
+      have hz_R := ha_bound z hroot
+      have hz_Icc : z ∈ Set.Icc (-R) R := Set.Ioo_subset_Icc_self hz_R
+      have hz_not_K : z ∉ K := fun hzK => ha_tube z hzK hroot
+      have hz_ball : ∃ i, z ∈ iftBall i := by
+        by_contra h; push_neg at h
+        exact hz_not_K ⟨hz_Icc, fun hmem => let ⟨i, hi⟩ := Set.mem_iUnion.mp hmem; h i hi⟩
+      obtain ⟨i, hi⟩ := hz_ball
+      refine ⟨i, hφ_unique i a (Set.mem_iInter.mp ha_ift i) z hroot ?_⟩
+      simp only [iftBall, Set.mem_Ioo] at hi
+      rw [abs_sub_lt_iff]; constructor <;> linarith [hi.1, hi.2]
+  -- (d) derivative nonzero at each φ i a
+  have h_der : ∀ᶠ a in nhds y₀,
+      ∀ i, (Polynomial.derivative (fam a)).eval (φ i a) ≠ 0 := by
+    simp only [Filter.eventually_all]
+    intro i
+    have hcont : ContinuousAt
+        (fun a => (Polynomial.derivative (fam a)).eval (φ i a)) y₀ := by
+      have hdcoeff : ∀ j, AnalyticAt ℝ (fun y => (Polynomial.derivative (fam y)).coeff j) y₀ := by
+        intro j
+        have heq : (fun y => (Polynomial.derivative (fam y)).coeff j)
+            = (fun y => (↑(j + 1) : ℝ) * (fam y).coeff (j + 1)) := by
+          funext y; rw [Polynomial.coeff_derivative]; push_cast; ring
+        rw [heq]; exact analyticAt_const.mul (hcoeff (j + 1))
+      have hddeg : ∀ᶠ y in nhds y₀, (Polynomial.derivative (fam y)).natDegree ≤ d := by
+        filter_upwards [hdeg_le] with y h
+        calc (Polynomial.derivative (fam y)).natDegree
+            ≤ (fam y).natDegree - 1 := Polynomial.natDegree_derivative_le (fam y)
+          _ ≤ d := by omega
+      obtain ⟨W', hW'_open, hW'_mem, hW'_cont⟩ :=
+        fam_eval_continuousOn (fun y => Polynomial.derivative (fam y)) y₀ d hddeg hdcoeff
+      have hmap : ContinuousAt (fun a => (a, φ i a)) y₀ := continuousAt_id.prodMk (hφ_cont i)
+      exact (hW'_cont.continuousAt
+        ((hW'_open.prod isOpen_univ).mem_nhds ⟨hW'_mem, Set.mem_univ _⟩)).comp hmap
+    exact hcont.eventually (isOpen_ne.mem_nhds (show
+        (Polynomial.derivative (fam y₀)).eval (φ i y₀) ≠ 0 by
+      rw [hφ_val i]; exact hder_spec i))
+  obtain ⟨V, hV_sub, hV_open, ha₀_V⟩ :=
+    mem_nhds_iff.mp (h_ift.and (h_ord.and (h_roots.and h_der)))
+  refine ⟨V, hV_open, ha₀_V, k, φ, fun _ => 1, ?_, ?_, ?_, ?_, ?_⟩
+  · intro i; exact (hφ_an i).mono fun a ha => Set.mem_iInter.mp (hV_sub ha).1 i
+  · intro a haV i j hij; exact (hV_sub haV).2.1 i j hij
+  · intro a haV z
+    exact ⟨(hV_sub haV).2.2.1 z, fun ⟨i, hi⟩ => hi ▸ hφ_root i a (Set.mem_iInter.mp (hV_sub haV).1 i)⟩
+  · intro _; exact Nat.one_pos
+  · intro a haV i
+    have ha_Ui : a ∈ Ui i := Set.mem_iInter.mp (hV_sub haV).1 i
+    have hroot_a := hφ_root i a ha_Ui
+    have hder_ne_a := (hV_sub haV).2.2.2 i
+    have hfa_ne : fam a ≠ 0 := by
+      intro h
+      have := (hV_sub haV).2.2.2 i
+      rw [h] at this; simp at this
+    have hle : ¬ 1 < (fam a).rootMultiplicity (φ i a) := by
+      rw [Polynomial.one_lt_rootMultiplicity_iff_isRoot hfa_ne]
+      push_neg; intro _; rwa [Polynomial.IsRoot]
+    have hge := (Polynomial.rootMultiplicity_pos hfa_ne).mpr hroot_a
+    show (fam a).rootMultiplicity (φ i a) = 1
+    omega
 
 /-! ### Theorem 2: Separable implies locally delineable -/
 

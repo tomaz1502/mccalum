@@ -2,6 +2,213 @@
 
 ## Main theorem
 `mccallum_3_2_3_generalized` (Projection.lean) — proved from `lifting_theorem_generalized'`.
+`non_null` removed; depends on **1 axiom** `analytic_pseudopoly_delineable` + standard. No sorries.
+
+## ROADMAP: proving the axiom (Weierstrass → Zariski)
+Full plan in **`WEIERSTRASS_ZARISKI_PLAN.md`** (6 phases A–F). Currently working **Phase A1**:
+the *separable subcase* — if `disc(g(0,0)) ≠ 0` the section family has only simple roots, so the
+axiom conclusion follows from the analytic IFT (no Weierstrass/Zariski), narrowing the axiom to the
+`disc(g(0,0)) = 0` case.
+
+### A1 sub-step DONE (2026-05-30): `analytic_root_section` (SimpleRoots.lean) — PROVED, 0 custom axioms
+Generic **analytic implicit function theorem** for a scalar equation: `F : ℝⁿ×ℝ → ℝ` analytic at
+`(y₀,t₀)`, `F(y₀,t₀)=0`, `∂ₜF(y₀,t₀) ≠ 0` ⟹ unique local analytic solution `t = φ(y)`. Extracted the
+IFT machinery (analytic inverse function theorem on `G(y,t)=(y,F(y,t))`) away from polynomials, so
+the **analytic family** `g(y,0)` (not just polynomial families `specialize f`) can use it.
+`ift_local_root_section` is now its special case `F = (specialize f y).eval t` (refactor onto it
+pending; currently both coexist).
+
+### A1 sub-step DONE (2026-05-30): `fam_eval_analyticAt` (SimpleRoots.lean) — PROVED, 0 custom axioms
+Joint analyticity of `(y,t) ↦ (fam y).eval t` for an analytic family `fam : ℝˢ → ℝ[t]` (analytic
+coeffs, degree ≤ N near y₀). This is the `hF_an` input that `analytic_root_section` needs to run the
+IFT at each simple root of the family. Proof: `(fam y).eval t = ∑_{i≤N} (fam y).coeff i · tⁱ` near
+y₀ (degree bound), and the finite sum is jointly analytic.
+
+### A1 COMPLETE (2026-05-30) — axiom narrowed to the multiple-root case
+`analytic_pseudopoly_delineable` is now a **theorem** (Lifting.lean), proved by case-split on
+`(g 0).Separable`:
+- **separable** ⟹ `separable_family_locally_delineable` (SimpleRoots.lean) — the full analytic-family
+  delineability for separable origin, PROVED (0 custom axioms): IFT at each simple root
+  (`analytic_root_section` + `fam_eval_analyticAt` + `fam_eval_fderiv_t`), ordering by continuity,
+  no-extra-roots via `Polynomial.cauchyBound` + tube lemma (`fam_eval_continuousOn`), exhaustiveness.
+- **non-separable** ⟹ `analytic_pseudopoly_delineable_nonsep` (NEW narrowed axiom, hypothesis
+  `¬ (g 0).Separable`).
+
+`#print axioms mccallum_3_2_3_generalized` → `[analytic_pseudopoly_delineable_nonsep, propext,
+Classical.choice, Quot.sound]`. Full build green, no sorries. The remaining axiom is now ONLY the
+genuinely-deep `disc(g(0,0)) = 0` (multiple-root / equisingular) case — exactly the part needing
+Weierstrass→Zariski (plan phases B–E). The easy case is off the trusted base.
+
+New A1 lemmas (SimpleRoots.lean, all 0 custom axioms): `analytic_root_section` (generic analytic
+IFT), `fam_eval_analyticAt`, `fam_eval_fderiv_t`, `fam_eval_continuousOn`,
+`separable_family_locally_delineable`.
+
+### D2 VALIDATED (2026-05-30): `disc_order_invariant_of_witness` (Lifting.lean) — 0 custom axioms
+The algebraic spine of Phase D, assembled from **proven** lemmas: for a monic `h` (stub Weierstrass
+output) with witness `P ∈ ⟨h, h'⟩` of constant order on connected `S`, `resultant(h, h')` (= disc up
+to leading coeff) has constant order on `S`. Wiring = `norm_identity_elim` (`P^m = res·Q`, generic
+`CommRing`) + reverse-order bridge `order_invariant_factor_of_mul`. Validated over `MvPolynomial`
+(where the bridge exists); the eventual proof instantiates `h` with the holomorphic Weierstrass
+polynomial over the germ ring (Phase B). This de-risks Phase D — confirms "witness order-inv ⟹
+disc order-inv" closes with what we have. NOTE: the *analytic* version of the bridge for the germ
+setting is largely available too (`order_additivity_holomorphic` for open sets +
+`complexify_order_invariant` to lift section-order to an open complex nbhd).
+
+**Next per plan:** Phase B (analytic germ-ring substrate `𝒪ₙ` + its valuation), which D2 instantiates
+over; then the two mountains C (convergent Weierstrass) and E (Zariski).
+
+### B1 STARTED (2026-05-30): `AnalyticGerm` (new file Generalized/AnalyticGerm.lean) — 0 custom axioms
+`𝒪ₙ := AnalyticGerm n` is the **subring of germs at `0 ∈ ℂⁿ`** admitting an analytic representative
+(carrier `{g | ∃ f, AnalyticAt ℂ f 0 ∧ ↑f = g}`), a `Subring (Filter.Germ (𝓝 0) ℂ)` — hence a
+`CommRing` (`example : CommRing (AnalyticGerm n) := inferInstance` checks). Closure under +,·,−,0,1
+from `AnalyticAt.add/mul/neg` + `analyticAt_const`. Germs are the right object: Weierstrass gives a
+factorization on an *arbitrarily small* nbhd, which germs quotient out.
+
+This is the **CommRing core of B1** — enough to host the Weierstrass polynomial `h ∈ 𝒪ₙ[t]` and
+`norm_identity_elim`.
+
+### B1 COMPLETE (2026-05-30): `IsLocalRing (AnalyticGerm n)` — 0 custom axioms
+`𝒪ₙ` is a **local ring**. Helper `AnalyticGerm.isUnit_of_rep_ne_zero`: a germ with an analytic
+representative `g` with `g 0 ≠ 0` is a unit (pointwise inverse `g⁻¹` is analytic at `0` via
+`AnalyticAt.inv`, and `g · g⁻¹ =ᶠ 1` near `0`, so the germs are inverse). Locality via
+`IsLocalRing.of_isUnit_or_isUnit_one_sub_self`: for any germ `a` with rep `f`, either `f 0 ≠ 0`
+(`a` is a unit) or `f 0 = 0` (then `(1-f) 0 = 1 ≠ 0`, so `1 - a` is a unit). `#print axioms` →
+`[propext, Classical.choice, Quot.sound]`. (Needed `import Mathlib.RingTheory.LocalRing.Basic`.)
+
+### B2 COMPLETE (2026-05-30): germ valuation `AnalyticGerm.order` + multiplicativity — 0 custom axioms
+The **vanishing order / valuation** on `𝒪ₙ`: `AnalyticGerm.order n b := order ℂ (rep b) 0` for a
+chosen analytic representative. Well-definedness bridge **`AnalyticGerm.order_eq_order_rep`**: the
+value equals `order ℂ f 0` for *any* analytic rep `f` (`↑f = b.1`), proved via a field-generic
+`order_congr_of_eventuallyEq'` (germ-only dependence of `order`) — the plan's B2 target
+`holGerm_order_eq_order`. Valuation property **`AnalyticGerm.order_mul`**:
+`v(a·b) = v(a) + v(b)`, from `order_mul_analytic`.
+
+**Refactor:** `order_mul_analytic` (+ its 5 helpers: `order_eq_top_of_eventuallyEq_zero`,
+`eventuallyEq_zero_of_order_eq_top`, `symmetric_multilinear_eq_zero_of_diagonal_zero`,
+`analyticAt_line_restriction`, `iteratedDeriv_line_eq_iteratedFDeriv_diag`) **relocated** from
+`Generalized/Lifting.lean` into new low-level file **`Mccalum/OrderMulAnalytic.lean`** (made public)
+so `AnalyticGerm` can reuse them without an import cycle. Full library rebuilds clean.
+
+**Phase B (germ-ring substrate) is now complete:** CommRing core + IsLocalRing + valuation. Then
+`disc_order_invariant_of_witness` (D2) can be re-run with `R := 𝒪ₙ`. Remaining: the two mountains
+**C (convergent Weierstrass)** and **E (Zariski)**, plus optional B3 (Cauchy/majorant for C).
+
+## STRATEGY PIVOT (2026-05-30): isolate C & E as two clean axioms, prove A+B+D+F
+
+Per user direction: replace the single monolithic axiom `analytic_pseudopoly_delineable_nonsep`
+with **two crisp, citable classical axioms** (convergent Weierstrass + Zariski) and **prove the
+connective phases A, D, F** (B already done) against them. Net effect: the main theorem reduces to
+depending only on those two axioms + standard. This is a strict honesty improvement (one bespoke
+axiom → two named classical theorems + fully-proved glue) and pins the C/E interfaces precisely,
+before attacking them later. **Bonus:** isolating C as an axiom means **B3 (Cauchy/majorant) is no
+longer needed** (it only served to prove C's convergence). Remaining connective work: A2, A3, D1,
+D2 (reuse), D3, F1 (reuse Schwarz), F2, F3. Main risk: A2 (root-count continuity, absent in
+Mathlib) is the one nontrivial real-analysis connective piece.
+
+### Axiom interfaces DRAFTED (2026-05-30): `Mccalum/Generalized/WeierstrassZariskiAxioms.lean`
+Type-checks; both register as proper axioms. **Function-level** (coefficients/roots as `AnalyticAt ℂ`
+functions), decoupled from the germ ring (which stays a Phase-D internal). Helpers `CParam s e`
+(`= ℂˢ × ℂᵉ`, section `T = ℂˢ × {0}`), `weierstrassPoly m a w` (`= tᵐ + ∑ aᵢ(w)tⁱ`),
+`weierstrassDiscFn`.
+- **`weierstrass_preparation_analytic`**: `G` analytic, `G(0,·)` order exactly `m>0` ⟹
+  `G =ᶠ u · (weierstrassPoly m a)` with `u 0 ≠ 0`, `aᵢ` analytic, `aᵢ 0 = 0`.
+- **`zariski_root_sections`**: monic Weierstrass `aᵢ` with **disc constant order along `T`**
+  (`∀ᶠ y, order ℂ discFn (y,0) = order ℂ discFn 0` — same shape as the real `hP_oi`) ⟹ holomorphic
+  sections `ψᵢ : ℂˢ → ℂ`, `ψᵢ 0 = 0`, constant `multᵢ > 0`, `∑ multᵢ = m`, distinct branches, and
+  the clean factorization `weierstrassPoly m a (y,0) = ∏ᵢ (X − C(ψᵢ y))^multᵢ` on a **full** nbhd
+  (avoids puncture issues; pointwise-distinct roots + `rootMultiplicity` derived in F2).
+
+### Connective chain — D3 core PROVED (2026-05-30): `order_factor_const_of_mul_analytic`
+First connective-chain artifact, in `Mccalum/OrderMulAnalytic.lean`, 0 custom axioms. The
+**holomorphic, preconnected reverse factor bridge**: if `f, g` are analytic, not ≡0, on a connected
+open `U`, and `f·g` has **constant vanishing order along a preconnected `S ⊆ U`** (basepoint
+`z₀ ∈ S`), then `f` and `g` each have constant order along `S`. This is the `order ℂ` analogue of
+`order_invariant_factor_of_mul` (polyOrder) and the preconnected generalization of
+`order_additivity_holomorphic` (the `S = U` open case). **It is Phase D3's engine**: the witness
+forces `order(P)` constant along the section, the norm identity gives `P^m = ±disc(h)·Q`, and this
+peels off `disc(h)`. Companion `order_pow_analytic` (`order(fᵐ) = m·order f`) added for the D3
+application (`P^m`).
+
+**Supporting refactor:** relocated the 3 analytic-order USC helpers
+(`order_ne_top_of_ne_zero`, `isOpen_order_le_inter`, `isOpen_order_lt_inter`) from `Lifting.lean`
+into `OrderMulAnalytic.lean` (now **public**, and the two `isOpen_*` **generalized** from
+`Fin s → ℂ` to any ℂ-normed `E`). `order_additivity_holomorphic` (still in Lifting) now consumes
+them via import. Full library rebuilds clean.
+
+### Connective chain — F2 PROVED (2026-05-30): root structure from the Zariski factorization
+New file `Mccalum/Generalized/RootSectionsAlgebra.lean`, 0 custom axioms. Pure polynomial algebra
+over `ℂ` extracting the per-root facts F3 needs from the Zariski factorization
+`weierstrassPoly m a (y,0) = ∏ᵢ (X − C(ψᵢ y))^multᵢ`:
+- `isRoot_prod_X_sub_C_pow` / `weierstrass_section_isRoot` — **exhaustiveness**: roots of
+  `∏ᵢ (X−C cᵢ)^eᵢ` (eᵢ>0) are exactly the `cᵢ`.
+- `rootMultiplicity_prod_X_sub_C_pow` / `weierstrass_section_rootMultiplicity` — **multiplicity**:
+  when the `cᵢ` are pairwise distinct, `rootMultiplicity cᵢ₀ = eᵢ₀` (via `rootMultiplicity_mul` +
+  `rootMultiplicity_X_sub_C_pow` + `rootMultiplicity_eq_zero` on the cofactor).
+The two `weierstrass_section_*` corollaries are stated directly against the Zariski axiom's output
+shape (rewrite by the factorization, apply the generic lemma).
+
+### Connective chain — F1 PROVED (2026-05-30): `real_section_of_real_valued` (in Lifting.lean)
+0 custom axioms. Phase F1 Schwarz real recovery: a holomorphic section `ψ` real-valued on the real
+slice near `x₀` restricts to real-analytic `η := Re∘ψ∘realEmbedding` (via the proven
+`real_restriction_analytic`) **and** `(η x : ℂ) = ψ(realEmbedding x)` on the slice — the bridge that
+turns the complex Zariski factorization into a real-root statement for F3. Placed in Lifting (where
+`realEmbedding`/`real_restriction_analytic` live, and where F3 will assemble).
+
+### Connective chain — evaluation infrastructure PROVED (2026-05-30): `WeierstrassEval.lean`
+New file `Mccalum/Generalized/WeierstrassEval.lean`, 0 custom axioms. The norm identity runs over the
+**pointwise function ring** `CParam s e → ℂ` (the germ ring is only needed for D1's membership), so
+`resultant` of the function-coefficient Weierstrass polynomial **is** a single function. Provides:
+- `weierstrassPolyFun m a : (CParam s e → ℂ)[X]` (monic, deg `m`) + `weierstrassPolyFun_map_eval`
+  (`Pi.evalRingHom` at `w` recovers `weierstrassPoly m a w`), `weierstrassPoly_monic`,
+  `weierstrassPoly_natDegree = m`.
+- `weierstrassResFun m a : CParam s e → ℂ` = `resultant(weierstrassPolyFun, derivative)`, with
+  `weierstrassResFun_apply` (pointwise = `resultant(weierstrassPoly m a w, …)`) via
+  `resultant_map_map` + `derivative_map`.
+- `weierstrassResFun_eq_discFn` — for monic, `resultant = (-1)^k · discr` pointwise (`resultant_deriv`).
+- `order_weierstrassResFun_eq` — resFun and discFn share vanishing order (sign unit), via the new
+  `order_const_mul_analytic`/`order_const_analytic_ne` (added to `OrderMulAnalytic`). **This is the
+  bridge from D2's norm identity (yields `resultant`) to the Zariski axiom's hypothesis (uses `discr`).**
+
+With this, the D-phase order argument is fully wired *except* the membership input: applying
+`norm_identity_elim (CParam s e → ℂ) (weierstrassPolyFun m a) …` needs `C(P) ∈ ⟨h, h'⟩` (D1, the
+germ-ring/subresultant step). Everything downstream of that membership (norm identity → `P^m =
+±resFun·Q` pointwise → `order_pow_analytic` + `order_factor_const_of_mul_analytic` along section →
+`order_weierstrassResFun_eq` → Zariski's `hdisc`) is now built.
+
+### Connective chain — D1 algebraic core PROVED (2026-05-30): `MembershipTransfer.lean`
+New file `Mccalum/Generalized/MembershipTransfer.lean`, 0 custom axioms. The **unit-multiplication
+membership transfer** for polynomial ideals (any `CommRing`):
+- `mem_span_pair_deriv_of_mul`: `p ∈ ⟨u·h, (u·h)'⟩ ⟹ p ∈ ⟨h, h'⟩` — **no hypothesis on `u`** for this
+  inclusion (both `u·h` and `(u·h)' = u'h+uh'` already lie in `⟨h,h'⟩`). This is the half used
+  downstream (Weierstrass `g = u·h`, push the witness from `⟨g,g'⟩` into `⟨h,h'⟩`).
+- `span_pair_deriv_mul_eq_of_isUnit`: the full ideal equality `⟨u·h,(u·h)'⟩ = ⟨h,h'⟩` when `u` a unit
+  (reverse inclusion via `w = u⁻¹`).
+
+**HONEST RESIDUAL (the genuine D1/A3 obstacle, NOT resolved):** the *input* to the transfer — the
+complexified/pointwise membership `C(P) ∈ ⟨g_ℂ, g_ℂ'⟩` over the relevant ring — is the hard part.
+The real witness `hP_elim` has Bézout cofactors `a(w),b(w)` that are **not analytic** in `w` (chosen
+pointwise), so the membership does not complexify directly. The faithful resolution needs the
+**subresultant** structure (the elimination ideal is generated by principal subresultant coefficients,
+whose Bézout cofactors *are* polynomial in `g`'s coefficients, hence analytic) — and **Mathlib has no
+subresultant theory**. This is one of the two genuine research-scale nuts (with A2). The algebraic
+*transfer* above is the clean, reusable component that sits on top of that input once obtained.
+
+**Connective-chain status:** A1 done; B done (germ ring); **D3-core, eval-infra, F2, F1, D1-core
+done**; axioms C/E drafted. The **"F" output side is complete** (F1+F2); the **D-phase order machinery
+is complete modulo the membership input**. Remaining is the A/D **middle** (the connective core) + F3
+plumbing:
+- **A2** localize at real root (root-count continuity — nontrivial real analysis, absent from Mathlib) — HARD NUT
+- **D1-input** complexify the membership: the elimination-ideal cofactors via **subresultant theory**
+  (absent from Mathlib) — HARD NUT. (D1 algebraic *transfer* `⟨u·h⟩→⟨h⟩` is DONE.)
+- A3 complexify (mostly reuse `analyticAt_complexify`/`complexify_order_invariant`)
+- D2-application `norm_identity_elim` over the function ring `CParam s e → ℂ` (direct reuse;
+  `weierstrassResFun` already identified — see `WeierstrassEval`)
+- D3-application: wire `order_factor_const_of_mul_analytic` + `order_pow_analytic` +
+  `order_weierstrassResFun_eq` along the section to produce Zariski's `hdisc` (pieces all built)
+- F3 assemble + discharge `analytic_pseudopoly_delineable_nonsep`
+
+**The two genuine research-scale nuts are now isolated: A2 (root-count continuity) and D1-input
+(subresultant cofactor complexification). Everything else in the chain is built or is plumbing.**
 
 ## Bridge lemma (2026-05-29): `order_invariant_factor_of_mul` — PROVED, 0 custom axioms
 

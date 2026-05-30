@@ -1,0 +1,115 @@
+import Mccalum.Order
+import Mathlib.RingTheory.Polynomial.Resultant.Basic
+import Mathlib.Analysis.Analytic.Order
+import Mathlib.Analysis.Calculus.FDeriv.Analytic
+import Mathlib.Analysis.Complex.Basic
+import Mathlib.Topology.MetricSpace.Pseudo.Pi
+
+/-!
+# The two classical analytic axioms: convergent Weierstrass preparation & Zariski root sections
+
+This file isolates the **two genuinely deep, classical analytic-geometry ingredients** of
+McCallum's generalized lifting proof as clean, named axioms:
+
+* `weierstrass_preparation_analytic` — convergent Weierstrass preparation (Phase C).
+* `zariski_root_sections` — Zariski's holomorphic root sections under constant discriminant
+  order (Phase E).
+
+Both are stated at the **analytic-function level** (coefficients / roots as `AnalyticAt ℂ`
+functions), deliberately decoupled from the germ-ring substrate `𝒪ₙ`
+(`Mccalum.Generalized.AnalyticGerm`): the germ ring is an internal tool of Phase D and need not
+appear in the public interfaces of C/E. The connective phases A, D, F (proved separately) wire the
+real lifting axiom against these two, so that — once they are in place — the main theorem
+`mccallum_3_2_3_generalized` depends only on these two axioms plus the standard
+`propext, Classical.choice, Quot.sound`.
+
+These are NOT the end state: both are standard, citable classical theorems (Weierstrass
+preparation; Zariski equisingularity / Newton–Puiseux), to be discharged in a later effort. Stating
+them crisply here pins down exactly the interface they must satisfy.
+
+## Parameter conventions
+
+The lifting problem has parameter space `ℝˢ × ℝᵉ` and a distinguished polynomial variable `t`.
+Complexified, the parameter space is `CParam s e = (ℂˢ) × (ℂᵉ)`; the **section** is
+`T = ℂˢ × {0}` (the `e`-directions are the "transverse" factor that only exists to make the
+witness order finite — see the lifting axiom). Roots are localized at a real root `β` of
+`g(0,0)`, shifted to `t = 0`, so a Weierstrass polynomial has all roots `→ 0` along `T`.
+-/
+
+noncomputable section
+
+open Filter Polynomial
+open scoped Topology
+
+/-- Complexified parameter space: `s` section variables × `e` transverse variables. -/
+abbrev CParam (s e : ℕ) : Type := (Fin s → ℂ) × (Fin e → ℂ)
+
+/-- The monic degree-`m` polynomial `t^m + ∑_{i<m} a_i(w)·t^i` (a Weierstrass polynomial in `t`
+when `a_i(0) = 0`), with coefficients evaluated at the parameter point `w`. -/
+def weierstrassPoly {s e : ℕ} (m : ℕ) (a : Fin m → (CParam s e → ℂ)) (w : CParam s e) :
+    Polynomial ℂ :=
+  X ^ m + ∑ i : Fin m, C (a i w) * X ^ (i : ℕ)
+
+/-- The discriminant of the section Weierstrass polynomial, as a function of the *full* parameter
+`w` (its order along the section `T` is the Zariski equisingularity invariant). -/
+def weierstrassDiscFn {s e : ℕ} (m : ℕ) (a : Fin m → (CParam s e → ℂ)) :
+    CParam s e → ℂ :=
+  fun w => Polynomial.discr (weierstrassPoly m a w)
+
+/-- **Convergent Weierstrass preparation (Phase C, AXIOM).**
+
+If `G : (ℂˢ × ℂᵉ) × ℂ → ℂ` is analytic at the origin and its restriction `t ↦ G(0, t)` to the
+distinguished line vanishes to order exactly `m > 0` at `t = 0`, then near the origin `G` factors
+as a **unit** germ `u` (with `u(0) ≠ 0`) times a **monic Weierstrass polynomial** in `t` of degree
+`m` whose coefficients `a_i` are analytic and vanish at the origin:
+
+`G(w, t) = u(w, t) · (t^m + ∑_{i<m} a_i(w) · t^i)`  near `0`.
+
+This is the classical convergent (analytic) Weierstrass preparation theorem. Mathlib has only the
+*formal* version (`PowerSeries.exists_isWeierstrassFactorization`); the convergence of the factors
+is the deep content. -/
+axiom weierstrass_preparation_analytic {s e : ℕ}
+    (G : CParam s e × ℂ → ℂ) (hG : AnalyticAt ℂ G 0)
+    (m : ℕ) (hm_pos : 0 < m)
+    (hm : analyticOrderAt (fun t : ℂ => G (0, t)) 0 = (m : ℕ∞)) :
+    ∃ (u : CParam s e × ℂ → ℂ) (a : Fin m → (CParam s e → ℂ)),
+      AnalyticAt ℂ u 0 ∧ u 0 ≠ 0 ∧
+      (∀ i, AnalyticAt ℂ (a i) 0) ∧ (∀ i, a i 0 = 0) ∧
+      G =ᶠ[𝓝 0] fun wt => u wt * (weierstrassPoly m a wt.1).eval wt.2
+
+/-- **Zariski holomorphic root sections (Phase E, AXIOM).**
+
+Given a monic Weierstrass polynomial `h(w, t) = t^m + ∑ a_i(w) t^i` (coefficients analytic,
+`a_i(0) = 0`, so all roots cluster at `t = 0` on the section), whose **discriminant has constant
+vanishing order along the section** `T = ℂˢ × {0}` near `0`, the roots of `h` over `T` are given
+by finitely many **holomorphic sections** `ψ_i : ℂˢ → ℂ` with constant positive multiplicities,
+distinct as branches, factoring `h` over `T`:
+
+`h((y,0), t) = ∏_i (t − ψ_i(y))^{mult_i}`  for `y` near `0`,  with  `∑_i mult_i = m`.
+
+This is Zariski's equisingularity theorem (equivalently, that the Newton–Puiseux root series are
+integral / honest holomorphic when the discriminant order is constant). It is the single deepest
+ingredient; nothing of Zariski, Puiseux, or analytic root-continuity is in Mathlib.
+
+The factorization is stated on a full neighborhood of `0` (at `y = 0` it reads `t^m = t^m`, since
+all `ψ_i(0) = 0`); pointwise-distinct roots and `rootMultiplicity` for `y ≠ 0` follow from it in
+Phase F. -/
+axiom zariski_root_sections {s e : ℕ}
+    (m : ℕ) (hm_pos : 0 < m)
+    (a : Fin m → (CParam s e → ℂ))
+    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0)
+    (ha0 : ∀ i, a i 0 = 0)
+    (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
+        = order ℂ (weierstrassDiscFn m a) (0 : CParam s e)) :
+    ∃ (r : ℕ) (ψ : Fin r → ((Fin s → ℂ) → ℂ)) (mult : Fin r → ℕ),
+      (∀ i, AnalyticAt ℂ (ψ i) 0) ∧
+      (∀ i, ψ i 0 = 0) ∧
+      (∀ i, 0 < mult i) ∧
+      (∑ i : Fin r, mult i = m) ∧
+      (∀ i j, i ≠ j → ¬ (ψ i =ᶠ[𝓝 (0 : Fin s → ℂ)] ψ j)) ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+        weierstrassPoly m a ((y, 0) : CParam s e)
+          = ∏ i : Fin r, (X - C (ψ i y)) ^ (mult i))
+
+end
