@@ -77,6 +77,43 @@ axiom weierstrass_preparation_analytic {s e : ℕ}
       (∀ i, AnalyticAt ℂ (a i) 0) ∧ (∀ i, a i 0 = 0) ∧
       G =ᶠ[𝓝 0] fun wt => u wt * (weierstrassPoly m a wt.1).eval wt.2
 
+/-- **Convergent Weierstrass division (Phase C, AXIOM) — existence.**
+
+For a monic Weierstrass polynomial `h(z,t) = t^m + ∑ a_i(z) t^i` (coefficients analytic, `a_i(0)=0`)
+and *any* germ `F` analytic at `0`, there exist an analytic quotient `q` and a degree-`< m`
+**polynomial remainder** `r(z,t) = ∑_{i<m} ρ_i(z) t^i` (coefficients analytic) with
+
+`F(z,t) = q(z,t) · h(z,t) + ∑_{i<m} ρ_i(z) t^i`  near `0`.
+
+This is the analytic Weierstrass division theorem — the classical companion of
+`weierstrass_preparation_analytic` (division follows from preparation). It is the interface needed
+to push **germ-ring** Bézout cofactors down to **polynomial-in-`t`** cofactors over `𝒪ₙ[t]`, so that
+`norm_identity_elim` (which lives in the polynomial ring) applies to the monic factor `h` — the
+final step closing Phase D1. -/
+axiom weierstrass_division_analytic {s e : ℕ}
+    (m : ℕ) (a : Fin m → (CParam s e → ℂ))
+    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
+    (F : CParam s e × ℂ → ℂ) (hF : AnalyticAt ℂ F 0) :
+    ∃ (q : CParam s e × ℂ → ℂ) (ρ : Fin m → (CParam s e → ℂ)),
+      AnalyticAt ℂ q 0 ∧ (∀ i, AnalyticAt ℂ (ρ i) 0) ∧
+      F =ᶠ[𝓝 0] fun wt => q wt * (weierstrassPoly m a wt.1).eval wt.2
+        + ∑ i : Fin m, ρ i wt.1 * wt.2 ^ (i : ℕ)
+
+/-- **Convergent Weierstrass division (Phase C, AXIOM) — uniqueness.**
+
+The quotient/remainder of Weierstrass division are unique; equivalently, the only division of the
+zero germ is the trivial one. This is the part used in the D1 descent: if a *polynomial-in-`t`* germ
+is divisible by the monic `h` with an a-priori only-analytic quotient, that quotient is forced to be
+polynomial (its non-polynomial part would be a nontrivial division of zero). -/
+axiom weierstrass_division_unique {s e : ℕ}
+    (m : ℕ) (a : Fin m → (CParam s e → ℂ))
+    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
+    (q : CParam s e × ℂ → ℂ) (ρ : Fin m → (CParam s e → ℂ))
+    (hq : AnalyticAt ℂ q 0) (hρ : ∀ i, AnalyticAt ℂ (ρ i) 0)
+    (hzero : (fun wt => q wt * (weierstrassPoly m a wt.1).eval wt.2
+        + ∑ i : Fin m, ρ i wt.1 * wt.2 ^ (i : ℕ)) =ᶠ[𝓝 0] 0) :
+    q =ᶠ[𝓝 0] 0 ∧ ∀ i, ρ i =ᶠ[𝓝 (0 : CParam s e)] 0
+
 /-- **Zariski holomorphic root sections (Phase E, AXIOM).**
 
 Given a monic Weierstrass polynomial `h(w, t) = t^m + ∑ a_i(w) t^i` (coefficients analytic,

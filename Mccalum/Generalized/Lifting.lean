@@ -1551,6 +1551,35 @@ theorem lifting_generalized_codim_local
       rw [hgw, Polynomial.map_add, Polynomial.map_mul, Polynomial.map_mul,
           ← Polynomial.derivative_map]
     rw [h1, hab, Polynomial.map_C]
+  -- **Soundness check (D1-input):** the elimination membership holds with *analytic cofactors*.
+  -- The cofactors `a.map (eval (Φ.symm ·))`, `b.map (eval (Φ.symm ·))` come from the *polynomial*
+  -- membership `hP_mem` (cofactors `a, b ∈ (MvPolyR n)[X]`); their coefficients are
+  -- `w ↦ eval (Φ.symm w) (a.coeff k)` — analytic by the same argument as `hgfull_coeff_an`.
+  -- This confirms the strengthened axiom hypothesis is genuinely provable at the call site.
+  have hPfull_elim_strong : ∃ (A B : (Fin s → ℝ) × (Fin (n - s) → ℝ) → Polynomial ℝ),
+      (∀ k, AnalyticAt ℝ (fun w => (A w).coeff k) 0) ∧
+      (∀ k, AnalyticAt ℝ (fun w => (B w).coeff k) 0) ∧
+      (∀ᶠ w in 𝓝 (0 : (Fin s → ℝ) × (Fin (n - s) → ℝ)),
+        Polynomial.C (Pfull w) = A w * gfull w + B w * Polynomial.derivative (gfull w)) := by
+    obtain ⟨a, b, hab⟩ := Ideal.mem_span_pair.mp hP_mem
+    refine ⟨fun w => a.map (MvPolynomial.eval (Φ.symm w)),
+            fun w => b.map (MvPolynomial.eval (Φ.symm w)), ?_, ?_, ?_⟩
+    · intro k
+      show AnalyticAt ℝ (fun w => (a.map (MvPolynomial.eval (Φ.symm w))).coeff k) 0
+      simp only [Polynomial.coeff_map]
+      exact (AnalyticOnNhd.eval_mvPolynomial (a.coeff k) (Φ.symm 0) (Set.mem_univ _)).comp hΦsymm_an0
+    · intro k
+      show AnalyticAt ℝ (fun w => (b.map (MvPolynomial.eval (Φ.symm w))).coeff k) 0
+      simp only [Polynomial.coeff_map]
+      exact (AnalyticOnNhd.eval_mvPolynomial (b.coeff k) (Φ.symm 0) (Set.mem_univ _)).comp hΦsymm_an0
+    · filter_upwards with w
+      have hgw : gfull w = Polynomial.map (MvPolynomial.eval (Φ.symm w)) f := rfl
+      have h1 : a.map (MvPolynomial.eval (Φ.symm w)) * gfull w
+          + b.map (MvPolynomial.eval (Φ.symm w)) * Polynomial.derivative (gfull w)
+          = (a * f + b * Polynomial.derivative f).map (MvPolynomial.eval (Φ.symm w)) := by
+        rw [hgw, Polynomial.map_add, Polynomial.map_mul, Polynomial.map_mul,
+            ← Polynomial.derivative_map]
+      rw [h1, hab, Polynomial.map_C]
   have hPfull_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), order ℝ Pfull (y, 0) = order ℝ Pfull 0 := by
     obtain ⟨W, hW_sub, hW_open, hxW⟩ := eventually_nhds_iff.mp hΦsymm_an0.eventually_analyticAt
     have hΦsymm_p : Φ.symm (0 : (Fin s → ℝ) × (Fin (n - s) → ℝ)) = p := hΨ_zero

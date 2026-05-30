@@ -210,6 +210,143 @@ plumbing:
 **The two genuine research-scale nuts are now isolated: A2 (root-count continuity) and D1-input
 (subresultant cofactor complexification). Everything else in the chain is built or is plumbing.**
 
+### D1-input OBSTACLE DISSOLVED (2026-05-30): analytic cofactors are already present
+**KEY RESULT.** The "subresultant theory" nut for D1-input was a false alarm. Scoping showed:
+- The resultant-Bézout shortcut (`exists_mul_add_mul_eq_C_resultant`) does NOT close D1-input (it gives
+  the *resultant's* membership, not the arbitrary witness `P`'s).
+- BUT: `mccallum_3_2_3_generalized`'s elimination hypotheses (`hd_mem`/`hr_mem`) are **`Polynomial`-ideal
+  memberships over `(MvPolyR n)[X]`** — their Bézout cofactors are polynomials in the variables, hence
+  analytic. This stays polynomial down the chain; only at the function-level axiom interface
+  (`lifting_generalized_codim_local`, the `hPfull_elim`) is it **weakened** to pointwise membership,
+  *discarding* the cofactors `a.map (eval (Φ.symm ·))`, `b.map (...)` that the proof already builds.
+
+**VERIFIED IN LEAN (soundness check (a)):** added `hPfull_elim_strong` in
+`lifting_generalized_codim_local` proving the **analytic-cofactor form** is derivable in-context
+(cofactor coeffs `w ↦ eval (Φ.symm w) (a.coeff k)` analytic, same argument as `hgfull_coeff_an`).
+Full library builds; `mccallum_3_2_3_generalized` axiom set unchanged.
+
+**Consequence:** strengthening the axiom `analytic_pseudopoly_delineable_nonsep`'s `hP_elim` to the
+analytic-cofactor form is **sound** — no hypothesis of the main theorem changes; the call site
+supplies it. D1-input drops from "research-scale subresultants" to **bounded plumbing**. Honest
+caveat (the remaining D1 residual): transferring the analytic-cofactor membership of `g` to the
+*monic local factor* `h` over the *polynomial* ring `𝒪ₙ[t]` (for `norm_identity_elim`) still rides on
+**Weierstrass division** (part of the C-axiom package), since `g = u·h` lives in the germ ring
+`𝒪ₙ₊₁`, not `𝒪ₙ[t]`. That is plumbing on the C axiom, not a new mathematical nut.
+
+**Net: only ONE genuine research-scale nut remains — A2 (root-count continuity).**
+
+### C-axiom WIDENED (2026-05-30): Weierstrass division added to `WeierstrassZariskiAxioms.lean`
+Added `weierstrass_division_analytic` (existence: any analytic `F = q·h + r`, `r` a degree-`<m`
+polynomial-in-`t` with analytic coeffs) and `weierstrass_division_unique` (the only division of the
+zero germ is trivial). Both register as proper axioms; full library builds. Division is the classical
+companion of `weierstrass_preparation_analytic` (it follows from preparation), so this is a faithful
+widening of the C-axiom package — not a new mathematical commitment.
+
+**Purpose (closes the D1 residual):** these two axioms are *exactly sufficient* for the
+germ-ring → `𝒪ₙ[t]` descent. Sketch: from `C(P) = γ·h + δ·h'` in the germ ring `𝒪ₙ₊₁`, divide
+`γ, δ` by `h` (existence) → `C(P) = (rᵧ + k)·h + r_δ·h'` with `rᵧ, r_δ` polynomial and `k·h` equal to
+a polynomial `P₀`; polynomial-divide `P₀ = q_poly·h + r_poly` in `𝒪ₙ[t]`, then
+`(k − q_poly)·h − r_poly =ᶠ 0` and **uniqueness** forces `r_poly = 0`, `k =ᶠ q_poly` (polynomial). So
+`C(P) ∈ ⟨h, h'⟩` over `𝒪ₙ[t]`, and `norm_identity_elim` applies. The interface (existence+uniqueness)
+is verified-by-reasoning to be the right shape; the full Lean derivation of the descent (with the
+germ↔`weierstrassPolyFun` eval translations) is the remaining bounded plumbing.
+
+**C-axiom package now:** `weierstrass_preparation_analytic`, `weierstrass_division_analytic`,
+`weierstrass_division_unique`. **E-axiom:** `zariski_root_sections`. These are the only non-standard
+ingredients the finished proof will rest on (all classical, citable theorems).
+
+### D1 descent — FOUNDATION built (2026-05-30): `WeierstrassDivision.lean`
+New file, all lemmas build, axiom-clean (uniqueness depends only on the division axiom). The
+load-bearing **polynomial ↔ germ translation** for the descent:
+- `polyToFun : (CParam s e → ℂ)[X] →+* (CParam s e × ℂ → ℂ)` (`X↦t`, `C c ↦ (z,t)↦c z`), with
+  `polyToFun_apply` (pointwise `= (p.map (eval z)).eval t`) and `polyToFun_weierstrassPolyFun`
+  (sends `weierstrassPolyFun` to the Weierstrass-poly-as-germ).
+- **`polyToFun_coeff_eventuallyEq_zero`** — germ-injectivity: `polyToFun p =ᶠ 0 ⟹ ∀ k, p.coeff k =ᶠ 0`
+  (for fixed `z`, `t ↦ polyToFun p (z,t)` is a `ℂ`-poly vanishing on a nbhd ⟹ `0`, via
+  `eq_zero_of_infinite_isRoot` + `infinite_of_mem_nhds`). The descent's return trip germ → `𝒪ₙ[t]`.
+- **`weierstrass_division_unique'`** — full two-divisions uniqueness from the zero-germ axiom.
+
+### D1 descent — CORE STEP PROVED (2026-05-30): `analytic_mul_weierstrass_eq_poly`
+The hardest part of the assembly. In `WeierstrassDivision.lean`, builds, depends only on
+`weierstrass_division_unique` (+ standard). **"An analytic germ `k` with `k·h =ᶠ polyToFun P₀` (P₀ a
+polynomial, h monic Weierstrass) is itself a polynomial germ: `k =ᶠ polyToFun (P₀ /ₘ h)`."** Proof:
+polynomial-divide `P₀ = h·Q₀ + R₀` (`modByMonic`), then `(k − polyToFun Q₀)·h + ∑(−R₀.coeffᵢ)tⁱ =ᶠ 0`
+is a division of zero, and `weierstrass_division_unique` forces `k =ᶠ polyToFun Q₀`. The
+**divByMonic-analyticity** facts (`polyToFun (P₀/ₘh)` analytic, `(P₀%ₘh).coeffᵢ` analytic) are taken as
+hypotheses — the precise remaining obligation. Helper `polyToFun_eq_finSum_of_natDegree_lt` (a
+degree-`<m` poly's `polyToFun` is the `Fin m` sum, matching the division-axiom remainder shape) added.
+
+**Remaining descent assembly (now small + isolated):**
+1. **divByMonic-analyticity** — `/ₘ`,`%ₘ` by the analytic monic `h` preserve analytic coefficients.
+   Route: the analytic-germ ring over `CParam s e` (parallel to Phase B's `AnalyticGerm`) + the proven
+   Mathlib `map_divByMonic`/`map_modByMonic`. Discharges the two hypotheses of the core step.
+2. **`u`-transfer** — `g = u·h` ⟹ germ membership `C(P) ∈ ⟨h,h'⟩` (a `=ᶠ`/germ form of the proven
+   `mem_span_pair_deriv_of_mul`, with `∂_t` a derivation), giving the `k·h =ᶠ polyToFun P₀` input.
+3. **assemble** — combine (1)+(2)+core step + `polyToFun_coeff_eventuallyEq_zero` (injectivity) into
+   the `𝒪ₙ[t]`-membership, then `norm_identity_elim` applies and Phase D closes against the C/E axioms.
+
+**Descent foundation + core are done and building; only the analyticity lemma + `u`-transfer +
+final glue remain — all bounded, no new mathematical content.**
+
+### D1 descent — STEP 1 COMPLETE (2026-05-30): divByMonic-analyticity discharged
+In `WeierstrassDivision.lean`, all axiom-clean. The key realization: **`{f | AnalyticAt ℂ f 0}` is a
+`Subring`** of the function ring (`AnalyticAtSubring`), so `map_divByMonic`/`map_modByMonic` over it
+give analyticity preservation directly — no germ ring needed.
+- `coeff_divByMonic_analyticAt` — `/ₘ`,`%ₘ` by a monic with analytic coeffs preserve analytic coeffs
+  (via `Polynomial.toSubring` + `Injective.monic_map_iff` + `map_divByMonic`).
+- `polyToFun_analyticAt` — `polyToFun` of an analytic-coeff polynomial is analytic
+  (finite sum of `(coeffᵢ∘fst)·sndⁱ`).
+- `weierstrassPolyFun_coeff_analyticAt` — the Weierstrass polynomial's coefficients are analytic.
+- **`analytic_mul_weierstrass_eq_poly_of_coeffs`** — the core descent step **fully discharged**: needs
+  only `P0` analytic-coeffs (the divByMonic-analyticity is derived). Depends only on
+  `weierstrass_division_unique` (+ standard).
+
+**Descent status: foundation + core step DONE (self-contained).** Remaining: **Step 2** the `u`-transfer
+(`g = u·h` ⟹ the `k·h =ᶠ polyToFun P₀` germ input, a `=ᶠ` form of `mem_span_pair_deriv_of_mul`), and
+**Step 3** final glue (combine + `polyToFun_coeff_eventuallyEq_zero` ⟹ `𝒪ₙ[t]` membership ⟹
+`norm_identity_elim`).
+
+### D1 descent — MEMBERSHIP DESCENT (Step 3a) PROVED (2026-05-30): `MembershipDescent.lean`
+`theorem membership_descent` builds, axiom-clean (only the two Weierstrass-division axioms). From a
+**germ-level membership** `polyToFun (C P) =ᶠ Γ·H + Δ·H'` (`Γ,Δ` analytic), it produces **polynomial
+cofactors** `A,B` with analytic coefficients and `polyToFun (C P) =ᶠ polyToFun (A·h + B·h')`. Method:
+Weierstrass-divide `Γ,Δ` → analytic quotients + degree-`<m` remainder polys (`remPoly`); collect
+`k := qΓ·H + qΔ·H'`; show `k·H =ᶠ polyToFun P₀`; apply the core step
+(`analytic_mul_weierstrass_eq_poly_of_coeffs`) ⟹ `k` polynomial; assemble `A := P₀/ₘh + rΓ`, `B := rΔ`.
+Support: `remPoly` + lemmas; `AnalyticCoeffs` predicate closed under `+,−,*,C,derivative,/ₘ` (all
+proved, via the `AnalyticAtSubring` + `coeff_mul`/`Finset.analyticAt_fun_sum` machinery).
+
+**Descent status: foundation + core step + Step 3a (membership descent) DONE.** The genuinely hard
+assembly is complete. Remaining: **Step 2** the `u`-transfer (produces the `Γ,Δ` germ membership input
+to `membership_descent`, from `g = u·h` + the analytic-cofactor membership — a `=ᶠ` manipulation), and
+**Step 3b** the norm identity (from `membership_descent`'s output + `polyToFun_coeff_eventuallyEq_zero`
+⟹ exact `𝒪ₙ[t]` membership over the germ ring on `CParam` ⟹ `norm_identity_elim` ⟹ `P^m =ᶠ
+weierstrassResFun·Q`, the input to `DiscOrder`'s `weierstrassDisc_order_const_along_section`).
+
+### Connective chain — D3-APPLICATION PROVED (2026-05-30): `DiscOrder.lean` (option-1 validation)
+New file `Mccalum/Generalized/DiscOrder.lean`, **sorry-free**, 0 custom axioms.
+`weierstrassDisc_order_const_along_section` **wires the entire D-phase order machinery end-to-end**:
+from the norm identity `P^m = weierstrassResFun·Q` (with analytic `Q`) + witness constant order
+along the section, it produces exactly the `hdisc` hypothesis of `zariski_root_sections`
+(`disc` has constant order along the section). The proof composes the built pieces:
+`order_congr_of_eventuallyEq'` + `order_pow_analytic` + `order_factor_const_of_mul_analytic`
+(the preconnected reverse bridge, with `S = {(y,0):y∈V}` the section image) + `order_weierstrassResFun_eq`.
+
+Every hypothesis is a precise upstream obligation, so this lemma **validates the D-phase architecture
+composes** and **pins down the exact interfaces** A/C/D1/D2 must deliver.
+
+**KEY FINDING (option-1 payoff — the precise D1-input spec):** `norm_identity_elim` builds
+`Q = Algebra.norm R (AdjoinRoot.mk h b)`, a polynomial in the Bézout cofactor `b`. So `Q` is analytic
+**iff `b` is**. The D3-application genuinely *needs* `Q` analytic (the reverse bridge requires both
+factors analytic). Therefore **D1-input must supply the membership `C(P) ∈ ⟨h,h'⟩` with *analytic*
+cofactors — equivalently, over the analytic-germ ring `𝒪ₙ` (Phase B), not the pointwise function
+ring.** This is exactly why `𝒪ₙ` is the right substrate (elements are analytic ⟹ `Q ∈ 𝒪ₙ` is
+automatically analytic). The remaining D-phase plumbing: (i) analyticity of `weierstrassResFun`/
+`weierstrassDiscFn` in the coefficients (resultant/disc are polynomials in the analytic `aᵢ`); (ii)
+running `norm_identity_elim` over `𝒪ₙ` and transporting the germ identity to the `=ᶠ` function form
+`hnorm`. Both are bounded; (ii) needs the germ↔function `resultant` identification (the germ half of
+the eval infra).
+
 ## Bridge lemma (2026-05-29): `order_invariant_factor_of_mul` — PROVED, 0 custom axioms
 
 In `DiscrProdInvariant.lean`. The **reverse** of `order_invariant_mul_mv`: if `f * g` is
