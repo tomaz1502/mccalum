@@ -120,8 +120,11 @@ theorem mccallum_3_2_3
         (continuousOn_id.prodMk hθ_cont)
     have hA_ne_zero : ∀ f ∈ A, f ≠ 0 :=
       fun f hf h => by linarith [hA.pos_degree f hf, show f.natDegree = 0 from by rw [h]; simp]
+    have hA_spec : ∀ f ∈ A, ∀ p ∈ SectionGraph θ S, specialize f p.1 ≠ 0 :=
+      fun f hf p hp => specialize_nonzero_everywhere f S
+        (hnonzero f hf) (hcoeff_oi f hf) p.1 hp.1
     exact order_invariant_full_factor_of_prod A (SectionGraph θ S) hT_preconn hA_ne_zero
-      hprod_oi F hF
+      hA_spec hprod_oi F hF
 
 #print axioms mccallum_3_2_3
 

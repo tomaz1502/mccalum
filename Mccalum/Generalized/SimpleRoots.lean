@@ -847,37 +847,8 @@ theorem orderFull_eq_one_of_simple_root
     (hroot : (specialize f a).IsRoot y)
     (hsimple : (specialize f a).rootMultiplicity y = 1) :
     orderFull f a y = 1 := by
-  unfold orderFull polyOrder
-  rw [show (1 : ℕ∞) = ↑(1 : ℕ) from rfl]
-  rw [order_eq_natCast_iff (𝕜 := ℝ)]
-  constructor
-  · -- All derivatives of order < 1 (i.e., just the 0th) vanish
-    intro m hm
-    interval_cases m
-    -- m = 0: need toMvPoly f evaluated at (y, a) = 0
-    ext v
-    simp only [iteratedFDeriv_zero_apply, ContinuousMultilinearMap.zero_apply]
-    -- eval (Fin.cons y a) (toMvPoly f) = (specialize f a).eval y = 0
-    have heval : MvPolynomial.eval (Fin.cons y a) (toMvPoly f) =
-        (specialize f a).eval y := by
-      unfold toMvPoly specialize
-      rw [MvPolynomial.eval_eq_eval_mv_eval',
-        (MvPolynomial.finSuccEquiv ℝ n).apply_symm_apply f]
-    rw [Polynomial.IsRoot] at hroot
-    exact heval ▸ hroot
-  · -- 1st iterated Fréchet derivative is nonzero
-    rw [iteratedFDeriv_ne_zero_iff_exists_iteratedPDeriv]
-    refine ⟨[0], rfl, ?_⟩
-    simp only [iteratedPDeriv, List.foldr_cons, List.foldr_nil]
-    rw [eval_pderiv_zero_toMvPoly]
-    have hne : specialize f a ≠ 0 := by
-      intro h; rw [h] at hsimple; simp at hsimple
-    have hnotder : ¬ (Polynomial.derivative (specialize f a)).IsRoot y := by
-      intro hder
-      have h1lt := (Polynomial.one_lt_rootMultiplicity_iff_isRoot hne).mpr ⟨hroot, hder⟩
-      omega
-    rw [Polynomial.IsRoot] at hnotder
-    exact fun h => hnotder h
+  have hne : specialize f a ≠ 0 := by intro h; rw [h] at hsimple; simp at hsimple
+  simp only [orderFull, if_neg hne, hsimple, Nat.cast_one]
 
 /-! ### Order invariance on simple-root sections -/
 

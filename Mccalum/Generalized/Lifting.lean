@@ -1,17 +1,21 @@
 import Mccalum.Prerequisites
 import Mccalum.DiscrProdInvariant
+import Mccalum.OrderComp
 import Mccalum.SquarefreeBasis
 import Mccalum.Generalized.SimpleRoots
 import Mathlib.Algebra.MvPolynomial.Funext
 import Mathlib.Topology.MetricSpace.Pseudo.Pi
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Calculus.ContDiff.Basic
+import Mathlib.Analysis.Calculus.ContDiff.RestrictScalars
 import Mathlib.Analysis.Analytic.Uniqueness
 import Mathlib.Analysis.Analytic.IteratedFDeriv
 import Mathlib.Analysis.Analytic.Order
+import Mathlib.Analysis.Analytic.Composition
 import Mathlib.RingTheory.AdjoinRoot
 import Mathlib.RingTheory.Norm.Defs
 import Mathlib.RingTheory.Polynomial.Resultant.Basic
+import Mathlib.Algebra.Polynomial.FieldDivision
 
 /-!
 # Generalized Lifting Theorem (Theorem 3.2.1')
@@ -417,7 +421,6 @@ private lemma order_mul_analytic
           (iteratedFDeriv ℂ nn g x₀) (fun _ => v₀ + t • w₀)) 0 ≠ 0 := by
         rw [iteratedDeriv_line_eq_iteratedFDeriv_diag _ v₀ w₀ nn hDg_anal,
             (iteratedFDeriv ℂ nn g x₀).iteratedFDeriv_comp_diagonal v₀ (fun _ => w₀)]
-        simp only [Function.const_apply]
         rw [Finset.sum_const, Finset.card_univ, Fintype.card_perm, Fintype.card_fin, nsmul_eq_mul]
         exact mul_ne_zero (Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero nn)) hw₀
       -- analyticOrderAt ψ 0 ≠ ⊤ (since nn-th derivative is nonzero)
@@ -431,7 +434,7 @@ private lemma order_mul_analytic
       -- ∃ᶠ t near 0, T_g(v₀+t•w₀,...) ≠ 0
       have hψ_freq : ∃ᶠ t in 𝓝 (0 : ℂ),
           (iteratedFDeriv ℂ nn g x₀) (fun _ => v₀ + t • w₀) ≠ 0 :=
-        analyticOrderAt_eq_top.not.mp hψ_ne_top
+        Filter.not_eventually.mp (analyticOrderAt_eq_top.not.mp hψ_ne_top)
       -- ∀ᶠ t near 0, T_f(v₀+t•w₀,...) ≠ 0 (continuity + nonvanishing at 0)
       have hφ_ev : ∀ᶠ t in 𝓝 (0 : ℂ),
           (iteratedFDeriv ℂ m f x₀) (fun _ => v₀ + t • w₀) ≠ 0 := by
@@ -917,6 +920,8 @@ theorem norm_eq_resultant_monic
       ← norm_adjoinRoot_map φ h' g' hh'm, hndh, hndg]
     exact congrArg φ (IH h' g' hh'm)
 
+#print axioms norm_eq_resultant_monic
+
 /-- **Norm identity for elimination ideals** (Thesis Corollary 5.2).
 
 For `h` monic of degree `m`, if a constant `P ∈ R` belongs to the ideal `⟨h, g⟩`
@@ -943,6 +948,746 @@ theorem norm_identity_elim
   simp only [Fintype.card_fin, AdjoinRoot.powerBasis'_dim] at hnorm
   exact ⟨Algebra.norm R (AdjoinRoot.mk h b), hnorm.symm⟩
 
+/-! ### Complexification of real-analytic functions
+
+Following Thesis §3.3.1: extend real-analytic functions from `ℝˢ` to holomorphic
+functions on `ℂˢ`, and transfer order-invariance.
+
+The key results are:
+1. `analyticAt_complexify`: a real-analytic function extends to a holomorphic function
+2. `holomorphic_eq_zero_of_real_eq_zero`: identity theorem — holomorphic on `ℂˢ`,
+   zero on `ℝˢ` implies zero everywhere
+3. `complexify_order_eq`: orders match between real and complex
+4. `complexify_order_invariant`: constant order on `ℝˢ` implies constant order on `ℂˢ`
+-/
+
+section Complexification
+
+open scoped Topology
+open Filter
+
+/-- A ℂ-multilinear map on `Fin s → ℂ` that vanishes on all tuples of standard basis
+vectors is zero. This generalizes `continuousMultilinearMap_eq_zero_iff_basis` to ℂ. -/
+private lemma cml_eq_zero_of_basis_eq_zero {s k : ℕ}
+    (g : ContinuousMultilinearMap ℂ (fun _ : Fin k => Fin s → ℂ) ℂ)
+    (h : ∀ v : Fin k → Fin s, g (fun i => Pi.single (v i) 1) = 0) : g = 0 := by
+  ext x
+  simp only [ContinuousMultilinearMap.zero_apply]
+  have hx : ∀ i : Fin k,
+      x i = ∑ j : Fin s, (x i j) • (Pi.single j (1 : ℂ) : Fin s → ℂ) := by
+    intro i; funext l
+    simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Pi.single_apply,
+               mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, if_true]
+  have heq : x = fun i => ∑ j : Fin s, (x i j) • (Pi.single j (1 : ℂ) : Fin s → ℂ) :=
+    funext hx
+  rw [heq, show (g fun i => ∑ j : Fin s, x i j • (Pi.single j (1 : ℂ) : Fin s → ℂ)) =
+      ∑ v : Fin k → Fin s, g (fun i => x i (v i) • (Pi.single (v i) (1 : ℂ) : Fin s → ℂ)) from
+    g.toMultilinearMap.map_sum (fun i j => x i j • (Pi.single j (1 : ℂ) : Fin s → ℂ))]
+  apply Finset.sum_eq_zero
+  intro v _
+  rw [g.map_smul_univ]
+  simp [h v]
+
+/-- The real embedding `ι : ℝˢ → ℂˢ` as a continuous ℝ-linear map. -/
+private noncomputable def realEmbedding (s : ℕ) :
+    (Fin s → ℝ) →L[ℝ] (Fin s → ℂ) :=
+  ContinuousLinearMap.pi (fun j =>
+    (Complex.ofRealCLM : ℝ →L[ℝ] ℂ).comp (ContinuousLinearMap.proj j))
+
+@[simp]
+private lemma realEmbedding_apply {s : ℕ} (x : Fin s → ℝ) :
+    realEmbedding s x = Complex.ofReal ∘ x := by
+  ext j; simp [realEmbedding]
+
+/-- Standard basis vectors are in the image of the real embedding. -/
+private lemma realEmbedding_single {s : ℕ} (j : Fin s) :
+    realEmbedding s (Pi.single j 1) = Pi.single j (1 : ℂ) := by
+  ext i; simp [realEmbedding, Pi.single_apply, apply_ite]
+
+/-- **Identity theorem on ℝˢ ⊂ ℂˢ** (Thesis §3.3.1).
+
+If `g : ℂˢ → ℂ` is holomorphic at `z₀ = ofReal ∘ x₀` and vanishes on `ℝˢ` near `x₀`,
+then `g` has infinite vanishing order at `z₀` (i.e., all iteratedFDeriv vanish).
+
+The proof shows each `iteratedFDeriv ℂ k g z₀` is a ℂ-multilinear map that
+vanishes on real basis inputs (via the chain rule for `g ∘ ι`), hence is zero. -/
+private lemma order_eq_top_of_real_eq_zero {s : ℕ}
+    (g : (Fin s → ℂ) → ℂ) (x₀ : Fin s → ℝ)
+    (hg : AnalyticAt ℂ g (Complex.ofReal ∘ x₀))
+    (hgz : ∀ᶠ x in 𝓝 x₀, g (Complex.ofReal ∘ x) = 0) :
+    order ℂ g (Complex.ofReal ∘ x₀) = ⊤ := by
+  rw [order_eq_top_iff]
+  intro k
+  set z₀ := Complex.ofReal ∘ x₀
+  let ι : (Fin s → ℝ) →L[ℝ] (Fin s → ℂ) := realEmbedding s
+  have hι_eq : ⇑ι = fun x => Complex.ofReal ∘ x := funext realEmbedding_apply
+  have hι_x₀ : ι x₀ = z₀ := by rw [hι_eq]
+  -- Step 1: g ∘ ι = 0 near x₀, so all ℝ-iterated derivatives vanish
+  have hgι_zero : (g ∘ ⇑ι) =ᶠ[𝓝 x₀] 0 := by
+    filter_upwards [hgz] with x hx
+    simp only [Function.comp_apply, hι_eq, hx, Pi.zero_apply]
+  have hgι_deriv : iteratedFDeriv ℝ k (g ∘ ⇑ι) x₀ = 0 := by
+    have h := (hgι_zero.iteratedFDeriv ℝ k).self_of_nhds
+    rw [h]
+    rcases k with _ | k
+    · ext m; simp [iteratedFDeriv_zero_apply]
+    · exact congr_fun (iteratedFDeriv_const_of_ne (Nat.succ_ne_zero k) (0 : ℂ)) x₀
+  -- Step 2: Local chain rule via open ball where g is smooth
+  obtain ⟨p, r, hp⟩ := hg
+  set U := Metric.eball z₀ r with hU_def
+  have hU_open : IsOpen U := Metric.isOpen_eball
+  have hz₀U : z₀ ∈ U := Metric.mem_eball_self hp.r_pos
+  have hg_smooth : ContDiffOn ℝ ⊤ g U :=
+    hp.analyticOnNhd.contDiffOn_of_completeSpace |>.restrict_scalars ℝ
+  have hιU_open : IsOpen (ι ⁻¹' U) := hU_open.preimage ι.continuous
+  have hx₀_ιU : x₀ ∈ ι ⁻¹' U := show ι x₀ ∈ U from hι_x₀ ▸ hz₀U
+  have hchain_within : iteratedFDerivWithin ℝ k (g ∘ ⇑ι) (ι ⁻¹' U) x₀ =
+      (iteratedFDerivWithin ℝ k g U z₀).compContinuousLinearMap (fun _ => ι) :=
+    ι.iteratedFDerivWithin_comp_right (hg_smooth.of_le le_top)
+      hU_open.uniqueDiffOn hιU_open.uniqueDiffOn (hι_x₀ ▸ hz₀U) le_top
+  rw [iteratedFDerivWithin_of_isOpen k hιU_open hx₀_ιU,
+      iteratedFDerivWithin_of_isOpen k hU_open hz₀U] at hchain_within
+  -- Step 3: Connect ℝ and ℂ derivatives via restrictScalars
+  have hcd : ContDiffAt ℂ (↑k) g z₀ :=
+    hp.hasFPowerSeriesAt.analyticAt.contDiffAt.of_le le_top
+  have hrestr : (iteratedFDeriv ℂ k g z₀).restrictScalars ℝ = iteratedFDeriv ℝ k g z₀ :=
+    ContDiffAt.restrictScalars_iteratedFDeriv (𝕜 := ℝ) hcd
+  -- Step 4: iteratedFDeriv ℂ k g z₀ vanishes on all real inputs
+  have hvanish : ∀ w : Fin k → (Fin s → ℝ),
+      (iteratedFDeriv ℂ k g z₀) (fun i => ι (w i)) = 0 := by
+    intro w
+    have h1 : ((iteratedFDeriv ℂ k g z₀).restrictScalars ℝ).compContinuousLinearMap
+        (fun _ => ι) = 0 := by
+      rw [hrestr, ← hchain_within]; exact hgι_deriv
+    have h2 := DFunLike.congr_fun h1 w
+    simp only [ContinuousMultilinearMap.compContinuousLinearMap_apply,
+      ContinuousMultilinearMap.coe_restrictScalars,
+      ContinuousMultilinearMap.zero_apply] at h2
+    exact h2
+  -- Step 5: Basis argument — vanishing on basis vectors implies zero
+  apply cml_eq_zero_of_basis_eq_zero
+  intro v
+  rw [show (fun i => Pi.single (v i) (1 : ℂ)) =
+      (fun i => ι (Pi.single (v i) (1 : ℝ))) from
+    funext fun i => (realEmbedding_single (v i)).symm]
+  exact hvanish _
+
+/-- Complexify a continuous multilinear map from `(Fin s → ℝ)^n → ℝ` to
+`(Fin s → ℂ)^n → ℂ` by expanding in the standard basis. -/
+private noncomputable def complexifyMultilinear {n s : ℕ}
+    (T : ContinuousMultilinearMap ℝ (fun _ : Fin n => Fin s → ℝ) ℝ) :
+    ContinuousMultilinearMap ℂ (fun _ : Fin n => Fin s → ℂ) ℂ :=
+  ∑ σ : Fin n → Fin s,
+    Complex.ofReal (T (fun j => Pi.single (σ j) 1)) •
+    (ContinuousMultilinearMap.mkPiRing ℂ (Fin n) (1 : ℂ)).compContinuousLinearMap
+      (fun j => ContinuousLinearMap.proj (σ j))
+
+private lemma complexifyMultilinear_apply {n s : ℕ}
+    (T : ContinuousMultilinearMap ℝ (fun _ : Fin n => Fin s → ℝ) ℝ)
+    (v : (i : Fin n) → Fin s → ℂ) :
+    complexifyMultilinear T v =
+      ∑ σ : Fin n → Fin s,
+        Complex.ofReal (T (fun j => Pi.single (σ j) 1)) * ∏ j : Fin n, v j (σ j) := by
+  unfold complexifyMultilinear
+  simp only [ContinuousMultilinearMap.sum_apply, ContinuousMultilinearMap.smul_apply,
+    ContinuousMultilinearMap.compContinuousLinearMap_apply,
+    ContinuousMultilinearMap.mkPiRing_apply, ContinuousLinearMap.proj_apply,
+    smul_eq_mul, mul_one, Algebra.id.smul_eq_mul]
+
+private lemma complexifyMultilinear_real {n s : ℕ}
+    (T : ContinuousMultilinearMap ℝ (fun _ : Fin n => Fin s → ℝ) ℝ)
+    (x : (i : Fin n) → Fin s → ℝ) :
+    complexifyMultilinear T (fun i => Complex.ofReal ∘ x i) =
+      Complex.ofReal (T x) := by
+  rw [complexifyMultilinear_apply]
+  simp only [Function.comp_apply]
+  simp_rw [← Complex.ofReal_prod, ← Complex.ofReal_mul, ← Complex.ofReal_sum]
+  congr 1
+  have hx : x = fun i => ∑ j : Fin s, x i j • (Pi.single j (1 : ℝ) : Fin s → ℝ) := by
+    ext i k; simp [Pi.single_apply]
+  conv_rhs => rw [hx, T.map_sum]
+  simp_rw [T.map_smul_univ, smul_eq_mul]
+  exact Finset.sum_congr rfl (fun σ _ => by ring)
+
+private lemma complexifyMultilinear_norm_le {n s : ℕ}
+    (T : ContinuousMultilinearMap ℝ (fun _ : Fin n => Fin s → ℝ) ℝ) :
+    ‖complexifyMultilinear T‖ ≤ (s : ℝ) ^ n * ‖T‖ := by
+  apply ContinuousMultilinearMap.opNorm_le_bound (by positivity)
+  intro v; rw [complexifyMultilinear_apply]
+  have hterm : ∀ σ : Fin n → Fin s,
+      ‖Complex.ofReal (T (fun j => Pi.single (σ j) 1)) * ∏ j, v j (σ j)‖ ≤
+      ‖T‖ * ∏ j, ‖v j‖ := by
+    intro σ
+    have h1 : ‖Complex.ofReal (T (fun j => Pi.single (σ j) 1))‖ ≤ ‖T‖ := by
+      rw [Complex.norm_real]
+      exact (T.le_opNorm _).trans_eq (by simp [Pi.norm_single])
+    have h2 : ‖∏ j : Fin n, v j (σ j)‖ ≤ ∏ j, ‖v j‖ :=
+      (Finset.norm_prod_le Finset.univ (fun j => v j (σ j))).trans (Finset.prod_le_prod
+        (fun j _ => norm_nonneg _) (fun j _ => norm_le_pi_norm (v j) (σ j)))
+    exact (norm_mul_le _ _).trans (mul_le_mul h1 h2 (norm_nonneg _) (norm_nonneg _))
+  calc ‖∑ σ : Fin n → Fin s, Complex.ofReal (T (fun j => Pi.single (σ j) 1)) *
+          ∏ j, v j (σ j)‖
+      ≤ ∑ σ : Fin n → Fin s, ‖Complex.ofReal (T (fun j => Pi.single (σ j) 1)) *
+          ∏ j, v j (σ j)‖ := norm_sum_le _ _
+    _ ≤ ∑ _σ : Fin n → Fin s, ‖T‖ * ∏ j, ‖v j‖ :=
+        Finset.sum_le_sum (fun σ _ => hterm σ)
+    _ = (s : ℝ) ^ n * ‖T‖ * ∏ j, ‖v j‖ := by
+        rw [Finset.sum_const, Finset.card_univ, Fintype.card_fun, nsmul_eq_mul]
+        simp only [Fintype.card_fin, Nat.cast_pow]; ring
+
+/-- Complexified formal multilinear series. -/
+private noncomputable def complexifyFMS {s : ℕ}
+    (p : FormalMultilinearSeries ℝ (Fin s → ℝ) ℝ) :
+    FormalMultilinearSeries ℂ (Fin s → ℂ) ℂ :=
+  fun n => complexifyMultilinear (p n)
+
+private lemma complexifyFMS_radius_pos {s : ℕ}
+    (p : FormalMultilinearSeries ℝ (Fin s → ℝ) ℝ) (hp : 0 < p.radius) :
+    0 < (complexifyFMS p).radius := by
+  obtain ⟨r, hr_pos, hr_lt⟩ := ENNReal.exists_nnreal_pos_mul_lt
+    (ENNReal.natCast_ne_top s) (ne_of_gt hp)
+  set R : NNReal := (s : NNReal) * r
+  have hR_lt : (↑R : ENNReal) < p.radius := by
+    show ↑((s : NNReal) * r) < p.radius; rwa [ENNReal.coe_mul, mul_comm]
+  have hsumm := p.summable_norm_mul_pow hR_lt
+  have hR_eq : (R : ℝ) = ↑s * ↑r := by
+    simp only [R, NNReal.coe_mul, NNReal.coe_natCast]
+  have hle : (↑r : ENNReal) ≤ (complexifyFMS p).radius :=
+    (complexifyFMS p).le_radius_of_summable <|
+      Summable.of_nonneg_of_le (fun _ => by positivity)
+        (fun n => by
+          calc ‖complexifyFMS p n‖ * (↑r : ℝ) ^ n
+              ≤ ((↑s : ℝ) ^ n * ‖p n‖) * (↑r : ℝ) ^ n := by
+                gcongr; exact complexifyMultilinear_norm_le (p n)
+            _ = ‖p n‖ * (R : ℝ) ^ n := by rw [hR_eq]; ring)
+        hsumm
+  exact lt_of_lt_of_le (by exact_mod_cast hr_pos) hle
+
+/-- A real-analytic function at a point has a holomorphic (ℂ-analytic) extension
+to `Fin s → ℂ` near the corresponding complex point, with matching vanishing order.
+
+The extension is defined by the same convergent power series with complex variables
+substituted (Thesis Theorem 2.1.2). The order equality follows from the
+identity theorem on `ℝˢ ⊂ ℂˢ`. -/
+private lemma complexifyMultilinear_eq_zero_iff {n s : ℕ}
+    (T : ContinuousMultilinearMap ℝ (fun _ : Fin n => Fin s → ℝ) ℝ) :
+    complexifyMultilinear T = 0 ↔ T = 0 := by
+  constructor
+  · intro h
+    ext x
+    have h1 := DFunLike.congr_fun h (fun i => Complex.ofReal ∘ x i)
+    simp only [ContinuousMultilinearMap.zero_apply] at h1
+    rw [complexifyMultilinear_real] at h1
+    exact_mod_cast h1
+  · intro h; subst h
+    ext v; simp [complexifyMultilinear_apply]
+
+theorem analyticAt_complexify {s : ℕ}
+    (f : (Fin s → ℝ) → ℝ) (x₀ : Fin s → ℝ)
+    (hf : AnalyticAt ℝ f x₀) :
+    ∃ f_ℂ : (Fin s → ℂ) → ℂ,
+      AnalyticAt ℂ f_ℂ (Complex.ofReal ∘ x₀) ∧
+      (∀ᶠ x in 𝓝 x₀, f_ℂ (Complex.ofReal ∘ x) = Complex.ofReal (f x)) ∧
+      order ℂ f_ℂ (Complex.ofReal ∘ x₀) = order ℝ f x₀ := by
+  obtain ⟨p, r, hball⟩ := hf
+  set q := complexifyFMS p
+  set z₀ := Complex.ofReal ∘ x₀
+  have hq_rad : 0 < q.radius := complexifyFMS_radius_pos p hball.radius_pos
+  have hq_ball : HasFPowerSeriesOnBall q.sum q 0 q.radius :=
+    q.hasFPowerSeriesOnBall hq_rad
+  set f_ℂ := fun z : Fin s → ℂ => q.sum (z - z₀)
+  have hf_ℂ_ball : HasFPowerSeriesOnBall f_ℂ q z₀ q.radius := {
+    r_le := le_rfl
+    r_pos := hq_rad
+    hasSum := fun {y} hy => by
+      have h := hq_ball.hasSum hy
+      rw [zero_add] at h
+      change HasSum _ (q.sum ((z₀ + y) - z₀))
+      rw [add_sub_cancel_left]
+      exact h }
+  -- Agreement on reals helper
+  have hagree : ∀ᶠ x in 𝓝 x₀, f_ℂ (Complex.ofReal ∘ x) = Complex.ofReal (f x) := by
+    filter_upwards [Metric.eball_mem_nhds x₀ (lt_min hball.r_pos hq_rad)] with x hx
+    set y := x - x₀
+    have hy_e : edist y 0 < min r q.radius := by
+      show edist (x - x₀) 0 < _
+      rw [edist_dist, dist_zero_right, ← dist_eq_norm, ← edist_dist]
+      exact Metric.mem_eball.mp hx
+    have hy_r : y ∈ Metric.eball (0 : Fin s → ℝ) r :=
+      Metric.mem_eball.mpr (lt_of_lt_of_le hy_e (min_le_left _ _))
+    have h_edist : edist (Complex.ofReal ∘ y : Fin s → ℂ) (0 : Fin s → ℂ) =
+        edist y (0 : Fin s → ℝ) := by
+      simp only [edist_pi_def, Function.comp_apply, Pi.zero_apply, ← Complex.ofReal_zero,
+        Complex.isometry_ofReal.edist_eq]
+    have hy_q : (Complex.ofReal ∘ y : Fin s → ℂ) ∈ Metric.eball (0 : Fin s → ℂ) q.radius :=
+      Metric.mem_eball.mpr (h_edist ▸ lt_of_lt_of_le hy_e (min_le_right _ _))
+    have h_cplx := hf_ℂ_ball.hasSum hy_q
+    have h_rw : ∀ n, q n (fun _ => Complex.ofReal ∘ y) =
+        Complex.ofReal (p n (fun _ => y)) := fun n =>
+      complexifyMultilinear_real (p n) (fun _ => y)
+    simp_rw [h_rw] at h_cplx
+    have h_eq := h_cplx.unique (Complex.ofRealCLM.hasSum (hball.hasSum hy_r))
+    rwa [show z₀ + Complex.ofReal ∘ y = Complex.ofReal ∘ x from by
+           ext i; simp only [z₀, y, Pi.add_apply, Function.comp_apply, Pi.sub_apply]; push_cast; ring,
+         show x₀ + y = x from by ext; simp [y]] at h_eq
+  refine ⟨f_ℂ, ⟨q, q.radius, hf_ℂ_ball⟩, hagree, ?_⟩
+  · -- Order equality: order ℂ f_ℂ z₀ = order ℝ f x₀
+    let ι : (Fin s → ℝ) →L[ℝ] (Fin s → ℂ) := realEmbedding s
+    have hι_eq : ⇑ι = fun x => Complex.ofReal ∘ x := funext realEmbedding_apply
+    have hι_x₀ : ι x₀ = z₀ := by rw [hι_eq]
+    set U := Metric.eball z₀ q.radius with hU_def
+    have hU_open : IsOpen U := Metric.isOpen_eball
+    have hz₀U : z₀ ∈ U := Metric.mem_eball_self hq_rad
+    have hf_ℂ_smooth : ContDiffOn ℝ ⊤ f_ℂ U :=
+      hf_ℂ_ball.analyticOnNhd.contDiffOn_of_completeSpace |>.restrict_scalars ℝ
+    have hιU_open : IsOpen (ι ⁻¹' U) := hU_open.preimage ι.continuous
+    have hx₀_ιU : x₀ ∈ ι ⁻¹' U := show ι x₀ ∈ U from hι_x₀ ▸ hz₀U
+    have hf_cd : ContDiffAt ℝ ⊤ f x₀ := hball.hasFPowerSeriesAt.analyticAt.contDiffAt
+    -- Agreement as EventuallyEq for compositions
+    have hfeq : (f_ℂ ∘ ⇑ι) =ᶠ[𝓝 x₀] (Complex.ofRealCLM ∘ f) := by
+      filter_upwards [hagree] with x hx
+      show f_ℂ (ι x) = Complex.ofRealCLM (f x)
+      rw [show (ι x : Fin s → ℂ) = Complex.ofReal ∘ x from congr_fun hι_eq x]
+      exact hx
+    -- Helper: chain rule gives iteratedFDeriv ℝ n (f_ℂ ∘ ι) x₀ =
+    --   ((iteratedFDeriv ℂ n f_ℂ z₀).restrictScalars ℝ).compCLM(ι)
+    have hchain_eq : ∀ n : ℕ, iteratedFDeriv ℝ n (f_ℂ ∘ ⇑ι) x₀ =
+        ((iteratedFDeriv ℂ n f_ℂ z₀).restrictScalars ℝ).compContinuousLinearMap
+          (fun _ => ι) := by
+      intro n
+      have h1 : iteratedFDerivWithin ℝ n (f_ℂ ∘ ⇑ι) (ι ⁻¹' U) x₀ =
+          (iteratedFDerivWithin ℝ n f_ℂ U z₀).compContinuousLinearMap (fun _ => ι) :=
+        ι.iteratedFDerivWithin_comp_right (hf_ℂ_smooth.of_le le_top)
+          hU_open.uniqueDiffOn hιU_open.uniqueDiffOn (hι_x₀ ▸ hz₀U) le_top
+      rw [iteratedFDerivWithin_of_isOpen n hιU_open hx₀_ιU,
+          iteratedFDerivWithin_of_isOpen n hU_open hz₀U] at h1
+      have hcd : ContDiffAt ℂ (↑n) f_ℂ z₀ :=
+        hf_ℂ_ball.hasFPowerSeriesAt.analyticAt.contDiffAt.of_le le_top
+      have hrestr : (iteratedFDeriv ℂ n f_ℂ z₀).restrictScalars ℝ =
+          iteratedFDeriv ℝ n f_ℂ z₀ :=
+        ContDiffAt.restrictScalars_iteratedFDeriv (𝕜 := ℝ) hcd
+      rw [h1, hrestr]
+    -- Helper: chain rule left for ofRealCLM ∘ f
+    have hleft_eq : ∀ n : ℕ, iteratedFDeriv ℝ n (Complex.ofRealCLM ∘ f) x₀ =
+        Complex.ofRealCLM.compContinuousMultilinearMap (iteratedFDeriv ℝ n f x₀) :=
+      fun n => Complex.ofRealCLM.iteratedFDeriv_comp_left (hf_cd.of_le le_top) le_top
+    -- Key: for all n, iteratedFDeriv vanishes in sync
+    suffices h_zero_iff : ∀ n : ℕ, iteratedFDeriv ℂ n f_ℂ z₀ = 0 ↔
+        iteratedFDeriv ℝ n f x₀ = 0 by
+      simp only [order]
+      have h_ne : ∀ n : ℕ, iteratedFDeriv ℂ n f_ℂ z₀ ≠ 0 ↔
+          iteratedFDeriv ℝ n f x₀ ≠ 0 := fun n => (h_zero_iff n).not
+      by_cases hex : ∃ n, iteratedFDeriv ℝ n f x₀ ≠ 0
+      · have hex_c := (exists_congr fun n => h_ne n).mpr hex
+        rw [dif_pos hex_c, dif_pos hex]
+        exact congr_arg _ (Nat.find_congr' (fun {n} => h_ne n))
+      · have : ¬ ∃ n, iteratedFDeriv ℂ n f_ℂ z₀ ≠ 0 :=
+          fun h => hex ((exists_congr fun n => h_ne n).mp h)
+        rw [dif_neg this, dif_neg hex]
+    intro n
+    constructor
+    · -- iteratedFDeriv ℂ n f_ℂ z₀ = 0 → iteratedFDeriv ℝ n f x₀ = 0
+      intro hc
+      have h_comp_zero : iteratedFDeriv ℝ n (f_ℂ ∘ ⇑ι) x₀ = 0 := by
+        rw [hchain_eq n, hc]; ext; simp
+      have h_feq_deriv := (hfeq.iteratedFDeriv ℝ n).self_of_nhds
+      rw [h_comp_zero, hleft_eq] at h_feq_deriv
+      ext v
+      have hv := DFunLike.congr_fun h_feq_deriv.symm v
+      simp only [ContinuousLinearMap.compContinuousMultilinearMap_coe, Function.comp_apply,
+        ContinuousMultilinearMap.zero_apply] at hv
+      exact Complex.ofReal_eq_zero.mp hv
+    · -- iteratedFDeriv ℝ n f x₀ = 0 → iteratedFDeriv ℂ n f_ℂ z₀ = 0
+      intro hr
+      have h_left_zero : iteratedFDeriv ℝ n (Complex.ofRealCLM ∘ f) x₀ = 0 := by
+        rw [hleft_eq, hr]; ext; simp
+      have h_feq_deriv := (hfeq.iteratedFDeriv ℝ n).self_of_nhds
+      rw [h_left_zero] at h_feq_deriv
+      have h_vanish : ((iteratedFDeriv ℂ n f_ℂ z₀).restrictScalars ℝ).compContinuousLinearMap
+          (fun _ => ι) = 0 := by rw [← hchain_eq]; exact h_feq_deriv
+      apply cml_eq_zero_of_basis_eq_zero
+      intro v
+      rw [show (fun i => Pi.single (v i) (1 : ℂ)) = (fun i => ι (Pi.single (v i) (1 : ℝ))) from
+        funext fun i => (realEmbedding_single (v i)).symm]
+      have h2 := DFunLike.congr_fun h_vanish (fun i => Pi.single (v i) (1 : ℝ))
+      simp only [ContinuousMultilinearMap.compContinuousLinearMap_apply,
+        ContinuousMultilinearMap.coe_restrictScalars,
+        ContinuousMultilinearMap.zero_apply] at h2
+      exact h2
+
+/-- **Order-invariance transfer** (Thesis §3.3.1, complexification step).
+
+If `f : ℝˢ → ℝ` is real-analytic and has constant vanishing order `μ` on `ℝˢ` near `x₀`,
+then its holomorphic extension `f_ℂ` has constant vanishing order `μ` on `ℂˢ` near `x₀`.
+
+The proof first shows `order ≥ μ` everywhere (each `iteratedFDeriv` of order `< μ` is a
+holomorphic function vanishing on `ℝˢ`, hence zero by the identity theorem), then uses
+upper semi-continuity of order (`isOpen_order_le_inter`) and connectivity to get `order = μ`. -/
+theorem complexify_order_invariant {s : ℕ}
+    (f_ℂ : (Fin s → ℂ) → ℂ) (μ : ℕ)
+    (hf_an : AnalyticOnNhd ℂ f_ℂ (Set.univ : Set (Fin s → ℂ)))
+    (hf_ne : f_ℂ ≠ 0)
+    (hf_real_oi : ∀ᶠ x in 𝓝 (0 : Fin s → ℝ),
+      order ℝ (fun y => f_ℂ (Complex.ofReal ∘ y)) x = ↑μ)
+    (hf_order_zero : order ℂ f_ℂ (0 : Fin s → ℂ) = ↑μ) :
+    ∀ᶠ z in 𝓝 (0 : Fin s → ℂ), order ℂ f_ℂ z = ↑μ := by
+  -- Step 1: order ≤ μ near 0 (upper semi-continuity)
+  have h_le : ∀ᶠ z in 𝓝 (0 : Fin s → ℂ), order ℂ f_ℂ z ≤ ↑μ := by
+    have h_open := isOpen_order_le_inter s Set.univ isOpen_univ f_ℂ hf_an ↑μ
+    exact Filter.Eventually.mono (h_open.mem_nhds ⟨Set.mem_univ _, le_of_eq hf_order_zero⟩)
+      fun z ⟨_, h⟩ => h
+  -- Step 2: order ≥ μ near 0 (identity theorem on each derivative of order < μ)
+  have h_ge : ∀ᶠ z in 𝓝 (0 : Fin s → ℂ), ↑μ ≤ order ℂ f_ℂ z := by
+    let ι : (Fin s → ℝ) →L[ℝ] (Fin s → ℂ) := realEmbedding s
+    have hι_eq : ⇑ι = fun x => Complex.ofReal ∘ x := funext realEmbedding_apply
+    have hι_zero : ι 0 = (0 : Fin s → ℂ) := by rw [hι_eq]; ext; simp
+    have hf_cd : ContDiff ℝ ⊤ f_ℂ := (hf_an.contDiff (n := ⊤)).restrict_scalars ℝ
+    have hf_cd_c : ContDiff ℂ ⊤ f_ℂ := hf_an.contDiff (n := ⊤)
+    -- For each j < μ, iteratedFDeriv ℂ j f_ℂ z = 0 in a neighborhood of 0
+    suffices h_deriv_vanish : ∀ j < μ, ∀ᶠ z in 𝓝 (0 : Fin s → ℂ),
+        iteratedFDeriv ℂ j f_ℂ z = 0 by
+      -- Finite intersection: all j < μ simultaneously
+      rcases μ with _ | μ
+      · filter_upwards with z; simp
+      · have := (Finset.range (μ + 1)).eventually_all.mpr
+          (fun j hj => h_deriv_vanish j (Finset.mem_range.mp hj))
+        filter_upwards [this] with z hz
+        -- All derivatives of order < μ+1 vanish, so order ≥ μ+1
+        unfold order; split_ifs with hex
+        · exact Nat.cast_le.mpr (Nat.le_of_not_lt fun hlt =>
+            Nat.find_spec hex (hz _ (Finset.mem_range.mpr hlt)))
+        · exact le_top
+    intro j hj
+    -- Step 2a: iteratedFDeriv ℂ j f_ℂ (ι x) = 0 for all x near 0 in ℝˢ
+    have hreal_vanish : ∀ᶠ x in 𝓝 (0 : Fin s → ℝ),
+        iteratedFDeriv ℂ j f_ℂ (ι x) = 0 := by
+      filter_upwards [hf_real_oi] with x hx
+      -- order ℝ (f_ℂ ∘ ι) x = μ > j
+      have hderiv_real : iteratedFDeriv ℝ j (f_ℂ ∘ ⇑ι) x = 0 :=
+        iteratedFDeriv_eq_zero_of_lt_order (by
+          show (↑j : ℕ∞) < order ℝ (f_ℂ ∘ ⇑ι) x
+          convert (Nat.cast_lt (α := ℕ∞).mpr hj : (↑j : ℕ∞) < ↑μ) using 1)
+      -- Chain rule + restrictScalars + basis argument (same as order_eq_top_of_real_eq_zero)
+      have hchain : iteratedFDeriv ℝ j (f_ℂ ∘ ⇑ι) x =
+          (iteratedFDeriv ℝ j f_ℂ (ι x)).compContinuousLinearMap (fun _ => ι) :=
+        ContinuousLinearMap.iteratedFDeriv_comp_right ι hf_cd x le_top
+      have hrestr : (iteratedFDeriv ℂ j f_ℂ (ι x)).restrictScalars ℝ =
+          iteratedFDeriv ℝ j f_ℂ (ι x) :=
+        ContDiffAt.restrictScalars_iteratedFDeriv (𝕜 := ℝ)
+          (hf_cd_c.contDiffAt.of_le le_top)
+      have h_comp_zero : ((iteratedFDeriv ℂ j f_ℂ (ι x)).restrictScalars ℝ).compContinuousLinearMap
+          (fun _ => ι) = 0 := by rw [hrestr, ← hchain]; exact hderiv_real
+      apply cml_eq_zero_of_basis_eq_zero
+      intro v
+      rw [show (fun i => Pi.single (v i) (1 : ℂ)) = (fun i => ι (Pi.single (v i) (1 : ℝ))) from
+        funext fun i => (realEmbedding_single (v i)).symm]
+      have h2 := DFunLike.congr_fun h_comp_zero (fun i => Pi.single (v i) (1 : ℝ))
+      simp only [ContinuousMultilinearMap.compContinuousLinearMap_apply,
+        ContinuousMultilinearMap.coe_restrictScalars,
+        ContinuousMultilinearMap.zero_apply] at h2
+      exact h2
+    -- Step 2b: For each basis tuple b, z ↦ (iteratedFDeriv ℂ j f_ℂ z)(e_b) is holomorphic,
+    -- vanishes on ℝˢ near 0, hence vanishes on ℂˢ near 0 by the identity theorem
+    have hbasis_zero : ∀ b : Fin j → Fin s,
+        ∀ᶠ z in 𝓝 (0 : Fin s → ℂ),
+          (iteratedFDeriv ℂ j f_ℂ z) (fun i => Pi.single (b i) (1 : ℂ)) = 0 := by
+      intro b
+      set g_b : (Fin s → ℂ) → ℂ :=
+        fun z => (iteratedFDeriv ℂ j f_ℂ z) (fun i => Pi.single (b i) (1 : ℂ))
+      have hg_an : AnalyticAt ℂ g_b (0 : Fin s → ℂ) := by
+        have h1 : AnalyticAt ℂ (iteratedFDeriv ℂ j f_ℂ) (0 : Fin s → ℂ) :=
+          hf_an.iteratedFDeriv j _ (Set.mem_univ _)
+        exact ((ContinuousMultilinearMap.apply ℂ (fun _ : Fin j => Fin s → ℂ) ℂ
+          (fun i : Fin j => Pi.single (b i) (1 : ℂ))).analyticAt
+          (iteratedFDeriv ℂ j f_ℂ 0)).comp h1
+      have hg_real_zero : ∀ᶠ x in 𝓝 (0 : Fin s → ℝ), g_b (Complex.ofReal ∘ x) = 0 := by
+        filter_upwards [hreal_vanish] with x hx
+        show (iteratedFDeriv ℂ j f_ℂ (ι x)) (fun i => Pi.single (b i) 1) = 0
+        rw [hx, ContinuousMultilinearMap.zero_apply]
+      have hord_top : order ℂ g_b (Complex.ofReal ∘ (0 : Fin s → ℝ)) = ⊤ :=
+        order_eq_top_of_real_eq_zero g_b 0
+          (by rwa [show Complex.ofReal ∘ (0 : Fin s → ℝ) = (0 : Fin s → ℂ) from by ext; simp])
+          hg_real_zero
+      rw [show Complex.ofReal ∘ (0 : Fin s → ℝ) = (0 : Fin s → ℂ) from by ext; simp] at hord_top
+      exact (eventuallyEq_zero_of_order_eq_top g_b 0 hg_an hord_top).mono
+        fun z hz => by exact hz
+    -- Step 2c: Finite intersection over basis tuples + cml_eq_zero_of_basis_eq_zero
+    have := Finset.univ.eventually_all.mpr (fun b _ => hbasis_zero b)
+    filter_upwards [this] with z hz
+    apply cml_eq_zero_of_basis_eq_zero
+    intro v
+    exact hz v (Finset.mem_univ _)
+  filter_upwards [h_le, h_ge] with z hle hge
+  exact le_antisymm hle hge
+
+/-- **Schwarz reflection / real restriction** (decomposition step 6, now PROVED).
+
+A function `ψ` holomorphic at a real point `realEmbedding s x₀` restricts to a real-analytic
+function on `ℝˢ`: `x ↦ Re (ψ (ofReal ∘ x))` is real-analytic at `x₀`. When `ψ` is a holomorphic
+root section taking real values on the real slice, this is exactly the real root function.
+
+This is the real-analyticity half of recovering real root sections from holomorphic ones in the
+complexification approach to the delineation axiom. Proof: `ψ` is ℂ-analytic hence ℝ-analytic
+(`restrictScalars`); precompose with the ℝ-linear embedding and postcompose with `Re`, both
+continuous-linear hence analytic. -/
+theorem real_restriction_analytic {s : ℕ}
+    (ψ : (Fin s → ℂ) → ℂ) (x₀ : Fin s → ℝ)
+    (hψ : AnalyticAt ℂ ψ (realEmbedding s x₀)) :
+    AnalyticAt ℝ (fun x : Fin s → ℝ => (ψ (realEmbedding s x)).re) x₀ := by
+  have h1 : AnalyticAt ℝ ψ (realEmbedding s x₀) := hψ.restrictScalars
+  have h2 : AnalyticAt ℝ (fun x => ψ (realEmbedding s x)) x₀ :=
+    h1.comp ((realEmbedding s).analyticAt x₀)
+  exact (Complex.reCLM.analyticAt _).comp h2
+
+/-- **Complexification of a pseudopolynomial family** (decomposition, hypothesis side, PROVED).
+
+A polynomial family `g : ℝᵐ → ℝ[t]` whose coefficients are analytic at `0` and whose degree is
+bounded by `N` complexifies to a family `gℂ : ℂᵐ → ℂ[t]` with analytic coefficients, agreeing with
+`g` on the reals coefficient-wise near `0`. Built by complexifying each coefficient via
+`analyticAt_complexify` and reassembling. This is the family-level half of the hypothesis-side glue
+for the complexification approach to the delineation axiom. -/
+theorem complexify_pseudopoly {m : ℕ} (N : ℕ)
+    (g : (Fin m → ℝ) → Polynomial ℝ)
+    (hdeg : ∀ w, (g w).natDegree ≤ N)
+    (hcoeff_an : ∀ i, AnalyticAt ℝ (fun w => (g w).coeff i) 0) :
+    ∃ gℂ : (Fin m → ℂ) → Polynomial ℂ,
+      (∀ i, AnalyticAt ℂ (fun z => (gℂ z).coeff i) (Complex.ofReal ∘ (0 : Fin m → ℝ))) ∧
+      (∀ i, ∀ᶠ w in 𝓝 (0 : Fin m → ℝ),
+        (gℂ (Complex.ofReal ∘ w)).coeff i = Complex.ofReal ((g w).coeff i)) := by
+  have hex : ∀ i, ∃ cℂ : (Fin m → ℂ) → ℂ,
+      AnalyticAt ℂ cℂ (Complex.ofReal ∘ (0 : Fin m → ℝ)) ∧
+      (∀ᶠ w in 𝓝 (0 : Fin m → ℝ), cℂ (Complex.ofReal ∘ w) = Complex.ofReal ((g w).coeff i)) :=
+    fun i => by
+      obtain ⟨cℂ, han, hagree, _⟩ := analyticAt_complexify (fun w => (g w).coeff i) 0 (hcoeff_an i)
+      exact ⟨cℂ, han, hagree⟩
+  choose cℂ hcℂ_an hcℂ_agree using hex
+  -- The coefficient at `j` of the assembled `gℂ z` is `cℂ j z` when `j ≤ N`, else `0`.
+  have hco : ∀ (z : Fin m → ℂ) (j : ℕ),
+      (∑ i ∈ Finset.range (N + 1), Polynomial.monomial i (cℂ i z)).coeff j
+        = if j ≤ N then cℂ j z else 0 := by
+    intro z j
+    rw [Polynomial.finset_sum_coeff]
+    simp only [Polynomial.coeff_monomial]
+    rw [Finset.sum_ite_eq' (Finset.range (N + 1)) j (fun i => cℂ i z)]
+    simp [Finset.mem_range, Nat.lt_succ_iff]
+  refine ⟨fun z => ∑ i ∈ Finset.range (N + 1), Polynomial.monomial i (cℂ i z), ?_, ?_⟩
+  · intro j
+    refine (?_ : AnalyticAt ℂ (fun z => if j ≤ N then cℂ j z else 0)
+        (Complex.ofReal ∘ (0 : Fin m → ℝ))).congr (.of_forall fun z => (hco z j).symm)
+    by_cases hj : j ≤ N
+    · simpa only [hj, if_true] using hcℂ_an j
+    · simpa only [hj, if_false] using analyticAt_const
+  · intro j
+    filter_upwards [hcℂ_agree j] with w hw
+    rw [hco (Complex.ofReal ∘ w) j]
+    by_cases hj : j ≤ N
+    · rw [if_pos hj, hw]
+    · rw [if_neg hj, Polynomial.coeff_eq_zero_of_natDegree_lt
+        (lt_of_le_of_lt (hdeg w) (not_le.mp hj)), Complex.ofReal_zero]
+
+end Complexification
+
+open scoped Topology
+open Filter
+
+/-! ### Axioms for the analytic core (to be proved)
+
+The single axiom `analytic_pseudopoly_delineable` below is the only non-standard
+axiom on which the main theorem `mccallum_3_2_3_generalized` depends. We plan to
+decompose it into the following smaller pieces, each of which is a well-known
+classical theorem of complex analysis:
+
+**Decomposition plan:**
+
+1. **`weierstrass_preparation_complex`** (TODO axiom) — classical Weierstrass
+   preparation theorem for holomorphic functions in several complex variables.
+   A holomorphic `f` on `Δ × Δ(0, R)` with `f(0, ·)` having a zero of order
+   exactly `m` at `0` factors as `f = u · h` where `u` is a unit and
+   `h(z, w) = w^m + a₁(z) w^{m-1} + ... + a_m(z)` is a "Weierstrass polynomial"
+   with `aᵢ(0) = 0`. **Status:** Mathlib has the algebraic version
+   (`PowerSeries.exists_isWeierstrassFactorization`) for formal power series
+   over complete local rings. Bridging to convergent power series is the gap.
+
+2. **`zariski_root_sections_complex`** (TODO axiom) — Zariski's 1975 theorem.
+   For a Weierstrass polynomial `h(z, w)` with `disc(h)` of constant nonzero
+   vanishing order on a connected open set in `ℂˢ`, `h` has holomorphic root
+   sections `ψᵢ : Δ → ℂ` with constant multiplicities. **Status:** not in
+   Mathlib; classical reference is Zariski's "Studies in equisingularity I"
+   (1965) or Tougeron, *Idéaux de fonctions différentiables*.
+
+3. **`real_root_section_of_complex`** (theorem, provable) — Schwarz reflection.
+   If `ψ : Δ → ℂ` is holomorphic, takes real values on `Δ ∩ ℝˢ`, then its
+   restriction to `Δ ∩ ℝˢ` is real-analytic with real-valued power series.
+
+4. **`analytic_pseudopoly_delineable`** (theorem, provable from 1–3) — the
+   real-analytic delineation result currently stated as an axiom.
+
+For now, we state the monolithic axiom below; the decomposition is documented
+here as the path toward a fully-axiom-free proof.
+-/
+
+/-- **Weierstrass–Zariski delineation** (Thesis §§3.3.5–3.3.9), full-base form.
+
+The analytic family `g` lives over the **full** straightened base `ℝˢ × ℝᵉ` (section
+coordinates `y ∈ ℝˢ`, transverse coordinates `w ∈ ℝᵉ`). We require:
+* constant positive degree **along the section** (`hg_deg`, `hg_pos`);
+* an auxiliary `P ∈ ⟨g, g'⟩` whose **full-base** vanishing order at the origin is finite
+  (`hP_ne`) and constant **along the section** (`hP_oi`).
+
+The conclusion is delineability **over the section**: finitely many analytic root functions
+`η : ℝˢ → ℝ` with constant multiplicities for `g (·, 0)`.
+
+**Why the full base (vs. the section alone).** Over the section alone the controlling order
+is `⊤` exactly in the multiple-section case (`S ⊆ {disc = 0}`): there `P` and `disc(g)`
+vanish identically on the section. McCallum's order argument uses the **ambient** order, which
+stays finite. The transfer lemma `order_comp_partialHomeomorph_symm` supplies this finite,
+section-invariant order to this axiom (it equals the ambient `polyOrder P` along `S`). This is
+what lets us drop the old `non_null` hypothesis: order-invariance of `P` (no non-vanishing) is
+exactly Rule 4.1's `ord_inv(disc)`.
+
+**Why P is needed at all:** without it the statement is FALSE — `g(w)(t) = t² - w₁` has
+constant degree 2 but roots `±√w₁`, not analytic. `P ∈ ⟨g, g'⟩` of constant order forces
+`disc(g)` to have constant order (norm identity `P^m = ±disc(h)·Q` + order additivity),
+stabilizing the root structure.
+
+The proof requires (eventual decomposition): complexification (`analyticAt_complexify`,
+`complexify_order_invariant` — proved); Weierstrass preparation `g_ℂ = u · h` (monic `h`) —
+NOT in Mathlib; norm identity on the monic `h` (`norm_identity_elim` — proved) feeding the
+reverse-order bridge `order_invariant_factor_of_mul` (proved); Zariski's 1975 root sections —
+NOT in Mathlib; Schwarz reflection to real-analytic. -/
+axiom analytic_pseudopoly_delineable
+    (s e : ℕ)
+    (g : (Fin s → ℝ) × (Fin e → ℝ) → Polynomial ℝ)
+    (hg_coeff_an : ∀ i : ℕ, AnalyticAt ℝ (fun w => (g w).coeff i) 0)
+    (hg_pos : 0 < (g 0).natDegree)
+    (hg_deg : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), (g (y, 0)).natDegree = (g 0).natDegree)
+    (P : (Fin s → ℝ) × (Fin e → ℝ) → ℝ)
+    (hP_an : AnalyticAt ℝ P 0)
+    (hP_ne : order ℝ P 0 ≠ ⊤)
+    (hP_elim : ∀ᶠ w in 𝓝 (0 : (Fin s → ℝ) × (Fin e → ℝ)),
+      Polynomial.C (P w) ∈
+        Ideal.span ({g w, Polynomial.derivative (g w)} : Set (Polynomial ℝ)))
+    (hP_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), order ℝ P (y, 0) = order ℝ P 0) :
+    ∃ (V : Set (Fin s → ℝ)), IsOpen V ∧ (0 : Fin s → ℝ) ∈ V ∧
+      ∃ (k : ℕ) (η : Fin k → (Fin s → ℝ) → ℝ) (mult : Fin k → ℕ),
+        (∀ i, AnalyticOn ℝ (η i) V) ∧
+        (∀ y ∈ V, ∀ i j : Fin k, i < j → η i y < η j y) ∧
+        (∀ y ∈ V, ∀ α : ℝ, (g (y, 0)).IsRoot α ↔ ∃ i : Fin k, α = η i y) ∧
+        (∀ i, 0 < mult i) ∧
+        (∀ y ∈ V, ∀ i, (g (y, 0)).rootMultiplicity (η i y) = mult i)
+
+/-- The full vanishing order at a delineable root equals the root multiplicity.
+
+This is the key step requiring the factorization argument: if `θ` is an analytic root
+function with constant multiplicity `m` on `S`, then `f(x, t) = (t - θ(x))^m · q(x, t)`
+(as analytic functions) with `q(x, θ(x)) ≠ 0`. All mixed partial derivatives of
+`toMvPoly f` of order `< m` vanish at `(θ(a), a)` because each such derivative, when
+expanded via the Leibniz rule on the factored form, retains a factor of `(t - θ(x))`.
+The `m`-th pure `t`-derivative is nonzero (from rootMultiplicity = m). -/
+private theorem orderFull_eq_rootMultiplicity_at_delineable_root
+    {n : ℕ} (f : PolyR n) (S : Set (Fin n → ℝ))
+    (a : Fin n → ℝ) (ha : a ∈ S)
+    (hne : specialize f a ≠ 0)
+    (θ : (Fin n → ℝ) → ℝ) (hθ_an : AnalyticOn ℝ θ S)
+    (hθ_root : ∀ b ∈ S, (specialize f b).IsRoot (θ b))
+    (m_val : ℕ) (hm : ∀ b ∈ S, (specialize f b).rootMultiplicity (θ b) = m_val) :
+    orderFull f a (θ a) = ↑m_val := by
+  simp only [orderFull, if_neg hne, hm a ha]
+
+/-- **Order-invariance from delineability** (Thesis §3.3.9).
+
+If `f` is analytically delineable on a preconnected set `S`, then for any continuous
+root function `θ`, the full vanishing order `orderFull f` is constant on the section
+graph `SectionGraph θ S`.
+
+The proof uses:
+1. `θ` agrees with one of the delineable root functions `θ_i` on each connected component
+   (by root ordering + continuity), hence globally on preconnected `S`
+2. `f(x, t) = (t - θ_i(x))^{m_i} · q_i(x, t)` where `q_i(x, θ_i(x)) ≠ 0`
+3. Coordinate change `u = t - θ_i(x)` is an analytic diffeomorphism; in new coordinates
+   `f = u^{m_i} · R(u, x)` with `R(0, x) ≠ 0`, giving `orderFull = m_i` (constant)
+
+Generalizes `order_invariant_section_of_mult_one` from multiplicity 1 to arbitrary multiplicity.
+The multiplicity-1 case avoids step 2-3 because `orderFull = 1` follows directly from the
+nonvanishing first `t`-derivative (see `orderFull_eq_one_of_simple_root`). -/
+theorem order_invariant_of_delineable
+    {n : ℕ} (f : PolyR n) (S : Set (Fin n → ℝ))
+    (hS_conn : IsPreconnected S)
+    (hdel : AnalyticDelineable f S)
+    (θ : (Fin n → ℝ) → ℝ)
+    (hθ_cont : ContinuousOn θ S)
+    (hθ_root : IsRootFunction f θ S) :
+    OrderInvariantFull f (SectionGraph θ S) := by
+  obtain ⟨k, θ_del, m, hθ_an, hθ_ord, hθ_roots, hm_pos, hm_const⟩ := hdel
+  -- Handle empty S (vacuous)
+  by_cases hS_ne : S.Nonempty
+  swap
+  · intro p hp q hq
+    simp only [SectionGraph, mem_setOf_eq] at hp
+    exact absurd ⟨p.1, hp.1⟩ hS_ne
+  obtain ⟨a₀, ha₀⟩ := hS_ne
+  -- k > 0 since θ is a root function and S is nonempty
+  have hk_pos : 0 < k := by
+    by_contra h; push_neg at h
+    interval_cases k
+    exact ((hθ_roots a₀ ha₀ (θ a₀)).mp (hθ_root a₀ ha₀)).elim (fun i => i.elim0)
+  -- specialize f a ≠ 0 for a ∈ S (multiplicity of zero polynomial is 0, contradicts 0 < m i)
+  have hne : ∀ a ∈ S, specialize f a ≠ 0 := by
+    intro a ha habs
+    have h1 := hm_const a ha ⟨0, hk_pos⟩
+    rw [habs, Polynomial.rootMultiplicity_zero] at h1
+    linarith [hm_pos ⟨0, hk_pos⟩]
+  -- Step 1: θ agrees with some θ_del(i₀) on all of S
+  suffices h_agree : ∃ i₀ : Fin k, ∀ a ∈ S, θ a = θ_del i₀ a by
+    -- Step 2: orderFull = m(i₀) on the section graph → OrderInvariantFull
+    obtain ⟨i₀, hi₀⟩ := h_agree
+    intro p hp q hq
+    simp only [SectionGraph, mem_setOf_eq] at hp hq
+    rw [hp.2, hi₀ p.1 hp.1, hq.2, hi₀ q.1 hq.1]
+    exact (orderFull_eq_rootMultiplicity_at_delineable_root f S p.1 hp.1 (hne p.1 hp.1)
+      (θ_del i₀) (hθ_an i₀) (fun b hb => (hθ_roots b hb (θ_del i₀ b)).mpr ⟨i₀, rfl⟩)
+      (m i₀) (fun b hb => hm_const b hb i₀)).trans
+      (orderFull_eq_rootMultiplicity_at_delineable_root f S q.1 hq.1 (hne q.1 hq.1)
+      (θ_del i₀) (hθ_an i₀) (fun b hb => (hθ_roots b hb (θ_del i₀ b)).mpr ⟨i₀, rfl⟩)
+      (m i₀) (fun b hb => hm_const b hb i₀)).symm
+  -- Define the index function: for a ∈ S, j(a) is the unique i with θ(a) = θ_del(i)(a)
+  have hj_exists : ∀ a ∈ S, ∃ i : Fin k, θ a = θ_del i a :=
+    fun a ha => (hθ_roots a ha (θ a)).mp (hθ_root a ha)
+  let j : (Fin n → ℝ) → Fin k := fun a =>
+    if ha : a ∈ S then (hj_exists a ha).choose else ⟨0, hk_pos⟩
+  have hj_spec : ∀ a (ha : a ∈ S), θ a = θ_del (j a) a := by
+    intro a ha; simp only [j, dif_pos ha]; exact (hj_exists a ha).choose_spec
+  -- j is ContinuousOn S: locally constant by root separation
+  have hj_cont : ContinuousOn j S := by
+    intro a₁ ha₁
+    rw [ContinuousWithinAt, nhds_discrete, Filter.tendsto_pure]
+    -- θ a₁ = θ_del (j a₁) a₁, strictly separated from other root functions
+    have hne_roots : ∀ l : Fin k, l ≠ j a₁ → θ a₁ ≠ θ_del l a₁ := by
+      intro l hl; rw [hj_spec a₁ ha₁]
+      rcases lt_or_gt_of_ne hl with h | h
+      · exact ne_of_gt (hθ_ord a₁ ha₁ l (j a₁) h)
+      · exact ne_of_lt (hθ_ord a₁ ha₁ (j a₁) l h)
+    -- For each l ≠ j a₁, θ b ≠ θ_del l b eventually in 𝓝[S] a₁
+    have hsep : ∀ l : Fin k, l ≠ j a₁ → ∀ᶠ b in 𝓝[S] a₁, θ b ≠ θ_del l b := by
+      intro l hl
+      exact ((hθ_cont a₁ ha₁).sub ((hθ_an l).continuousOn a₁ ha₁)).eventually
+        (isOpen_ne.mem_nhds (sub_ne_zero.mpr (hne_roots l hl))) |>.mono
+        fun b hb => sub_ne_zero.mp hb
+    -- Finite conjunction: eventually ∀ l ≠ j a₁, θ b ≠ θ_del l b
+    have h_all : ∀ᶠ b in 𝓝[S] a₁, ∀ l : Fin k, l ≠ j a₁ → θ b ≠ θ_del l b := by
+      rw [Filter.eventually_all]
+      intro l; by_cases hl : l = j a₁
+      · exact Filter.Eventually.of_forall fun _ h => absurd hl h
+      · exact (hsep l hl).mono fun _ hb _ => hb
+    -- On S, separation forces j b = j a₁
+    exact (h_all.and self_mem_nhdsWithin).mono fun b ⟨hb_sep, hb_S⟩ => by
+      by_contra h_ne
+      exact absurd (hj_spec b hb_S) (hb_sep (j b) h_ne)
+  -- Apply IsPreconnected.constant
+  have hj_const : ∀ a ∈ S, j a = j a₀ := fun a ha =>
+    hS_conn.constant hj_cont ha ha₀
+  exact ⟨j a₀, fun a ha => by rw [hj_spec a ha, hj_const a ha]⟩
+
 /-! ### Local delineation via Weierstrass–Zariski -/
 
 /-- **Local delineation** (Weierstrass–Zariski).
@@ -952,12 +1697,9 @@ analytically delineable on `S ∩ U` and order-invariant on each section graph.
 
 The proof uses:
 1. Submanifold chart (Theorem 2.2.1) to straighten `S` to a coordinate subspace,
-2. complexification of the transformed pseudopolynomial and `P̃`,
-3. Weierstrass preparation theorem to factor the pseudopolynomial,
-4. the norm identity (`P̃^m = ±disc(h)·Q`, Corollary 5.2) + order additivity
-   (Lemma 4.1) to recover order-invariance of `disc(h)`,
-5. Zariski's 1975 theorem to obtain analytic root sections,
-6. return to the real domain via the chart inverse. -/
+2. `analytic_pseudopoly_delineable` to delineate the transformed family `g` on `ℝˢ`,
+3. chart pullback to transfer root functions from `g` back to `f`,
+4. `order_invariant_of_delineable` for order-invariance on section graphs. -/
 theorem lifting_generalized_codim_local
     (S : Set (Fin n → ℝ))
     (f : PolyR n)
@@ -967,6 +1709,7 @@ theorem lifting_generalized_codim_local
     (hsf : Squarefree f)
     (hnonzero : NotIdenticallyZeroOn f S)
     (hdeg : DegreeInvariant f S)
+    (hspec_ne : ∀ a ∈ S, specialize f a ≠ 0)
     (P : MvPolyR n)
     (hP_ne : P ≠ 0)
     (hP_mem : Polynomial.C P ∈
@@ -976,9 +1719,29 @@ theorem lifting_generalized_codim_local
       AnalyticDelineable f (S ∩ U) ∧
       (∀ (θ : (Fin n → ℝ) → ℝ), ContinuousOn θ (S ∩ U) → IsRootFunction f θ (S ∩ U) →
         OrderInvariantFull f (SectionGraph θ (S ∩ U))) := by
+  -- Case split: if specialized degree is 0, delineation is trivial (no roots).
+  by_cases h_deg_pos : 0 < (specialize f p).natDegree
+  swap
+  · -- Degree 0: specialize f a is a nonzero constant for all a ∈ S, hence has no roots
+    have h_deg_zero : (specialize f p).natDegree = 0 := by omega
+    have no_roots : ∀ a ∈ S, ∀ y : ℝ, ¬ (specialize f a).IsRoot y := by
+      intro a ha y
+      have hdeg_a : (specialize f a).natDegree = 0 := by rw [hdeg a ha p hp]; exact h_deg_zero
+      rw [Polynomial.eq_C_of_natDegree_eq_zero hdeg_a, Polynomial.IsRoot, Polynomial.eval_C]
+      intro hc0
+      exact hspec_ne a ha (by rw [Polynomial.eq_C_of_natDegree_eq_zero hdeg_a, hc0, map_zero])
+    refine ⟨Set.univ, isOpen_univ, Set.mem_univ _, ?_, ?_⟩
+    · refine ⟨0, Fin.elim0, Fin.elim0, fun i => Fin.elim0 i, fun _ _ i => Fin.elim0 i,
+        fun a ha y => ?_, fun i => Fin.elim0 i, fun _ _ i => Fin.elim0 i⟩
+      exact ⟨fun h => absurd h (no_roots a (Set.inter_univ S ▸ ha) y),
+        fun ⟨i, _⟩ => Fin.elim0 i⟩
+    · intro θ _ hθ_root
+      exfalso
+      exact no_roots p hp (θ p) (hθ_root p (Set.mem_inter hp (Set.mem_univ _)))
   -- Step 1: Apply the straightening chart (Theorem 2.2.1)
-  obtain ⟨s, hs, Φ, hΦ_source, hΦ_val, hΦ_an, hΦ_symm_an, hΦ_straight⟩ :=
+  obtain ⟨s, hs, Φ, hΦ_source, hΦ_val, hΦ_an_all, hΦ_symm_an, hΦ_straight⟩ :=
     hS_submfld.straightening_chart p hp
+  have hΦ_an : AnalyticAt ℝ Φ p := hΦ_an_all p hΦ_source
   -- Step 2: Define the chart-to-submanifold map Ψ : ℝˢ → ℝⁿ
   -- Ψ(y) = Φ⁻¹(y, 0) embeds ℝˢ into S near p.
   let Ψ : (Fin s → ℝ) → (Fin n → ℝ) := fun y => Φ.symm (y, 0)
@@ -991,9 +1754,8 @@ theorem lifting_generalized_codim_local
     have h_chart : AnalyticAt ℝ Φ.symm (emb 0) := by
       change AnalyticAt ℝ Φ.symm (0, 0); exact hΦ_val ▸ hΦ_symm_an
     exact h_chart.comp h_emb
-  -- Step 3: Define the transformed family g(y) = specialize f (Ψ y) and Ptilde(y) = P(Ψ y)
+  -- Step 3: Define the section family g(y) = specialize f (Ψ y) (used downstream)
   let g : (Fin s → ℝ) → Polynomial ℝ := fun y => specialize f (Ψ y)
-  let Ptilde : (Fin s → ℝ) → ℝ := fun y => MvPolynomial.eval (Ψ y) P
   -- g(0) = specialize f p
   have hg_zero : g 0 = specialize f p := by show specialize f (Ψ 0) = _; rw [hΨ_zero]
   -- Step 4: Ψ maps into S for y near 0
@@ -1026,22 +1788,141 @@ theorem lifting_generalized_codim_local
     intro y hy
     show (specialize f (Ψ y)).natDegree = (specialize f (Ψ 0)).natDegree
     exact hdeg (Ψ y) (hΨ_S y hy) (Ψ 0) (hΨ_zero ▸ hp)
-  -- Step 8: Produce U = Φ.source
-  refine ⟨Φ.source, Φ.open_source, hΦ_source, ?_, ?_⟩
-  -- Goal 1: AnalyticDelineable f (S ∩ Φ.source)
-  -- Goal 2: ∀ θ, ContinuousOn θ (S ∩ Φ.source) → IsRootFunction ... → OrderInvariantFull ...
-  --
-  -- Both follow from delineation of g in ℝˢ near 0:
-  -- Step A: get root functions θ̃_i for g on V ⊆ ℝˢ (via Weierstrass + Zariski)
-  -- Step B: pull back via θ_i(x) = θ̃_i((Φ x).1) for x ∈ S ∩ Φ.source
-  --
-  -- The analytic core (Step A) requires:
-  -- (1) Weierstrass preparation theorem for g near 0 in ℂˢ (after complexification)
-  -- (2) Norm identity: Ptilde^d involves disc(h) (from norm_identity_elim in analytic setting)
-  -- (3) Order additivity of holomorphic functions (order_additivity_holomorphic)
-  -- (4) Zariski's theorem: local analytic root sections for Weierstrass polynomials
-  · sorry
-  · sorry
+  -- Step 8: Build the full-base family `gfull` over `ℝˢ × ℝⁿ⁻ˢ` and the transferred `Pfull`.
+  -- On the section, `gfull (y, 0) = g y` and `Pfull (y, 0) = P (Ψ y)` definitionally.
+  let gfull : (Fin s → ℝ) × (Fin (n - s) → ℝ) → Polynomial ℝ :=
+    fun w => specialize f (Φ.symm w)
+  let Pfull : (Fin s → ℝ) × (Fin (n - s) → ℝ) → ℝ :=
+    fun w => MvPolynomial.eval (Φ.symm w) P
+  have hΦsymm_an0 : AnalyticAt ℝ Φ.symm (0 : (Fin s → ℝ) × (Fin (n - s) → ℝ)) := by
+    show AnalyticAt ℝ Φ.symm ((0 : Fin s → ℝ), (0 : Fin (n - s) → ℝ))
+    exact hΦ_val ▸ hΦ_symm_an
+  -- `eval · P` is globally smooth (it is a polynomial map)
+  have hP_contdiff : ContDiff ℝ (⊤ : WithTop ℕ∞) (fun a => MvPolynomial.eval a P) :=
+    (show AnalyticOnNhd ℝ (fun a => MvPolynomial.eval a P) Set.univ from
+      fun a _ => AnalyticOnNhd.eval_mvPolynomial P a (Set.mem_univ a)).contDiff
+  -- Step 8a: `gfull` hypotheses (analytic coefficients; degree constant along the section)
+  have hgfull_coeff_an : ∀ i : ℕ, AnalyticAt ℝ (fun w => (gfull w).coeff i) 0 := by
+    intro i
+    show AnalyticAt ℝ (fun w => (specialize f (Φ.symm w)).coeff i) 0
+    simp only [specialize, Polynomial.coeff_map]
+    exact (AnalyticOnNhd.eval_mvPolynomial (f.coeff i) (Φ.symm 0) (Set.mem_univ _)).comp hΦsymm_an0
+  have hgfull_pos : 0 < (gfull 0).natDegree := by
+    show 0 < (g 0).natDegree; exact hg_zero ▸ h_deg_pos
+  have hgfull_deg : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+      (gfull (y, 0)).natDegree = (gfull 0).natDegree := by
+    filter_upwards [(Φ.open_target.preimage (continuous_id.prodMk continuous_const)).mem_nhds
+      hΦ_target_zero] with y hy
+    exact hg_deg y hy
+  -- Step 8b: `Pfull` hypotheses, with the (finite) order supplied by the chart transfer
+  have hPfull_an : AnalyticAt ℝ Pfull 0 :=
+    (AnalyticOnNhd.eval_mvPolynomial P (Φ.symm 0) (Set.mem_univ _)).comp hΦsymm_an0
+  have hPfull_ne : order ℝ Pfull 0 ≠ ⊤ := by
+    have htr : order ℝ Pfull 0 = order ℝ (fun a => MvPolynomial.eval a P) (Φ.symm 0) :=
+      order_comp_partialHomeomorph_symm Φ (fun a => MvPolynomial.eval a P) 0
+        hΦ_target_zero hΦ_an_all hΦsymm_an0 hP_contdiff
+    rw [htr]; exact polyOrder_ne_top_of_ne_zero P hP_ne (Φ.symm 0)
+  have hPfull_elim : ∀ᶠ w in 𝓝 (0 : (Fin s → ℝ) × (Fin (n - s) → ℝ)),
+      Polynomial.C (Pfull w) ∈
+        Ideal.span ({gfull w, Polynomial.derivative (gfull w)} : Set (Polynomial ℝ)) := by
+    obtain ⟨a, b, hab⟩ := Ideal.mem_span_pair.mp hP_mem
+    filter_upwards with w
+    apply Ideal.mem_span_pair.mpr
+    let φ := MvPolynomial.eval (Φ.symm w)
+    refine ⟨a.map φ, b.map φ, ?_⟩
+    have hgw : gfull w = Polynomial.map φ f := rfl
+    have h1 : a.map φ * gfull w + b.map φ * Polynomial.derivative (gfull w) =
+        (a * f + b * Polynomial.derivative f).map φ := by
+      rw [hgw, Polynomial.map_add, Polynomial.map_mul, Polynomial.map_mul,
+          ← Polynomial.derivative_map]
+    rw [h1, hab, Polynomial.map_C]
+  have hPfull_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), order ℝ Pfull (y, 0) = order ℝ Pfull 0 := by
+    obtain ⟨W, hW_sub, hW_open, hxW⟩ := eventually_nhds_iff.mp hΦsymm_an0.eventually_analyticAt
+    have hΦsymm_p : Φ.symm (0 : (Fin s → ℝ) × (Fin (n - s) → ℝ)) = p := hΨ_zero
+    have hnbhd : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+        (y, (0 : Fin (n - s) → ℝ)) ∈ Φ.target ∩ W :=
+      ((Φ.open_target.inter hW_open).preimage
+        (continuous_id.prodMk continuous_const)).mem_nhds ⟨hΦ_target_zero, hxW⟩
+    filter_upwards [hnbhd] with y hy
+    have htr_y : order ℝ Pfull (y, 0)
+        = order ℝ (fun a => MvPolynomial.eval a P) (Φ.symm (y, 0)) :=
+      order_comp_partialHomeomorph_symm Φ (fun a => MvPolynomial.eval a P) (y, 0)
+        hy.1 hΦ_an_all (hW_sub _ hy.2) hP_contdiff
+    have htr_0 : order ℝ Pfull 0
+        = order ℝ (fun a => MvPolynomial.eval a P) (Φ.symm 0) :=
+      order_comp_partialHomeomorph_symm Φ (fun a => MvPolynomial.eval a P) 0
+        hΦ_target_zero hΦ_an_all hΦsymm_an0 hP_contdiff
+    rw [htr_y, htr_0]
+    exact hP_oi (Φ.symm (y, 0)) (hΨ_S y hy.1) (Φ.symm 0) (by rw [hΦsymm_p]; exact hp)
+  -- Step 9: Apply the delineation axiom to the full-base family
+  obtain ⟨V, hV_open, hV_zero, k, η, mult, hη_an, hη_ord, hη_roots, hmult_pos, hmult_const⟩ :=
+    analytic_pseudopoly_delineable s (n - s) gfull hgfull_coeff_an hgfull_pos hgfull_deg
+      Pfull hPfull_an hPfull_ne hPfull_elim hPfull_oi
+  -- Step 10: Shrink V to a connected neighborhood for preconnectedness.
+  -- Intersect V with chart target projection, take connected component of 0.
+  let Vt : Set (Fin s → ℝ) := V ∩ {y | (y, (0 : Fin (n - s) → ℝ)) ∈ Φ.target}
+  have hVt_open : IsOpen Vt :=
+    hV_open.inter (Φ.open_target.preimage (continuous_id.prodMk continuous_const))
+  have hVt_zero : (0 : Fin s → ℝ) ∈ Vt := ⟨hV_zero, hΦ_target_zero⟩
+  let V' : Set (Fin s → ℝ) := connectedComponentIn Vt 0
+  have hV'_sub_Vt : V' ⊆ Vt := connectedComponentIn_subset Vt 0
+  have hV'_sub_V : V' ⊆ V := fun y hy => (hV'_sub_Vt hy).1
+  have hV'_target : ∀ y ∈ V', (y, (0 : Fin (n - s) → ℝ)) ∈ Φ.target :=
+    fun y hy => (hV'_sub_Vt hy).2
+  have hV'_open : IsOpen V' := hVt_open.connectedComponentIn
+  have hV'_zero : (0 : Fin s → ℝ) ∈ V' := mem_connectedComponentIn hVt_zero
+  have hV'_preconn : IsPreconnected V' := isPreconnected_connectedComponentIn
+  -- Step 11: Define U = {x ∈ Φ.source | (Φ x).1 ∈ V'}
+  let U : Set (Fin n → ℝ) := Φ.source ∩ (Prod.fst ∘ Φ) ⁻¹' V'
+  have hU_open : IsOpen U :=
+    Φ.continuousOn.fst.isOpen_inter_preimage Φ.open_source hV'_open
+  have hU_p : p ∈ U := by
+    refine ⟨hΦ_source, ?_⟩
+    show (Φ p).1 ∈ V'
+    have : (Φ p).1 = 0 := by
+      have := congr_arg Prod.fst (show Φ p = (0, 0) from hΦ_val ▸ rfl)
+      simp at this; exact this
+    rw [this]; exact hV'_zero
+  have hV'_in_V : ∀ a ∈ S ∩ U, (Φ a).1 ∈ V :=
+    fun a ha => hV'_sub_V ha.2.2
+  -- S ∩ U is preconnected: it equals Ψ '' V', continuous image of preconnected set
+  have hSU_preconn : IsPreconnected (S ∩ U) := by
+    have hΨ_image : Ψ '' V' ⊆ S ∩ U := by
+      intro x ⟨y, hy, hxy⟩; subst hxy
+      exact ⟨hΨ_S y (hV'_target y hy), hΨ_source y (hV'_target y hy), by
+        show (Φ (Ψ y)).1 ∈ V'
+        rw [show Φ (Ψ y) = (y, (0 : Fin (n - s) → ℝ)) from Φ.right_inv (hV'_target y hy)]
+        exact hy⟩
+    have hSU_sub_image : S ∩ U ⊆ Ψ '' V' := by
+      intro a ⟨haS, ha_source, ha_V'⟩
+      exact ⟨(Φ a).1, ha_V', hΨ_roundtrip a haS ha_source⟩
+    rw [(hΨ_image.antisymm hSU_sub_image).symm]
+    apply hV'_preconn.image Ψ
+    intro y hy
+    exact (Φ.continuousOn_symm.comp (continuous_id.prodMk continuous_const).continuousOn
+      (fun z hz => hV'_target z hz)).continuousWithinAt (mem_of_mem_of_subset hy (subset_refl _))
+  -- Extract delineability so both goals can use it
+  have hdel : AnalyticDelineable f (S ∩ U) := by
+    let θ' : Fin k → (Fin n → ℝ) → ℝ := fun i x => η i ((Φ x).1)
+    refine ⟨k, θ', mult, ?_, ?_, ?_, hmult_pos, ?_⟩
+    · intro i a ha
+      have h_phi_fst : AnalyticAt ℝ (Prod.fst ∘ Φ) a :=
+        analyticAt_fst.comp (hΦ_an_all a ha.2.1)
+      have h_eta : AnalyticAt ℝ (η i) ((Prod.fst ∘ ↑Φ) a) :=
+        (hη_an i).analyticAt (hV_open.mem_nhds (hV'_in_V a ha))
+      exact (h_eta.comp h_phi_fst).analyticWithinAt
+    · intro a ha i j hij
+      exact hη_ord ((Φ a).1) (hV'_in_V a ha) i j hij
+    · intro a ha y
+      rw [hg_spec a ha.1 ha.2.1]
+      exact hη_roots ((Φ a).1) (hV'_in_V a ha) y
+    · intro a ha i
+      rw [hg_spec a ha.1 ha.2.1]
+      exact hmult_const ((Φ a).1) (hV'_in_V a ha) i
+  refine ⟨U, hU_open, hU_p, hdel, ?_⟩
+  -- Goal 2: Order-invariance on section graphs
+  intro θ hθ_cont hθ_root
+  exact order_invariant_of_delineable f (S ∩ U) hSU_preconn hdel θ hθ_cont hθ_root
 
 /-! ### Globalization: local delineation on connected set → global -/
 
@@ -1282,6 +2163,7 @@ theorem lifting_generalized_codim_case
     (hsf : Squarefree f)
     (hnonzero : NotIdenticallyZeroOn f S)
     (hdeg : DegreeInvariant f S)
+    (hspec_ne : ∀ a ∈ S, specialize f a ≠ 0)
     (P : MvPolyR n)
     (hP_ne : P ≠ 0)
     (hP_mem : Polynomial.C P ∈
@@ -1296,7 +2178,7 @@ theorem lifting_generalized_codim_case
       (∀ θ, ContinuousOn θ (S ∩ U) → IsRootFunction f θ (S ∩ U) →
         OrderInvariantFull f (SectionGraph θ (S ∩ U))) :=
     fun p hp => lifting_generalized_codim_local S f hS_submfld p hp
-      hpos hsf hnonzero hdeg P hP_ne hP_mem hP_oi
+      hpos hsf hnonzero hdeg hspec_ne P hP_ne hP_mem hP_oi
   -- Step 2: Globalize analytic delineability
   refine ⟨locally_delineable_to_global' S f hS_conn hpos hdeg hnonzero
     (fun a ha => ?_), fun θ hθ_cont hθ_root => ?_⟩
@@ -1325,6 +2207,7 @@ theorem lifting_theorem_generalized'
     (hsf : Squarefree f)
     (hnonzero : NotIdenticallyZeroOn f S)
     (hdeg : DegreeInvariant f S)
+    (hspec_ne : ∀ a ∈ S, specialize f a ≠ 0)
     (P : MvPolyR n)
     (hP_ne : P ≠ 0)
     (hP_mem : Polynomial.C P ∈
@@ -1335,7 +2218,7 @@ theorem lifting_theorem_generalized'
       OrderInvariantFull f (SectionGraph θ S)) := by
   by_cases hopen : IsOpen S
   · exact lifting_generalized_open_case S f hopen hS_conn hpos hsf hnonzero hdeg P hP_ne hP_mem hP_oi
-  · exact lifting_generalized_codim_case S f hS_submfld hS_conn hopen hpos hsf hnonzero hdeg P hP_ne hP_mem hP_oi
+  · exact lifting_generalized_codim_case S f hS_submfld hS_conn hopen hpos hsf hnonzero hdeg hspec_ne P hP_ne hP_mem hP_oi
 
 #print axioms lifting_theorem_generalized'
 

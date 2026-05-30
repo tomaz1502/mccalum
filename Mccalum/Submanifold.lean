@@ -122,7 +122,7 @@ theorem IsAnalyticSubmanifold.straightening_chart
     ∃ (Φ : OpenPartialHomeomorph (Fin n → ℝ) ((Fin s → ℝ) × (Fin (n - s) → ℝ))),
       p ∈ Φ.source ∧
       Φ p = (0, 0) ∧
-      AnalyticAt ℝ Φ p ∧
+      (∀ x ∈ Φ.source, AnalyticAt ℝ Φ x) ∧
       AnalyticAt ℝ Φ.symm (Φ p) ∧
       (∀ x ∈ Φ.source, x ∈ S ↔ (Φ x).2 = 0) := by
   obtain ⟨_, s, hs, hS_data⟩ := hS
@@ -184,7 +184,13 @@ theorem IsAnalyticSubmanifold.straightening_chart
     intro x hx
     rw [OpenPartialHomeomorph.restr_source' _ _ hW_open] at hx
     simp only [Φ, hF_zero x hx.2]
-  exact ⟨R, hR_source, hΦ_val, hΦ_an, hR_an_symm, hR_straight⟩
+  have hΦ_an_all : ∀ x ∈ R.source, AnalyticAt ℝ Φ x := by
+    intro x hx
+    rw [OpenPartialHomeomorph.restr_source' _ _ hW_open] at hx
+    exact AnalyticAt.prod
+      (AnalyticAt.comp (P.analyticAt _) (analyticAt_id.sub analyticAt_const))
+      (hF_an x hx.2)
+  exact ⟨R, hR_source, hΦ_val, hΦ_an_all, hR_an_symm, hR_straight⟩
 
 end
 

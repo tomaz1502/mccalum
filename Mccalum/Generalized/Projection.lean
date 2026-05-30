@@ -54,6 +54,7 @@ theorem lifting_theorem_generalized
     (hsf : Squarefree f)
     (hnonzero : NotIdenticallyZeroOn f S)
     (hdeg : DegreeInvariant f S)
+    (hspec_ne : ∀ a ∈ S, specialize f a ≠ 0)
     (P : MvPolyR n)
     (hP_ne : P ≠ 0)
     (hP_mem : Polynomial.C P ∈
@@ -62,7 +63,7 @@ theorem lifting_theorem_generalized
     AnalyticDelineable f S ∧
     (∀ (θ : (Fin n → ℝ) → ℝ), ContinuousOn θ S → IsRootFunction f θ S →
       OrderInvariantFull f (SectionGraph θ S)) :=
-  lifting_theorem_generalized' S f hS_submfld hS_conn hpos hsf hnonzero hdeg P hP_ne hP_mem hP_oi
+  lifting_theorem_generalized' S f hS_submfld hS_conn hpos hsf hnonzero hdeg hspec_ne P hP_ne hP_mem hP_oi
 
 /-! ### Elimination product -/
 
@@ -336,6 +337,11 @@ theorem mccallum_3_2_3_generalized
     prod_pos_degree A hA_ne hA.pos_degree
   have hf_nz : NotIdenticallyZeroOn f S :=
     not_identically_zero_prod S A hnonzero hcoeff hS_ne
+  have hf_spec_ne : ∀ a ∈ S, specialize f a ≠ 0 := by
+    have hne_each := fun f hf => specialize_nonzero_everywhere f S (hnonzero f hf) (hcoeff f hf)
+    intro a ha
+    simp only [hf_def, specialize, Polynomial.map_prod]
+    exact Finset.prod_ne_zero_iff.mpr (fun g hg => hne_each g hg a ha)
   have hf_deg : DegreeInvariant f S :=
     degree_invariant_prod S A h_deg
       (fun f hf => specialize_nonzero_everywhere f S (hnonzero f hf) (hcoeff f hf))
@@ -350,7 +356,7 @@ theorem mccallum_3_2_3_generalized
   have hP_oi : OrderInvariantMv P S := order_invariant_pow_mv S _ N hR_oi
   -- Apply the generalized lifting theorem to f with witness P
   obtain ⟨hf_delin, hf_oi_sections⟩ := lifting_theorem_generalized S f hS_submfld hS_conn
-    hf_pos hf_sf hf_nz hf_deg P hP_ne hPN_mem hP_oi
+    hf_pos hf_sf hf_nz hf_deg hf_spec_ne P hP_ne hPN_mem hP_oi
   -- Factor the conclusions back to individual polynomials
   refine ⟨h_deg, ?_, h_disjoint, ?_⟩
   · exact delineable_factor_of_delineable_prod S hS_conn.isPreconnected A
@@ -369,8 +375,11 @@ theorem mccallum_3_2_3_generalized
         (continuousOn_id.prodMk hθ_cont)
     have hA_ne_zero : ∀ f ∈ A, f ≠ 0 :=
       fun f hf h => by linarith [hA.pos_degree f hf, show f.natDegree = 0 from by rw [h]; simp]
+    have hA_spec : ∀ f ∈ A, ∀ p ∈ SectionGraph θ S, specialize f p.1 ≠ 0 :=
+      fun f hf p hp => specialize_nonzero_everywhere f S
+        (hnonzero f hf) (hcoeff f hf) p.1 hp.1
     exact order_invariant_full_factor_of_prod A (SectionGraph θ S) hT_preconn hA_ne_zero
-      hprod_oi F hF
+      hA_spec hprod_oi F hF
 
 #print axioms mccallum_3_2_3_generalized
 

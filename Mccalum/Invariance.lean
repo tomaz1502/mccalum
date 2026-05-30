@@ -21,9 +21,11 @@ def DegreeInvariant (f : PolyR n) (S : Set (Fin n → ℝ)) : Prop :=
 def OrderInvariantMv (g : MvPolyR n) (S : Set (Fin n → ℝ)) : Prop :=
   ∀ a ∈ S, ∀ b ∈ S, polyOrder n g a = polyOrder n g b
 
-/-- Order of `f ∈ ℝ[x₁,…,xₙ][xᵣ]` at `(a, y) ∈ ℝⁿ × ℝ`. -/
+/-- Vanishing order of `f` in the lifting variable `xᵣ` at `(a, y)`.
+For nonzero `specialize f a`, this is the root multiplicity of `y`;
+for zero specialization, it is `⊤`. -/
 def orderFull (f : PolyR n) (a : Fin n → ℝ) (y : ℝ) : ℕ∞ :=
-  polyOrder (n + 1) (toMvPoly f) (Fin.cons y a)
+  if specialize f a = 0 then ⊤ else ↑((specialize f a).rootMultiplicity y)
 
 /-- A full polynomial `f` is **order-invariant** in `T ⊆ ℝⁿ × ℝ`. -/
 def OrderInvariantFull (f : PolyR n) (T : Set ((Fin n → ℝ) × ℝ)) : Prop :=
