@@ -47,20 +47,12 @@ theorem cluster_from_real (m : ℕ) (hm_pos : 0 < m)
     (hm_root : (g 0).rootMultiplicity 0 = m)
     -- section degree constancy (so `g(y,0) ≠ 0` near `0`)
     (hg_deg_const : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), (g (y, 0)).natDegree = (g 0).natDegree) :
-    ∃ (a : Fin m → (CParam s e → ℂ)) (r : ℕ) (ψ : Fin r → ((Fin s → ℂ) → ℂ)) (mult : Fin r → ℕ),
-      (∀ i, AnalyticAt ℂ (a i) 0) ∧ (∀ i, a i 0 = 0) ∧
-      (∀ i, AnalyticAt ℂ (ψ i) 0) ∧ (∀ i, ψ i 0 = 0) ∧ (∀ i, 0 < mult i) ∧
-      (∑ i : Fin r, mult i = m) ∧
-      (∀ i j, i ≠ j → ¬ (ψ i =ᶠ[𝓝 (0 : Fin s → ℂ)] ψ j)) ∧
-      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
-        (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ ∃ i, α = ψ i y) ∧
-      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), Function.Injective (fun i => ψ i y) →
-        ∀ i, (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ i y) = mult i) ∧
-      -- A2-ready real-slice outputs
-      (∀ᶠ y in 𝓝 (0 : Fin s → ℝ), Function.Injective (fun i => ψ i (realEmbedding s y)) → ∀ i,
-        ((g (y, 0)).map (algebraMap ℝ ℂ)).rootMultiplicity (ψ i (realEmbedding s y)) = mult i) ∧
-      (∃ δ₀ : ℝ, 0 < δ₀ ∧ ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), ∀ α : ℂ, ‖α‖ < δ₀ →
-        (((g (y, 0)).map (algebraMap ℝ ℂ)).IsRoot α ↔ ∃ i, α = ψ i (realEmbedding s y))) := by
+    ∃ (ξ : (Fin s → ℂ) → ℂ) (δ₀ : ℝ),
+      AnalyticAt ℂ ξ 0 ∧ ξ 0 = 0 ∧ 0 < δ₀ ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℝ), ∀ α : ℂ, ‖α‖ < δ₀ →
+        (((g (y, 0)).map (algebraMap ℝ ℂ)).IsRoot α ↔ α = ξ (realEmbedding s y))) ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+        ((g (y, 0)).map (algebraMap ℝ ℂ)).rootMultiplicity (ξ (realEmbedding s y)) = m) := by
   -- complexify `g`, `A`, `B`, `P`
   obtain ⟨gℂ, hgℂ_coeff, hgℂ_agree⟩ := complexify_pseudopoly_prod Ng g hg_deg hg_coeff
   obtain ⟨Aℂ_fam, hAℂ_coeff, hAℂ_agree⟩ := complexify_pseudopoly_prod NA A hA_deg hA_coeff
@@ -122,8 +114,8 @@ theorem cluster_from_real (m : ℕ) (hm_pos : 0 < m)
       (fun z hz => hVsub z hz) hP_an hPℂ_agree μ hμ0 hreal_oi
     filter_upwards [hsec] with y hy
     rw [hy, show ((0, 0) : CParam s e) = 0 from rfl, hμ0]
-  -- assemble the single cluster
-  obtain ⟨r, ψ, mult, hψ_an, hψ0, hmult_pos, hsum, hdistinct, hroots, hmults⟩ :=
+  -- assemble the single cluster (Theorem 4.1.1: a single holomorphic branch `ψ`)
+  obtain ⟨ψ, hψ_an, hψ0, hroots, hmults⟩ :=
     single_cluster_from_weierstrass m hm_pos a ha_an ha0 g_poly u hu_an hfac
       Pℂ hPℂ_an hP_ne_C Aℂ Bℂ hAℂ_an hBℂ_an hmem_poly hP_oi
   -- section-level map agreement (specialise `hg_map` to `w = (y, 0)`)
@@ -150,12 +142,26 @@ theorem cluster_from_real (m : ℕ) (hm_pos : 0 < m)
     have hne : g (y, 0) ≠ 0 := by
       intro h; rw [h, Polynomial.natDegree_zero] at hdy; omega
     exact (Polynomial.map_ne_zero_iff (algebraMap ℝ ℂ).injective).mpr hne
-  -- A2-ready outputs via the covering / multiplicity bridges
-  have hmult_match := multmatch_of_weierstrass m hm_pos a g_poly u hu0 hu_an hfac ψ mult hψ_an hψ0
-    hmults (fun y => (g (y, 0)).map (algebraMap ℝ ℂ)) hfam_ne hfam_map
-  obtain ⟨δ₀, hδ₀, hcover⟩ := cover_of_weierstrass m a g_poly u hu0 hu_an hfac ψ hroots
-    (fun y => (g (y, 0)).map (algebraMap ℝ ℂ)) hfam_map
-  exact ⟨a, r, ψ, mult, ha_an, ha0, hψ_an, hψ0, hmult_pos, hsum, hdistinct, hroots, hmults,
-    hmult_match, δ₀, hδ₀, hcover⟩
+  -- Real-slice covering / multiplicity via the bridges, instantiated at the single branch (`r = 1`).
+  have hroots1 : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
+      (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ ∃ _i : Fin 1, α = ψ y := by
+    filter_upwards [hroots] with y hy α
+    rw [hy α]; exact ⟨fun h => ⟨0, h⟩, fun ⟨_, h⟩ => h⟩
+  have hmults1 : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      Function.Injective (fun _i : Fin 1 => ψ y) → ∀ _i : Fin 1,
+        (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m := by
+    filter_upwards [hmults] with y hy _ _i; exact hy
+  have hmult_match := multmatch_of_weierstrass m hm_pos a g_poly u hu0 hu_an hfac
+    (fun _ : Fin 1 => ψ) (fun _ => m) (fun _ => hψ_an) (fun _ => hψ0) hmults1
+    (fun y => (g (y, 0)).map (algebraMap ℝ ℂ)) hfam_ne hfam_map
+  obtain ⟨δ₀, hδ₀, hcover⟩ := cover_of_weierstrass m a g_poly u hu0 hu_an hfac
+    (fun _ : Fin 1 => ψ) hroots1 (fun y => (g (y, 0)).map (algebraMap ℝ ℂ)) hfam_map
+  have hinj1 : ∀ y : Fin s → ℝ, Function.Injective (fun _i : Fin 1 => ψ (realEmbedding s y)) :=
+    fun y a b _ => Subsingleton.elim a b
+  refine ⟨ψ, δ₀, hψ_an, hψ0, hδ₀, ?_, ?_⟩
+  · filter_upwards [hcover] with y hy α hα
+    rw [hy α hα]; exact ⟨fun ⟨_, h⟩ => h, fun h => ⟨0, h⟩⟩
+  · filter_upwards [hmult_match] with y hy
+    exact hy (hinj1 y) 0
 
 end

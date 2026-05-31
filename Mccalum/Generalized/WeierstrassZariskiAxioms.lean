@@ -12,8 +12,8 @@ This file isolates the **two genuinely deep, classical analytic-geometry ingredi
 McCallum's generalized lifting proof as clean, named axioms:
 
 * `weierstrass_preparation_analytic` — convergent Weierstrass preparation (Phase C).
-* `zariski_root_sections` — Zariski's holomorphic root sections under constant discriminant
-  order (Phase E).
+* `zariski_single_branch` — Zariski's Theorem 4.1.1: a single holomorphic root section
+  (nonsplitting) under `disc ≢ 0` and constant discriminant order along the section (Phase E).
 
 Both are stated at the **analytic-function level** (coefficients / roots as `AnalyticAt ℂ`
 functions), deliberately decoupled from the germ-ring substrate `𝒪ₙ`
@@ -114,39 +114,36 @@ axiom weierstrass_division_unique {s e : ℕ}
         + ∑ i : Fin m, ρ i wt.1 * wt.2 ^ (i : ℕ)) =ᶠ[𝓝 0] 0) :
     q =ᶠ[𝓝 0] 0 ∧ ∀ i, ρ i =ᶠ[𝓝 (0 : CParam s e)] 0
 
-/-- **Zariski holomorphic root sections (Phase E, AXIOM).**
+/-- **Zariski's theorem 4.1.1 — single holomorphic root section (Phase E, AXIOM).**
 
+This is the *exact* statement of Theorem 4.1.1 of the thesis (an adaptation of Zariski 1975).
 Given a monic Weierstrass polynomial `h(w, t) = t^m + ∑ a_i(w) t^i` (coefficients analytic,
-`a_i(0) = 0`, so all roots cluster at `t = 0` on the section), whose **discriminant has constant
-vanishing order along the section** `T = ℂˢ × {0}` near `0`, the roots of `h` over `T` are given
-by finitely many **holomorphic sections** `ψ_i : ℂˢ → ℂ` with constant positive multiplicities,
-distinct as branches, factoring `h` over `T`:
+`a_i(0) = 0`, so all roots cluster at `t = 0` on the section) whose **discriminant `F = disc(h)`
+(i) does not vanish identically** (`order F 0 ≠ ⊤`) and **(ii) has constant vanishing order along the
+section** `T = ℂˢ × {0}` near `0`, the roots of `h` over `T` are a **single** holomorphic section
+`ψ : ℂˢ → ℂ` — the *unique distinct root* (nonsplitting) — of multiplicity `m`:
 
-`h((y,0), t) = ∏_i (t − ψ_i(y))^{mult_i}`  for `y` near `0`,  with  `∑_i mult_i = m`.
+`h((y,0), α) = 0  ⟺  α = ψ(y)`  for `y, α` near `0`, with `rootMultiplicity (ψ y) = m`.
 
-This is Zariski's equisingularity theorem (equivalently, that the Newton–Puiseux root series are
-integral / honest holomorphic when the discriminant order is constant). It is the single deepest
-ingredient; nothing of Zariski, Puiseux, or analytic root-continuity is in Mathlib.
-
-The factorization is stated on a full neighborhood of `0` (at `y = 0` it reads `t^m = t^m`, since
-all `ψ_i(0) = 0`); pointwise-distinct roots and `rootMultiplicity` for `y ≠ 0` follow from it in
-Phase F. -/
-axiom zariski_root_sections {s e : ℕ}
+Both hypotheses match 4.1.1: `F ≢ 0` is "F does not vanish identically" (satisfied in the application
+because `h` is squarefree, from squarefree `f`); constant order along `T` is the output of the
+(ambient) order-additivity / `DiscOrder` step. The single-`ψ` conclusion is 4.1.1's nonsplitting; the
+multiplicity `m` is its order-invariance of `h` along the graph of `ψ`. This is the single deepest
+ingredient (Chapter 4 / Puiseux–Newton–monodromy); nothing of it is in Mathlib. -/
+axiom zariski_single_branch {s e : ℕ}
     (m : ℕ) (hm_pos : 0 < m)
     (a : Fin m → (CParam s e → ℂ))
     (ha_an : ∀ i, AnalyticAt ℂ (a i) 0)
     (ha0 : ∀ i, a i 0 = 0)
+    (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
     (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
         = order ℂ (weierstrassDiscFn m a) (0 : CParam s e)) :
-    ∃ (r : ℕ) (ψ : Fin r → ((Fin s → ℂ) → ℂ)) (mult : Fin r → ℕ),
-      (∀ i, AnalyticAt ℂ (ψ i) 0) ∧
-      (∀ i, ψ i 0 = 0) ∧
-      (∀ i, 0 < mult i) ∧
-      (∑ i : Fin r, mult i = m) ∧
-      (∀ i j, i ≠ j → ¬ (ψ i =ᶠ[𝓝 (0 : Fin s → ℂ)] ψ j)) ∧
+    ∃ ψ : (Fin s → ℂ) → ℂ,
+      AnalyticAt ℂ ψ 0 ∧ ψ 0 = 0 ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
+        (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ α = ψ y) ∧
       (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-        weierstrassPoly m a ((y, 0) : CParam s e)
-          = ∏ i : Fin r, (X - C (ψ i y)) ^ (mult i))
+        (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m)
 
 end

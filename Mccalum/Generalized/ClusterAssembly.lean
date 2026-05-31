@@ -42,14 +42,12 @@ theorem single_cluster_from_weierstrass (m : ℕ) (hm : 0 < m)
       + polyToFun s e B zt * polyToFun s e (derivative g_poly) zt)
     (hP_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ P ((y, 0) : CParam s e) = order ℂ P ((0, 0) : CParam s e)) :
-    ∃ (r : ℕ) (ψ : Fin r → ((Fin s → ℂ) → ℂ)) (mult : Fin r → ℕ),
-      (∀ i, AnalyticAt ℂ (ψ i) 0) ∧ (∀ i, ψ i 0 = 0) ∧ (∀ i, 0 < mult i) ∧
-      (∑ i : Fin r, mult i = m) ∧
-      (∀ i j, i ≠ j → ¬ (ψ i =ᶠ[𝓝 (0 : Fin s → ℂ)] ψ j)) ∧
+    ∃ ψ : (Fin s → ℂ) → ℂ,
+      AnalyticAt ℂ ψ 0 ∧ ψ 0 = 0 ∧
       (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
-        (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ ∃ i, α = ψ i y) ∧
-      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), Function.Injective (fun i => ψ i y) →
-        ∀ i, (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ i y) = mult i) := by
+        (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ α = ψ y) ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+        (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m) := by
   -- the t-derivative factorization, with `uder = ptderiv u`
   have huder : AnalyticAt ℂ (ptderiv u) 0 := analyticAt_ptderiv u hu
   have hfac' := factor_deriv m a g_poly u hu hfac

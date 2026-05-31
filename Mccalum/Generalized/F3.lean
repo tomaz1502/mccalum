@@ -1,13 +1,16 @@
 import Mccalum.Generalized.ClusterFromReal
-import Mccalum.Generalized.A2Axiom
+import Mccalum.Generalized.A2Recovery
 
 /-!
-# F3 — single-cluster real delineation (the `{C, E, A2}` milestone)
+# F3 — single-cluster real delineation (the `{C, E}` milestone)
 
-`single_cluster_real_delineation` wires the full per-cluster chain on `{C, E, A2}`: it runs
-`cluster_from_real` (Weierstrass + Zariski) to get the complex sections and the A2-ready real-slice
-`hcover` / `hmult_match`, then applies the A2 axiom `real_delineation_of_complex_sections` to obtain
-the **real** root delineation of the section family `g(·,0)` near `0`.
+`single_cluster_real_delineation` wires the full per-cluster chain on `{C, E}`: it runs
+`cluster_from_real` (Weierstrass + Zariski 4.1.1), which produces the **single** holomorphic branch
+`ξ` of the cluster (the unique root, nonsplitting) together with the real-slice covering and
+multiplicity, and then finishes with the **proved** recovery core
+`real_delineation_of_single_branch` (`A2Recovery.lean`, 0 custom axioms) to obtain the **real** root
+delineation of the section family `g(·,0)` near `0`. No separate real-analysis axiom is needed: the
+no-splitting is part of Zariski's Theorem 4.1.1, and the real recovery is proved.
 
 The remaining work for the full theorem is the multi-cluster assembly (enumerate `g(0,0)`'s real
 roots, translate each to `0`, apply this, and glue).
@@ -43,15 +46,12 @@ theorem single_cluster_real_delineation (m : ℕ) (hm_pos : 0 < m)
         (∀ y ∈ V, |η y| < δ) ∧
         (∀ y ∈ V, ∀ α : ℝ, (|α| < δ ∧ (g (y, 0)).IsRoot α) ↔ α = η y) ∧
         (∀ y ∈ V, (g (y, 0)).rootMultiplicity (η y) = m) := by
-  obtain ⟨a, r, ψ, mult, ha_an, ha0, hψ_an, hψ0, hmult_pos, hsum, hdistinct, hroots, hmults,
-      hmult_match, δ₀, hδ₀, hcover⟩ :=
+  -- `cluster_from_real` (C + Zariski 4.1.1) gives the single holomorphic branch `ξ` of the cluster,
+  -- real-valued on the slice; the proved recovery core turns it into the real-analytic delineation.
+  obtain ⟨ξ, δ₀, hξ_an, hξ0, hδ₀, hξ_cover, hξ_mult⟩ :=
     cluster_from_real m hm_pos Ng g hg_deg hg_coeff P hP_an hP_ne NA NB A B hA_deg hB_deg
       hA_coeff hB_coeff hmem hP_oi_real hm_root hg_deg_const
-  -- the section coefficient family is real-analytic
-  have hcoeff_sec : ∀ i, AnalyticAt ℝ (fun y : Fin s → ℝ => (g (y, 0)).coeff i) 0 := fun i =>
-    (hg_coeff i).comp_of_eq (analyticAt_id.prod analyticAt_const) rfl
-  -- apply A2
-  exact real_delineation_of_complex_sections (fun y => g (y, 0)) hcoeff_sec hg_deg_const m hm_pos
-    hm_root r ψ mult hψ_an hψ0 hmult_pos hsum hdistinct δ₀ hδ₀ hcover hmult_match
+  exact real_delineation_of_single_branch (fun y => g (y, 0)) m ξ hξ_an hξ0 δ₀ hδ₀
+    hξ_cover hξ_mult
 
 end

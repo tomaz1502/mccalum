@@ -1,11 +1,40 @@
 # Generalized McCallum Formalization — Status
 
-## Main theorem — `{C, E, A2}` REACHED (2026-05-31)
-`mccallum_3_2_3_generalized` (Projection.lean) — `#print axioms` = **exactly the three named classical
-axioms** `weierstrass_preparation_analytic` / `weierstrass_division_analytic` / `weierstrass_division_unique`
-(C), `zariski_root_sections` (E), `real_delineation_of_complex_sections` (A2) + standard
-(`propext`, `Classical.choice`, `Quot.sound`). **No sorries; the old monolithic
-`analytic_pseudopoly_delineable_nonsep` axiom is eliminated.** Full library builds (2526 jobs).
+## Main theorem — `{C, E}` base REACHED, A2 ELIMINATED (2026-05-31)
+`mccallum_3_2_3_generalized` (Projection.lean) — `#print axioms` = **exactly two classical inputs**:
+`weierstrass_preparation_analytic` / `weierstrass_division_analytic` / `weierstrass_division_unique`
+(C, Weierstrass preparation/division) and **`zariski_single_branch` (E)** + standard (`propext`,
+`Classical.choice`, `Quot.sound`). **No sorries; full library builds (2527 jobs).** No real-analysis
+axiom remains.
+
+**`E = zariski_single_branch` now matches the thesis's Theorem 4.1.1 verbatim** (`thesis/thesis.pdf`):
+a single holomorphic root section `ψ` (the *unique distinct root* — nonsplitting) of multiplicity `m`,
+under hypotheses (i) `disc(h) ≢ 0` (`order F 0 ≠ ⊤`, "F does not vanish identically") and (ii)
+`disc(h)` order-invariant along the section. The previous `zariski_root_sections` (general-`r`
+factorization, and **missing** the `F ≢ 0` guard) did not match 4.1.1 and has been replaced.
+
+**A2 is gone — no-splitting is part of Zariski 4.1.1, not a separate axiom.** History: the original
+`real_delineation_of_complex_sections` (A2) was **unsound**; it was replaced by a sound stopgap
+`real_cluster_single_branch` (A2′); then, after correcting the informal proof (see below) and matching
+E to 4.1.1, A2′ was shown to be a *crutch* and **removed entirely** (`A2Axiom.lean` deleted). The
+real-analytic content that survives is **proved, 0 custom axioms**: `real_delineation_of_single_branch`
+(`A2Recovery.lean`) — single complex branch (real-valued on the slice via conjugation) ⟹ real-analytic
+root delineation via Schwarz reflection.
+
+**The chain** (`F3.lean` `single_cluster_real_delineation`): `cluster_from_real` (C + Zariski 4.1.1)
+produces the single branch `ξ` + real-slice cover/multiplicity → `real_delineation_of_single_branch`
+(proved). The complex chain collapsed to single-branch throughout
+(`zariski_single_branch` → `cluster_root_structure` → `single_cluster_complex` →
+`single_cluster_from_weierstrass` → `cluster_from_real`); the general-`r` machinery
+(`weierstrass_section_isRoot`/`_rootMultiplicity` in `RootSectionsAlgebra.lean`) is now dead code
+(builds, off the axiom path) — optional future deletion.
+
+### Corrected informal proof (2026-05-31): `thesis/generalized/proof.tex`
+Fixed a real defect in the generalized proof's key step (§5.4.4): the order-additivity lemma was
+applied to `disc(h)` **restricted to the section** `T*`, which is `≡ 0` when `m ≥ 2` (e.g.
+`f = x₃²−x₂` ⟹ `disc(h)=4x₂`, `≡0` on `{x₂=0}`). Corrected to use the **ambient** order along `T*`
+(lemma `order_factor_const_of_mul_analytic` in `OrderMulAnalytic.lean` — audited, already the ambient
+form; the Lean disc-order chain was ahead of the prose). Companion: `thesis/generalized/proof_corrected.md`.
 
 The delineation is now a *theorem* (`analytic_pseudopoly_delineable'`, `Delineable.lean`): separable
 case → analytic IFT; non-separable → `multi_cluster_real_delineation` (C+E+A2). The upper lifting chain
@@ -13,6 +42,39 @@ case → analytic IFT; non-separable → `multi_cluster_real_delineation` (C+E+A
 `Lifting.lean` to `Delineable.lean` (above the C/E/A2 stack) to break the import cycle, with the
 dispatcher call fed the analytic Bézout cofactors (`Ideal.mem_span_pair` on `hP_mem`, `natDegree_map_le`
 degree bounds). The remaining `{C, E, A2}` are the genuine classical inputs not in Mathlib.
+
+## A2 PROOF EFFORT (2026-05-31) — recovery core PROVED; A2-as-stated found UNSOUND
+
+**Proved (0 custom axioms):** `real_delineation_of_single_branch` (`A2Recovery.lean`). This is the
+genuine real-analytic content of A2: given **one** holomorphic cluster section `ψ` parametrizing the
+**unique** complex root of `(fam y).map(ℝ→ℂ)` in the cluster ball `δ₀` (real `y` near `0`) with constant
+multiplicity `m`, the real root of `fam y` is a single real-analytic `η` with `η 0 = 0`, mult `m`.
+Crux = conjugation: a real polynomial's complex roots are conjugate-closed, so the *unique* ball-root is
+conj-fixed, hence real; Schwarz reflection (`real_root_function`, already proved) recovers `η = Re∘ψ∘ι`.
+`#print axioms real_delineation_of_single_branch = [propext, Classical.choice, Quot.sound]`.
+
+**Finding — `real_delineation_of_complex_sections` (A2) is UNSOUND as stated.** Its conclusion delivers
+**one** root function `η`, but its hypotheses (general `r` complex branches, `hcover`, `hmult_match`,
+`hsum`) are satisfied by genuinely-multi-real-root families. Concrete witness (`s=1`):
+`fam_y(t) = (t − y₀)(t − 2y₀)` with `ψ₁(y)=y₀`, `ψ₂(y)=2y₀` (`r=2`, `mult=(1,1)`, `m=2`). Every A2
+hypothesis holds, yet for `y₀>0` the family has **two** distinct real roots `y₀, 2y₀`, both `→0` — so no
+single `η` satisfies the `(|α|<δ ∧ IsRoot α) ↔ α = η y` clause. ⇒ A2 ⊢ `False`. The current
+`{C,E,A2}` base is therefore inconsistent (no exploit is wired, but it must be fixed).
+
+**Root cause / residual.** The missing ingredient is **no-splitting**: under McCallum order-invariance a
+multiplicity-`m` real root persists as a *single* branch of multiplicity `m` (does not split). That fact
+needs the order-invariance witness `P` (`hP_ne`, `hP_oi_real`) — which A2's interface does **not** carry,
+and which the counterexample violates (`disc = y₀²` drops order off the section). The `r=1` single-branch
+case is exactly when A2 is true, and then it is fully provable (= the recovery core above). So A2's
+content splits into: **(1) recovery — PROVED**, and **(2) no-splitting (`r=1`) — irreducible**, requiring
+order-invariance / equisingularity not in Mathlib (Puiseux/Newton/monodromy absent). Cannot be derived
+from `{C,E}` as stated.
+
+**DONE (Option A implemented).** Replaced the unsound A2 with the sound `real_cluster_single_branch`
+(A2′) carrying the order-invariance witness → single real branch `ξ`, then finished via the proved
+recovery core. `F3.lean` rewired; full library green (2528 jobs); `#print axioms mccallum_3_2_3_generalized`
+= `{C, E, real_cluster_single_branch} + standard`. Base is now **sound**; residual axiom = exactly the
+no-splitting/equisingularity fact (not in Mathlib). See the milestone section at the top.
 
 ## ROADMAP: proving the axiom (Weierstrass → Zariski)
 Full plan in **`WEIERSTRASS_ZARISKI_PLAN.md`** (6 phases A–F). Currently working **Phase A1**:
@@ -503,6 +565,9 @@ Foundational covering-transfer pieces (axiom-clean):
   `multmatch_of_weierstrass` are axiom-clean — they produce exactly A2's `hcover` and `hmult_match`.
 
 ### SINGLE-CLUSTER `{C, E, A2}` MILESTONE (2026-05-31): `ClusterCover.lean` + `F3.lean`
+> **SUPERSEDED (later 2026-05-31):** the A2 axiom referenced below
+> (`real_delineation_of_complex_sections`) was found unsound and removed; `single_cluster_real_delineation`
+> now rests on `{C, E, A2′ = real_cluster_single_branch}` + the proved recovery core. See the top section.
 `single_cluster_real_delineation` (`F3.lean`) — the **complete per-cluster real delineation**: from the
 real product family `g` localized at a multiplicity-`m` cluster root of `g(0,0)` at `t=0`, the real
 roots of `g(·,0)` near `0` form finitely many ordered real-analytic functions with constant

@@ -32,14 +32,12 @@ theorem single_cluster_complex {s e : ℕ} (m : ℕ) (hm : 0 < m)
     (hnorm : (fun w => P w ^ m) =ᶠ[𝓝 0] fun w => weierstrassResFun m a w * Q w)
     (hP_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ P ((y, 0) : CParam s e) = order ℂ P ((0, 0) : CParam s e)) :
-    ∃ (r : ℕ) (ψ : Fin r → ((Fin s → ℂ) → ℂ)) (mult : Fin r → ℕ),
-      (∀ i, AnalyticAt ℂ (ψ i) 0) ∧ (∀ i, ψ i 0 = 0) ∧ (∀ i, 0 < mult i) ∧
-      (∑ i : Fin r, mult i = m) ∧
-      (∀ i j, i ≠ j → ¬ (ψ i =ᶠ[𝓝 (0 : Fin s → ℂ)] ψ j)) ∧
+    ∃ ψ : (Fin s → ℂ) → ℂ,
+      AnalyticAt ℂ ψ 0 ∧ ψ 0 = 0 ∧
       (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
-        (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ ∃ i, α = ψ i y) ∧
-      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), Function.Injective (fun i => ψ i y) →
-        ∀ i, (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ i y) = mult i) := by
+        (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ α = ψ y) ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+        (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m) := by
   have hRan : AnalyticAt ℂ (weierstrassResFun m a) 0 := weierstrassResFun_analyticAt a ha_an
   have hDan : AnalyticAt ℂ (weierstrassDiscFn m a) 0 := weierstrassDiscFn_analyticAt hm a ha_an
   -- A neighbourhood where all four functions are analytic and the norm identity holds.
@@ -83,8 +81,11 @@ theorem single_cluster_complex {s e : ℕ} (m : ℕ) (hm : 0 < m)
     (fun z hz => (hball hz).2.2.1) (fun z hz => (hball hz).2.1) (fun z hz => (hball hz).1)
     (fun z hz => (hball hz).2.2.2.1) hres_ne hQ_ne
     (fun z hz => (hball hz).2.2.2.2) hP_oiV
-  -- Feed Zariski + F2.
-  refine cluster_root_structure m hm a ha_an ha0 ?_
+  -- `disc(h) ≢ 0` (from `res ≢ 0`, since `P^m = res·Q` and `P ≢ 0`), then Zariski 4.1.1.
+  have hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤ := by
+    rw [← order_weierstrassResFun_eq m a hm (0 : CParam s e) hDan]
+    exact order_ne_top_of_ne_zero U hU_open hU_conn _ (fun z hz => (hball hz).2.2.1) hres_ne 0 hU0
+  refine cluster_root_structure m hm a ha_an ha0 hdisc_ne ?_
   filter_upwards [Metric.ball_mem_nhds (0 : Fin s → ℂ) hδ] with y hy
   exact hdiscV y hy
 

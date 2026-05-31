@@ -44,8 +44,10 @@ discriminant $D(x) = \disc(f)$ and specific resultants $\res(F_i, F_j)$
 by arbitrary nonzero elements of the corresponding elimination ideals
 $\langle f, \partial f / \partial x_r \rangle \cap \R[x]$ and
 $\langle F_i, F_j \rangle \cap \R[x]$.  The proofs follow the structure of
-McCallum's original argument with two new ingredients: (1) the
-\emph{order additivity lemma} for holomorphic functions, and
+McCallum's original argument with two new ingredients: (1) an
+\emph{order additivity lemma along a submanifold}, using the \emph{ambient}
+vanishing order at points of the section (not the order of the restriction,
+which is identically zero in the multiple-root case), and
 (2) a \emph{norm identity}: for a Weierstrass polynomial~$h$ of degree~$m$,
 any $P \in \langle h, h' \rangle \cap \mathcal{O}(\Delta)$ satisfies
 $P^m = \pm\disc(h) \cdot Q$ for some holomorphic~$Q$.
@@ -166,46 +168,76 @@ $\ord_p(f) = \sum_i \ord_p(F_i)$.
 
 \textbf{[NEW]}
 
-\begin{lemma}[Order additivity lemma]
+For a holomorphic function $F$ on an open set $\Delta \subseteq \C^n$ and a
+point $p \in \Delta$, we write $\ord_p F$ for the \emph{ambient} vanishing
+order of $F$ at $p$: the largest $k$ such that every partial derivative
+$\partial^\alpha F$ with $|\alpha| < k$ vanishes at~$p$.  When we apply the
+lemma below, $F$ is the discriminant $\disc(h)$, a function of \emph{all} the
+variables, and $p$ ranges over the section $T^*$; the relevant quantity is the
+ambient order $\ord_p F$, \textbf{not} the order of the restriction
+$F|_{T^*}$.  These differ precisely when $F$ vanishes along~$T^*$ (e.g.\ for a
+transverse coordinate $F = z_n$ one has $\ord_p F = 1$ for all $p \in T^*$,
+while $F|_{T^*} \equiv 0$).
+
+\begin{lemma}[Order additivity along a submanifold]
 \label{lem:order_additivity}
-Let $U \subseteq \C^s$ be a connected open set.  Let $f, g : U \to \C$
-be holomorphic functions, both not identically zero.  If $f \cdot g$
-has constant vanishing order on~$U$ (i.e., $\ord_z(fg)$ is the same for
-all $z \in U$), then $f$ and $g$ each have constant vanishing order
-on~$U$.
+Let $\Delta \subseteq \C^n$ be a connected open set and let
+$T^* \subseteq \Delta$ be a connected complex submanifold (in our application,
+a linear coordinate slice).  Let $f, g : \Delta \to \C$ be holomorphic, both
+\textbf{not identically zero on~$\Delta$} (we do \emph{not} assume $f|_{T^*}$
+or $g|_{T^*}$ is nonzero).  If $f \cdot g$ is order-invariant along~$T^*$,
+i.e.\ $\ord_p(fg)$ takes the same value~$c$ for all $p \in T^*$, then $f$ and
+$g$ are each order-invariant along~$T^*$.
 \end{lemma}
 
 \begin{proof}
-Let $c = \ord_z(fg)$ (constant) for all $z \in U$.
-Let $a = \min_{z \in U} \ord_z(f)$ and $b = \min_{z \in U} \ord_z(g)$.
+\emph{Additivity at each point.}  The vanishing order at a point is a
+valuation, so $\ord_p(fg) = \ord_p(f) + \ord_p(g)$ for every $p \in \Delta$.
 
-Since $f$ is holomorphic and not identically zero, the set
-$\{ z \in U : \ord_z(f) \ge k \}$ is a closed analytic subset of~$U$ for
-each $k$.  The order achieves its minimum $a$ on a dense open subset
-$U_1 \subseteq U$ (the complement of a proper analytic subset).
-Similarly, $\ord_z(g)$ achieves its minimum $b$ on a dense open
-$U_2 \subseteq U$.
+\emph{Finiteness.}  Since $f \not\equiv 0$ on the connected open set
+$\Delta$, the identity theorem gives $\ord_p(f) < \infty$ for all
+$p \in \Delta$; likewise for~$g$.  In particular $\ord_p(f), \ord_p(g) \in \N$
+for $p \in T^*$.
 
-On $U_1 \cap U_2$ (which is dense and open, since $U$ is connected and
-each $U_i$ is the complement of a proper analytic subset), we have
-$a + b = c$.
+\emph{Minima attained on a dense open subset of~$T^*$.}  Put
+$a = \min_{p \in T^*} \ord_p(f)$ and $b = \min_{p \in T^*} \ord_p(g)$.  The set
+\[
+  \Sigma_f = \{ p \in T^* : \ord_p(f) > a \}
+           = \{ p \in T^* : \partial^\alpha f(p) = 0
+                            \text{ for all } |\alpha| \le a \}
+\]
+is the common zero set, \emph{within} $T^*$, of the finitely many holomorphic
+functions $\partial^\alpha f|_{T^*}$ ($|\alpha| \le a$) --- hence an analytic
+subset of~$T^*$.  It is \emph{proper}: by definition of~$a$ there is
+$q \in T^*$ with $\ord_q(f) = a$, so some $\partial^\alpha f$ with
+$|\alpha| = a$ has $\partial^\alpha f(q) \ne 0$; thus
+$\partial^\alpha f|_{T^*} \not\equiv 0$ and $\Sigma_f \subsetneq T^*$.  So
+$T^* \setminus \Sigma_f$ is dense open in~$T^*$.  Symmetrically
+$T^* \setminus \Sigma_g$ is dense open.  (Note these loci are cut out by the
+\emph{ambient} derivatives $\partial^\alpha f$ restricted to~$T^*$; this is
+exactly what lets the argument succeed when $f|_{T^*} \equiv 0$.)
 
-For an arbitrary point $z_0 \in U$:
-\begin{itemize}
-\item $\ord_{z_0}(f) \ge a$ \quad (since $a$ is the minimum),
-\item $\ord_{z_0}(g) \ge b$ \quad (since $b$ is the minimum),
-\item $\ord_{z_0}(f) + \ord_{z_0}(g) = c = a + b$.
-\end{itemize}
-The third equality together with the two inequalities forces
-$\ord_{z_0}(f) = a$ and $\ord_{z_0}(g) = b$.
+\emph{Compatibility of the minima.}  $T^*$ is connected, so the two proper
+analytic subsets $\Sigma_f, \Sigma_g$ cannot cover it; choose
+$p_* \in (T^* \setminus \Sigma_f) \cap (T^* \setminus \Sigma_g)$.  There
+$\ord_{p_*}(f) = a$ and $\ord_{p_*}(g) = b$, whence $a + b = \ord_{p_*}(fg) = c$.
+
+\emph{Rigidity.}  For arbitrary $p \in T^*$: $\ord_p(f) \ge a$,
+$\ord_p(g) \ge b$, and $\ord_p(f) + \ord_p(g) = \ord_p(fg) = c = a + b$.  As
+$a, b$ are finite, this forces $\ord_p(f) = a$ and $\ord_p(g) = b$.  Hence
+$\ord_\cdot(f) \equiv a$ and $\ord_\cdot(g) \equiv b$ on~$T^*$.
 \end{proof}
 
 \begin{remark}
-This lemma generalizes to any connected analytic manifold, and also to the
-real-analytic setting (by complexification).  The key input is that for a
-non-identically-zero holomorphic function on a connected open set, the
-vanishing order achieves a finite minimum on a dense open subset and can
-only jump \emph{up} on a proper analytic subset.
+The earlier version of this lemma was stated for an open set $U \subseteq \C^s$
+and the \emph{intrinsic} order on $U$.  That is the wrong notion here: in the
+application $U$ would be the section $T^*$ and $f$ the restriction
+$\disc(h)|_{T^*}$, which is \emph{identically zero} whenever the cluster root
+has multiplicity $m \ge 2$ (the entire reason the positive-codimension case
+exists), so the non-vanishing hypothesis would fail.  The ambient formulation
+above only requires $\disc(h) \not\equiv 0$ \emph{on $\Delta$} (true by
+squarefreeness), and the conclusion is the ambient order-invariance of
+$\disc(h)$ along~$T^*$ --- precisely the hypothesis of Zariski's theorem.
 \end{remark}
 
 %% =========================================================================
@@ -529,34 +561,49 @@ Corollary~\ref{cor:norm_weierstrass} gives
 for some holomorphic $Q = N(\bar{b}) \in \mathcal{O}(\Delta_2)$,
 where $m = \deg_{z_r} h$.
 
-We verify that neither factor on the right is identically zero:
+We verify that neither factor on the right is identically zero
+\textbf{on $\Delta_2$} (ambient non-vanishing --- we make \emph{no} claim about
+the restrictions to $T^*$):
 \begin{itemize}
-\item $\disc(h) \not\equiv 0$ because $f$ is squarefree, so $g$ is
-  squarefree as a pseudopolynomial (the coordinate change preserves
-  coprimality of $g$ and $g'$), and $h$ divides $g$ with unit cofactor,
-  so $h$ is also squarefree.
-\item $Q \not\equiv 0$ because $\widetilde{P}^m \not\equiv 0$ and
-  $\disc(h) \not\equiv 0$, and $\mathcal{O}(\Delta_2)$ is an integral
-  domain.
+\item $\disc(h) \not\equiv 0$ on $\Delta_2$ because $f$ is squarefree, so $g$
+  is squarefree as a pseudopolynomial (the coordinate change preserves
+  coprimality of $g$ and $g'$), and $h$ divides $g$ with unit cofactor, so $h$
+  is squarefree --- hence its discriminant is not the zero function on
+  $\Delta_2$.
+
+  \emph{Caution.} This does \textbf{not} say $\disc(h)|_{T^*} \not\equiv 0$.
+  On the contrary, when the cluster root has multiplicity $m \ge 2$ the section
+  roots of $h$ have multiplicity, so $\disc(h)|_{T^*} \equiv 0$ (e.g.\
+  $f = x_3^2 - x_2$ gives $\disc(h) = 4x_2$, which is $\equiv 0$ on
+  $T^* = \{x_2 = 0\}$ but vanishes only to ambient order~$1$ there).  This is
+  exactly why the \emph{ambient} order-additivity lemma is needed, and why the
+  earlier intrinsic version was inapplicable.
+\item $Q \not\equiv 0$ on $\Delta_2$ because $\widetilde{P}^m \not\equiv 0$ and
+  $\disc(h) \not\equiv 0$, and $\mathcal{O}(\Delta_2)$ is an integral domain.
 \end{itemize}
 
-Now apply the order additivity lemma (Lemma~\ref{lem:order_additivity}) to
-the restriction of~\eqref{eq:Pm_disc_Q} to $T^* \cap \Delta_2$:
+Now apply the order-additivity lemma (Lemma~\ref{lem:order_additivity}) to the
+identity~\eqref{eq:Pm_disc_Q} \emph{on $\Delta_2$}, with the submanifold
+$T^* \cap \Delta_2$ (using the \emph{ambient} order $\ord_p$ at points
+$p \in T^*$):
 \begin{itemize}
-\item $\widetilde{P}|_{T^*}$ has constant vanishing order $\mu$ on
-  $T^* \cap \Delta_2$ (established in \S\ref{sssec:complexification}),
-  so $\widetilde{P}^m|_{T^*}$ has constant vanishing order $m\mu$.
-\item $\disc(h)|_{T^*}$ and $Q|_{T^*}$ are holomorphic, not identically
-  zero, on the connected open set $T^* \cap \Delta_2 \cong \Delta^{(s)}$.
-\item Their product equals $\pm\,\widetilde{P}^m|_{T^*}$, which has constant
-  order~$m\mu$.
+\item $\widetilde{P}$ is order-invariant along $T^*$ with constant ambient
+  order $\mu$ (established in \S\ref{sssec:complexification}: all ambient
+  partials of $\widetilde{P}$ of order $< \mu$ vanish on $T^*$, and some
+  order-$\mu$ partial is nonzero at $0$, hence on a $T^*$-neighborhood).  Thus
+  $\widetilde{P}^m$ is order-invariant along $T^*$ with constant ambient order
+  $m\mu$ (point-order is a valuation).
+\item $\disc(h)$ and $Q$ are holomorphic and $\not\equiv 0$ on the connected
+  set $\Delta_2$.
+\item Their product is $\pm\,\widetilde{P}^m$, order-invariant along $T^*$ with
+  ambient order $m\mu$.
 \end{itemize}
-By Lemma~\ref{lem:order_additivity}, $\disc(h)|_{T^*}$ has constant
-vanishing order on $T^* \cap \Delta_2$.  Denote this constant order by~$r$.
-Then $F(z) := \disc(h)(z) = z_{n-1}^r \cdot N(z)$ (after possibly
-refining $\Delta_2$ and noting the power-series structure), where $N$ is
-holomorphic and non-vanishing --- exactly the hypothesis required by
-Zariski's theorem.
+By Lemma~\ref{lem:order_additivity}, $\disc(h)$ is order-invariant along
+$T^*$: $\ord_p(\disc(h))$ takes a constant finite value $r_0$ for all
+$p \in T^*$.  This is precisely the hypothesis required by Zariski's theorem
+(constant vanishing order of the discriminant along the section); equivalently,
+after refining $\Delta_2$, $\disc(h)(z) = (\text{normal-direction})^{r_0} \cdot
+N(z)$ with $N$ holomorphic and non-vanishing along $T^*$.
 
 \subsubsection{Application of Zariski's theorem (unchanged)}
 \label{sssec:zariski}
@@ -577,6 +624,23 @@ $\alpha \in \Delta(0; \epsilon)$,
 and $h$ is order-invariant in the set
 $G^* = \{ (z, z_r) : z \in T^* \cap \Delta_3,\;
 z_r = \psi(z_1, \ldots, z_s) \}$.
+
+\begin{remark}[Why a \emph{single} branch --- no splitting]
+That Zariski's theorem yields one section $\psi$ over $T^*$ (rather than
+several distinct ones meeting at the base) is forced by the constant order of
+$\disc(h)$ just established, and is what makes the resulting real roots
+\emph{disjoint} (delineable).  Indeed, suppose $h$ had two distinct holomorphic
+sections $\psi_1 \ne \psi_2$ over $T^*$, both tending to~$0$ at the base.  Then
+$\disc(h)$ carries a factor $(\psi_1 - \psi_2)^{\,2\,(\cdots)}$ which vanishes
+at the base (where $\psi_1 = \psi_2 = 0$) but not at nearby section points
+(where $\psi_1 \ne \psi_2$); this raises $\ord_p(\disc(h))$ at the base above
+its value at generic $p \in T^*$, contradicting the constant order~$r_0$.
+Hence the cluster is a single branch of multiplicity~$m$.  (In $f = x_3^2 -
+x_2$: over $T^* = \{z_2 = 0\}$, $h|_{T^*} = z_3^2$ has the single root
+$\psi = 0$ of multiplicity~$2$; the two Puiseux roots $\pm\sqrt{z_2}$ separate
+only \emph{transversally}, off~$S$.)  This ``no splitting'' is therefore part
+of the Zariski/equisingularity step, not a separate ingredient.
+\end{remark}
 
 \subsubsection{Return to the real domain (unchanged)}
 \label{sssec:return_real}
@@ -728,9 +792,12 @@ Proof of 3.2.1, Weierstrass prep & unchanged & \\
 Proof of 3.2.1, factorization step & \textbf{changed} &
   $\widetilde{P}^m = \pm\disc(h) \cdot Q$ via norm identity
   (Cor.~\ref{cor:norm_weierstrass}) + order additivity
-  (Lem.~\ref{lem:order_additivity}) replaces Thm.~2.3.3 \\
+  (Lem.~\ref{lem:order_additivity}) replaces Thm.~2.3.3.
+  \textbf{Corrected} to use the \emph{ambient} order along $T^*$
+  (the restriction $\disc(h)|_{T^*}$ is $\equiv 0$ when $m \ge 2$) \\
 \hline
-Proof of 3.2.1, Zariski application & unchanged & \\
+Proof of 3.2.1, Zariski application & unchanged & Single-branch
+  (no-splitting) now justified by the constant $\disc(h)$ order \\
 \hline
 Proof of 3.2.1, return to real & unchanged & \\
 \hline
@@ -769,12 +836,24 @@ The Lean project already contains:
 \noindent
 \textbf{Remaining work to remove the axiom:}
 \begin{enumerate}
-\item Formalize the order additivity lemma
-  (Lemma~\ref{lem:order_additivity}) for holomorphic functions.
-  This requires Lean infrastructure for holomorphic functions on polydiscs
-  and vanishing order in the complex-analytic setting.
-  \emph{Status:} declared as a standalone axiom
-  (\texttt{order\_additivity\_holomorphic}).
+\item The order-additivity lemma (Lemma~\ref{lem:order_additivity}) in its
+  \textbf{ambient, along-a-submanifold} form is \textbf{already formalized and
+  used} in Lean, as \texttt{order\_factor\_const\_of\_mul\_analytic}
+  (\texttt{OrderMulAnalytic.lean}): for $f,g$ analytic and \emph{ambiently}
+  non-zero on a connected open $U$, with $f\cdot g$ of constant order along a
+  preconnected $S \subseteq U$, each factor has constant order along $S$.  It
+  takes the \emph{ambient} order at section points and ambient non-vanishing
+  ($\exists z \in U,\ f z \ne 0$), never $f|_S \not\equiv 0$; finiteness comes
+  from \texttt{order\_ne\_top\_of\_ne\_zero} on all of $U$ (identity theorem),
+  so it is correct even when $\disc(h)|_S \equiv 0$.  It is sorry-free and is
+  wired into the Zariski path via
+  \texttt{DiscOrder.weierstrassDisc\_order\_const\_along\_section} $\to$
+  \texttt{cluster\_root\_structure} $\to$ \texttt{zariski\_root\_sections}
+  (audited).  \emph{Note:} the separate \texttt{order\_additivity\_holomorphic}
+  is the \emph{intrinsic} ($S = U$ open) version; it is \textbf{not} on the
+  disc-order path and must not be applied to $y \mapsto \disc(h)(y,0)$.  In
+  short, the Lean disc-order machinery already follows the \emph{corrected}
+  proof; it was the prose that lagged.
 \item Formalize the norm identity (Corollary~\ref{cor:norm_weierstrass}).
   This needs the algebra norm on $R[z]/(h)$ for monic~$h$ and the identity
   $N(\bar{g}) = \pm\res(h,g)$.  The norm map and its multiplicativity are
@@ -794,5 +873,23 @@ $\langle h, g \rangle \cap R = (\res(h,g))$ for monic~$h$.
 This was discovered to be \textbf{false} (see
 Remark in \S\ref{sec:norm_identity}) and has been removed.  The norm
 identity (Lemma~\ref{lem:norm_identity}) is the correct replacement.
+
+\medskip
+\noindent
+\textbf{Note on a corrected proof step (this revision).}
+The factorization step (\S\ref{sssec:recover_discr}) previously applied the
+order-additivity lemma to $\disc(h)$ \emph{restricted to the section} $T^*$.
+That restriction is identically zero whenever the cluster root has multiplicity
+$m \ge 2$ (e.g.\ $f = x_3^2 - x_2$ gives $\disc(h) = 4x_2$, which vanishes
+identically on $T^* = \{x_2 = 0\}$), so the lemma's non-vanishing hypothesis
+failed.  The lemma and the step have been corrected to use the \emph{ambient}
+order of $\disc(h)$ along $T^*$ (finite, since $\disc(h) \not\equiv 0$ on the
+ambient polydisc), which is the notion Zariski's theorem actually requires.
+A separate consequence is that the Lean axiom
+\texttt{real\_cluster\_single\_branch} (introduced as a stopgap when this step
+appeared stuck) is \textbf{not} an ingredient of the corrected proof: the
+single-branch / no-splitting content is delivered by the constant $\disc(h)$
+order feeding Zariski's theorem, so it should be eliminated from the
+formalization in favour of following this proof.
 
 \end{document}
