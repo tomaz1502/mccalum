@@ -341,9 +341,216 @@ via `CharZero ↥𝒪`) and `hres` (resultant degree-arg `(m,m−1)` matching vi
 `descent_membership` (Steps 2+3a, axiom-clean modulo the C-division axioms) → `descent_norm_identity`
 (Step 3b, axiom-clean) → `DiscOrder.weierstrassDisc_order_const_along_section` (D3-app, ✅) → Zariski's
 `hdisc`. **The entire Phase-D pipeline is built, sorry-free, and type-checks against the C/E axioms.**
-Remaining for the whole theorem: wire **A2/A3** (complexification + localization at real roots) to
-*instantiate* the descent's hypotheses, then F3 assembly — and the two research-scale axioms C (now
-prep+division) and E (Zariski).
+
+### Single-cluster composition — STARTED (2026-05-30): back half + analyticity helpers
+- **`ClusterRootStructure.lean`** `cluster_root_structure` (axiom-clean modulo `zariski_root_sections`):
+  the **back half** `Zariski → F2`. From constant disc order along the section, produces the holomorphic
+  root sections `ψᵢ` + full root/multiplicity structure (exhaustiveness everywhere near `0`; multiplicity
+  wherever the `ψᵢ` are distinct).
+- **`WeierstrassResAnalytic.lean`** `weierstrassResFun_analyticAt`, `weierstrassDiscFn_analyticAt`
+  (axiom-clean): the resultant/disc functions of the family are analytic at `0` — via the `toSubring` +
+  `resultant_map_map` technique (resultant of analytic-coeff polys lands in `AnalyticAtSubring`); `discFn`
+  follows as `(-1)^k · resFun`. These discharge the `hres_an`/`hdisc_an` hypotheses of `DiscOrder`.
+
+### Single-cluster composition (complex) — COMPLETE (2026-05-30): `SingleCluster.lean`
+`theorem single_cluster_complex` builds, axiom-clean modulo `zariski_root_sections`. **The entire
+complex single-cluster chain, fully wired and sorry-free:** from the descent's norm identity
+(`P^m =ᶠ weierstrassResFun·Q`, `Q` analytic) + the witness's constant section-order, it produces the
+holomorphic root sections `ψᵢ` of the section Weierstrass polynomial + their full root/multiplicity
+structure. The **front-half glue**: builds open metric balls `U`/`V` (analytic + norm-identity nbhd,
+`AnalyticAt → AnalyticOnNhd` via `eventually_analyticAt`, `isConnected_ball`); derives the
+non-vanishing of `resFun`/`Q` from `P ≢ 0` (`order P 0 ≠ ⊤` ⟹ `∃ z, P z ≠ 0` ⟹ via `P^m=resFun·Q`);
+runs `DiscOrder`; chains `cluster_root_structure` (Zariski + F2).
+
+**STATUS: the WHOLE D→E→F-root pipeline is built and verified end-to-end** —
+`descent_membership` → `descent_norm_identity` → `single_cluster_complex` (the latter chaining
+`DiscOrder` + `cluster_root_structure` = Zariski + F2). Only `zariski_root_sections` (E) and the
+C-division axioms remain as the non-standard ingredients on this path.
+
+### F1 per-section recovery DONE (2026-05-30): `RealRecovery.lean`
+`real_root_function` (axiom-clean): a complex section `ψ` analytic at `0`, `ψ 0 = 0`, real on the real
+slice ⟹ real-analytic `η := Re∘ψ∘realEmbedding`, `η 0 = 0`, recovery `(η x:ℂ)=ψ(realEmbedding x)`.
+(Un-privated `realEmbedding`/`realEmbedding_apply`/`realEmbedding_single` in Lifting.)
+
+### A3 plumbing — family↔function-ring bridge DONE (2026-05-30): `PolyOfFamily.lean`
+`polyOfFamily`/`polyToFun_polyOfFamily` (axiom-clean): assemble a degree-`≤N` family `gℂ : CParam→ℂ[t]`
+into a function-ring polynomial `g : (CParam→ℂ)[X]` with `polyToFun g (z,t) = (gℂ z).eval t`. Connects
+the complexification output to the `polyToFun`-based descent inputs.
+
+**Existing complexification tools (reuse):** `analyticAt_complexify` (real f ⟹ complex `f_ℂ` analytic +
+real-on-slice + **order-preserving** `order ℂ f_ℂ = order ℝ f`), `complexify_pseudopoly` (real family ⟹
+`gℂ : ℂᵐ→ℂ[t]` analytic + real-on-slice), `complexify_order_invariant` (real-slice order μ ⟹ complex
+order μ near 0).
+
+### A3 friction #1 (product↔`Fin` reconciliation) DONE (2026-05-30): `OrderCLE.lean` + `ProductComplexify.lean`
+The reindexing reconciliation that moves the complexification machinery onto the *product* base
+`CParam s e = (Fin s→ℂ)×(Fin e→ℂ)`. All axiom-clean.
+- `order_comp_continuousLinearEquiv` (`OrderCLE.lean`): `order 𝕜 (f ∘ g) x = order 𝕜 f (g x)` for any
+  CLE `g` (via `iteratedFDeriv_comp_continuousLinearEquiv` + `continuousMultilinearMapCongrLeft`
+  injectivity). General `𝕜`, fully reusable.
+- `reindexCLE 𝕜 s e : (Fin (s+e)→𝕜) ≃L[𝕜] (Fin s→𝕜)×(Fin e→𝕜)` + `reindexCLE_apply` (rfl-characterised)
+  + `reindexCLE_ofReal` (commutes with coordinatewise `ofReal`).
+- `analyticAt_complexify_prod`: real-analytic `F` on the product base ⟹ holomorphic `F_ℂ` on
+  `CParam`, real-slice agreement, **order preservation at 0** (`order ℂ F_ℂ 0 = order ℝ F 0`). Built by
+  transporting `analyticAt_complexify` across `reindexCLE` (order half uses the CLE lemma).
+- `complexify_pseudopoly_prod`: the family version (`g : product → ℝ[t]` ⟹ `gℂ : CParam → ℂ[t]`),
+  mirroring `complexify_pseudopoly` coefficientwise.
+
+### A3 friction #2 (section-order complexification) DONE (2026-05-30): `SectionOrder.lean`
+`complexify_section_order_invariant` (axiom-clean): real witness `P` with constant order `μ` **along
+the section** `{(y,0)}` near `0` + complexification `Pℂ` (analytic, real-slice agreement,
+`order ℂ Pℂ 0 = μ`) ⟹ `∀ᶠ y in 𝓝 0, order ℂ Pℂ (y,0) = μ` (the **full** CParam order at section
+points — exactly the `hP_oi` `DiscOrder`/`single_cluster_complex` consume). Structure mirrors
+`complexify_order_invariant`: USC upper bound (`isOpen_order_le_inter` pulled back through the section
+inclusion) + identity-theorem lower bound applied in the **section variable** `y`. Supporting lemmas
+(all axiom-clean): `prodEmbedCLM`, `cml_eq_zero_of_real_inputs` / `cml_eq_zero_of_reindex_basis`
+(CParam multilinear-vanishing, transported via `reindexCLE` from the `Fin (s+e)` basis lemma),
+`cderiv_zero_at_real_point` (full ℂ-derivative vanishes at real section points — chain rule +
+`restrictScalars` + the CParam-basis lemma). Un-privated `cml_eq_zero_of_basis_eq_zero` and
+`order_eq_top_of_real_eq_zero` in Lifting for reuse.
+
+### A3 friction #3 (factorization differentiation + cluster assembly) DONE (2026-05-31): `FactorDifferentiate.lean` + `ClusterAssembly.lean`
+The genuine analytic content of friction #3 was the **`hfac'` derivation** — differentiating the
+C-axiom factorization `polyToFun g =ᶠ u · polyToFun h` in `t` to get the product-rule form
+`descent_membership` consumes. `FactorDifferentiate.lean` (axiom-clean):
+- `ptderiv F (z,t) = deriv (τ ↦ F (z,τ)) t` (partial `t`-derivative) + `ptderiv_polyToFun`
+  (`ptderiv (polyToFun p) = polyToFun (derivative p)`, via `Polynomial.hasDerivAt` + `derivative_map`).
+- `ptderiv_congr` (germ-only dependence, for `=ᶠ` differentiation), `ptderiv_mul` (product rule),
+  `analyticAt_ptderiv` (`ptderiv u` analytic via `AnalyticAt.fderiv` + eval).
+- `factor_deriv`: assembles all of the above into the `hfac'` bridge with `uder = ptderiv u`.
+
+`ClusterAssembly.lean`: `single_cluster_from_weierstrass` wires the **whole** per-cluster chain —
+`factor_deriv` → `descent_membership` → `descent_norm_identity` → `single_cluster_complex` — taking
+the C-axiom factorization `hfac`, the complexified polynomial elim membership `C Pℂ = A·g + B·g'`,
+`hP_ne`, and the section order `hP_oi` as inputs, producing the holomorphic root sections + multiplicity
+structure. **Depends only on the named classical axioms C and E** (`weierstrass_division_analytic`,
+`weierstrass_division_unique`, `zariski_root_sections`) + standard — no custom/sorry axioms.
+
+### A3 item (b) (membership complexification) DONE (2026-05-31): `MembershipComplexify.lean`
+`complexify_membership` (axiom-clean): lifts the **real analytic-cofactor** elimination membership
+`C(P w) = A w·g w + B w·g'(w)` (near 0) to the **eventual `polyToFun`** form
+`polyToFun (C Pℂ) =ᶠ polyToFun Aℂ·polyToFun g + polyToFun Bℂ·polyToFun g'` consumed by
+`single_cluster_from_weierstrass`. Inputs: the complexified function-ring polynomials with
+`Polynomial.map`-level real-slice agreements + the real identity. The exact global function-ring
+identity is *not* achievable (complexification is local), so the target is the eventual form — this
+required **weakening** `u_transfer`/`descent_membership`/`single_cluster_from_weierstrass`'s `hmem_g`
+from an exact polynomial identity to the eventual `polyToFun` form (a strict generalization, not an
+added hypothesis; only my own A3 code calls them). Supporting (axiom-clean):
+- `eventuallyEq_zero_of_real_eq_zero_prod` (`SectionOrder.lean`): **CParam identity theorem** — analytic
+  `h : CParam → ℂ` vanishing on the real slice near 0 vanishes near 0. Transported from
+  `order_eq_top_of_real_eq_zero` via `reindexCLE` (no new derivative machinery).
+- `polyToFun_eventuallyEq_zero_of_coeffs`: coefficient-wise-zero ⟹ `polyToFun`-zero, both near 0.
+Proof works at the `Polynomial.map` level (the difference poly `D` satisfies `D.map(eval at real pt)=0`
+from the real identity ⟹ each `D.coeff k` vanishes on the real slice ⟹ near 0 ⟹ `polyToFun D =ᶠ 0`).
+
+### A3 CLOSED (2026-05-31): `ClusterFromReal.lean` (+ `ComplexifyGlue.lean`)
+`cluster_from_real` is the **complete A3 front-end**: from the real section family `g`, witness `P`,
+analytic cofactors `A,B` + elimination membership, real section-order invariance, and the per-cluster
+**localization datum** (`analyticOrderAt ((g 0) complexified) 0 = m`, the multiplicity of the cluster
+root at `t=0`), it constructs *every* input of `single_cluster_from_weierstrass` and produces the
+holomorphic root sections + multiplicity structure. **Depends only on the named classical axioms C and
+E** + standard — no custom/sorry axioms. Composition:
+`complexify_pseudopoly_prod`/`analyticAt_complexify_prod` → `map_agree_of_complexify` /
+`analyticCoeffs_polyOfFamily` glue → `complexify_membership` (item b) →
+`weierstrass_preparation_analytic` (C axiom, item a; order datum transferred via `polyToFun_apply`) →
+`complexify_section_order_invariant` → `single_cluster_from_weierstrass`.
+
+**Localization fix (2026-05-31):** the complexification is only *locally* analytic (`AnalyticAt`, not
+global), so `cderiv_zero_at_real_point` and `complexify_section_order_invariant` were re-localized to
+accept `AnalyticOnNhd ℂ Pℂ U` on an open `U ∋ 0` (extracted via `eventually_analyticAt`), using the
+`iteratedFDerivWithin` chain rule on `U` instead of the global `ContDiff` one.
+
+### Localization datum internalized DONE (2026-05-31): `AnalyticOrderPoly.lean`
+`analyticOrderAt_polynomial_eval` (axiom-clean): for `p : ℂ[X]`, `p ≠ 0`,
+`analyticOrderAt (p.eval ·) z₀ = p.rootMultiplicity z₀` (via `exists_eq_pow_rootMultiplicity_mul_and_not_dvd`
++ `analyticOrderAt_eq_natCast`); `_ofReal` corollary via `eq_rootMultiplicity_map`. `cluster_from_real`
+now takes the clean real hypothesis **`(g 0).rootMultiplicity 0 = m`** (deriving the `analyticOrderAt`
+datum internally) — its last non-structural input is gone.
+
+### A2 axiom drafted (2026-05-31): `A2Axiom.lean`
+`real_delineation_of_complex_sections` — the **complex→real recovery** axiom (the one remaining
+classical real-analysis ingredient, alongside C and E). Takes the holomorphic cluster sections `ψ_i`
+that `cluster_from_real` (= Weierstrass + Zariski) produces + the real family, and yields the **real**
+root delineation of one cluster (ordered real-analytic `η_i`, ball-localized at the cluster, constant
+multiplicities). **Design note:** stated to *consume* the complex sections specifically so C and E stay
+load-bearing — the final theorem then rests on `{C, E, A2}`, not `{A2}` (a self-contained per-cluster
+real-delineation axiom would have left C/E as mere soundness witnesses).
+
+### F3 build STARTED (2026-05-31): `F3.lean`
+Foundational covering-transfer pieces (axiom-clean):
+- `isRoot_eq_of_unit_factor`: a unit factor (`u 0 ≠ 0`) doesn't change zeros near `0` — transfers root
+  statements across the `u`-Weierstrass factorization.
+- `cover_of_weierstrass`: **the core bridge** — from `cluster_from_real`'s data (`u`-factorization
+  `hfac`, the `weierstrassPoly`↔`ψ` covering `hroots`, and the section-level map agreement), the
+  complex roots of the complexified section family `(fam y).map ℝ→ℂ` within a cluster radius `δ₀` are
+  exactly `{ψ_i(realEmbedding y)}` — i.e. A2's `hcover` hypothesis. (Chains: agreement → unit-factor →
+  `polyToFun_weierstrassPolyFun` → `hroots`, with the ball-localization plumbing.)
+
+- `multmatch_of_weierstrass` (2026-05-31): the **multiplicity analog** — the multiplicity of a section
+  root `ψ_i(realEmbedding y)` in `(fam y).map ℝ→ℂ` equals `mult i`. Built on a clean new lemma
+  `analyticOrderAt_eq_of_unit_factor` (order is invariant under a non-vanishing unit factor) +
+  `analyticOrderAt_polynomial_eval` (order = rootMultiplicity). Both `cover_of_weierstrass` and
+  `multmatch_of_weierstrass` are axiom-clean — they produce exactly A2's `hcover` and `hmult_match`.
+
+### SINGLE-CLUSTER `{C, E, A2}` MILESTONE (2026-05-31): `ClusterCover.lean` + `F3.lean`
+`single_cluster_real_delineation` (`F3.lean`) — the **complete per-cluster real delineation**: from the
+real product family `g` localized at a multiplicity-`m` cluster root of `g(0,0)` at `t=0`, the real
+roots of `g(·,0)` near `0` form finitely many ordered real-analytic functions with constant
+multiplicities. **`#print axioms` = exactly `{C, E, A2}`** (`weierstrass_preparation/division/division_unique`,
+`zariski_root_sections`, `real_delineation_of_complex_sections`) + standard. The `{C,E,A2}` architecture
+is now realized end-to-end for one cluster.
+- `ClusterCover.lean`: the three bridges (`isRoot_eq_of_unit_factor`, `cover_of_weierstrass`,
+  `multmatch_of_weierstrass`), moved below `ClusterFromReal` to avoid an import cycle.
+- `cluster_from_real` enriched: now also outputs the A2-ready `hmult_match` and `⟨δ₀, hcover⟩`
+  (computed internally via the bridges), plus takes a section degree-constancy hypothesis.
+- `single_cluster_real_delineation` = `cluster_from_real` (enriched) → **A2**.
+
+### Multi-cluster assembly STARTED (2026-05-31): `ShiftCluster.lean`
+Translation infrastructure for applying the single-cluster machinery (stated at `t=0`) at a general
+real root `t_j` via `taylor t_j (g w) = (g w).comp (X + C t_j)`. **Mathlib already supplies the shift
+facts:** `Polynomial.rootMultiplicity_eq_rootMultiplicity` (`p.rootMultiplicity t = (taylor t p).rootMultiplicity 0`),
+`natDegree_taylor`, `taylor_apply`/`taylor_X_pow` (ring/linear structure), `derivative_comp` (chain
+rule for `g_j' = taylor t_j g'`). The one new ingredient — `analyticAt_taylor_coeff` (the shifted
+coefficients stay analytic, axiom-clean) — is built here.
+
+**Remaining multi-cluster steps (now all grounded in available facts):**
+1. **Translation lemma** `single_cluster_real_delineation` at root `t_j`: shift `g`,`A`,`B` by `taylor t_j`
+   (coeffs analytic via `analyticAt_taylor_coeff`; membership via `taylor` ring hom on `hmem`; degree via
+   `natDegree_taylor`; mult via `rootMultiplicity_eq_rootMultiplicity`), apply the `t=0` result, shift the
+   conclusion back (`η_i + t_j`, roots/mult via the shift correspondences).
+2. **Enumerate + dispatch**: distinct real roots of `g(0,0)` (`orderIsoOfFin`, exactly as
+   `separable_family_locally_delineable`); per root, multiple → translation lemma, simple → analytic IFT.
+3. **Glue**: order across clusters, cover (`∑ m_j = deg`), multiplicities → `analytic_pseudopoly_delineable_nonsep`.
+This is the final piece; it collapses the main theorem's dependency from the monolithic
+`analytic_pseudopoly_delineable` axiom to `{C, E, A2}`.
+
+### F3 plan (to discharge `analytic_pseudopoly_delineable_nonsep` → `{C, E, A2}`)
+Mirror the proven separable case `separable_family_locally_delineable`: enumerate the distinct real
+roots `t_j` of `g(0,0)` (`orderIsoOfFin`); per root, **simple** → analytic IFT (no axioms), **multiple**
+→ translate `t ↦ t - t_j`, run `cluster_from_real` (C, E) for the complex sections, feed A2 for the real
+functions; then glue (order, cover via degree count `∑ m_j = deg`, multiplicities). One enrichment
+needed: expose `cluster_from_real`'s factorization (`u`, `hfac`, `u 0 ≠ 0`) so F3 can derive A2's
+`hcover` (roots of `(fam y).map ℝ→ℂ` near the cluster `=` the `ψ_i`) from the `u`-unit relation.
+
+**Remaining for the whole theorem (honest scope):**
+- **Axiom hypothesis note:** proving `analytic_pseudopoly_delineable_nonsep` will need its `hP_elim` in
+  the **analytic-cofactor** form (the `hPfull_elim_strong` shape, already constructed + soundness-checked
+  at the call site `lifting_generalized_codim_local`) — a strengthening that does NOT weaken
+  `mccallum_3_2_3_generalized` (the call site provides it). Likewise the cofactor degree bounds.
+- **A2** the genuine nut: clustering *all* roots of `g(0,0)` into separated clusters near `0` with stable
+  multiplicities, and supplying each cluster's `m` (root multiplicity) + translation to `t=0`.
+- **F3** assembly across clusters: per-cluster `cluster_from_real` → `real_root_function` (F1) → order
+  and glue into `analytic_pseudopoly_delineable_nonsep`.
+
+**The entire per-cluster pipeline is complete** (Phase B, the whole D-phase descent, the complex
+single-cluster pipeline, F1 per-section, all analyticity, **all of A3: frictions #1 product
+reconciliation / #2 section-order / #3 factorization-differentiation, the membership bridge (b), the
+C-axiom application (a), and the full real→complex closer `cluster_from_real`**). Everything from the
+real per-cluster data to the complex root structure is proven, axiom-clean modulo only the named
+classical axioms C and E. What remains is purely the **multi-cluster real-analysis assembly**: the A2
+clustering nut (partition all roots of `g(0,0)` into separated stable clusters, supplying each `m`)
+and the F3 glue (`cluster_from_real` + `real_root_function` per cluster → ordered real delineation
+`analytic_pseudopoly_delineable_nonsep`) — plus the small `analyticOrderAt = rootMultiplicity` lemma.
 
 ### Connective chain — D3-APPLICATION PROVED (2026-05-30): `DiscOrder.lean` (option-1 validation)
 New file `Mccalum/Generalized/DiscOrder.lean`, **sorry-free**, 0 custom axioms.

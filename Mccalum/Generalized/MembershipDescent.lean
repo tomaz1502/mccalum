@@ -188,7 +188,9 @@ the germ membership `polyToFun (C P) =ᶠ Γ·H + Δ·H'` feeding `membership_de
 theorem u_transfer {m : ℕ} (a : Fin m → (CParam s e → ℂ))
     (P : CParam s e → ℂ) (g A B : (CParam s e → ℂ)[X])
     (hA : AnalyticCoeffs A) (hB : AnalyticCoeffs B)
-    (hmem_g : Polynomial.C P = A * g + B * derivative g)
+    (hmem_g : polyToFun s e (Polynomial.C P) =ᶠ[𝓝 0] fun zt =>
+        polyToFun s e A zt * polyToFun s e g zt
+      + polyToFun s e B zt * polyToFun s e (derivative g) zt)
     (u uder : CParam s e × ℂ → ℂ) (hu : AnalyticAt ℂ u 0) (huder : AnalyticAt ℂ uder 0)
     (hfac : polyToFun s e g =ᶠ[𝓝 0]
         fun zt => u zt * polyToFun s e (weierstrassPolyFun m a) zt)
@@ -203,12 +205,7 @@ theorem u_transfer {m : ℕ} (a : Fin m → (CParam s e → ℂ))
           fun zt => polyToFun s e B zt * u zt,
           ((polyToFun_analyticAt A hA).mul hu).add ((polyToFun_analyticAt B hB).mul huder),
           (polyToFun_analyticAt B hB).mul hu, ?_⟩
-  have hCP : polyToFun s e (Polynomial.C P)
-      = polyToFun s e A * polyToFun s e g + polyToFun s e B * polyToFun s e (derivative g) := by
-    rw [hmem_g, map_add, map_mul, map_mul]
-  filter_upwards [hfac, hfac'] with zt hf hf'
-  have hcpz := congrFun hCP zt
-  simp only [Pi.add_apply, Pi.mul_apply] at hcpz
+  filter_upwards [hmem_g, hfac, hfac'] with zt hcpz hf hf'
   rw [hcpz, hf, hf']
   ring
 
@@ -219,7 +216,9 @@ theorem descent_membership {m : ℕ} (hm : 0 < m) (a : Fin m → (CParam s e →
     (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
     (P : CParam s e → ℂ) (hP_an : AnalyticAt ℂ P 0)
     (g A B : (CParam s e → ℂ)[X]) (hA : AnalyticCoeffs A) (hB : AnalyticCoeffs B)
-    (hmem_g : Polynomial.C P = A * g + B * derivative g)
+    (hmem_g : polyToFun s e (Polynomial.C P) =ᶠ[𝓝 0] fun zt =>
+        polyToFun s e A zt * polyToFun s e g zt
+      + polyToFun s e B zt * polyToFun s e (derivative g) zt)
     (u uder : CParam s e × ℂ → ℂ) (hu : AnalyticAt ℂ u 0) (huder : AnalyticAt ℂ uder 0)
     (hfac : polyToFun s e g =ᶠ[𝓝 0]
         fun zt => u zt * polyToFun s e (weierstrassPolyFun m a) zt)

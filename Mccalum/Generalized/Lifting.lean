@@ -630,7 +630,7 @@ open Filter
 
 /-- A ℂ-multilinear map on `Fin s → ℂ` that vanishes on all tuples of standard basis
 vectors is zero. This generalizes `continuousMultilinearMap_eq_zero_iff_basis` to ℂ. -/
-private lemma cml_eq_zero_of_basis_eq_zero {s k : ℕ}
+lemma cml_eq_zero_of_basis_eq_zero {s k : ℕ}
     (g : ContinuousMultilinearMap ℂ (fun _ : Fin k => Fin s → ℂ) ℂ)
     (h : ∀ v : Fin k → Fin s, g (fun i => Pi.single (v i) 1) = 0) : g = 0 := by
   ext x
@@ -651,18 +651,18 @@ private lemma cml_eq_zero_of_basis_eq_zero {s k : ℕ}
   simp [h v]
 
 /-- The real embedding `ι : ℝˢ → ℂˢ` as a continuous ℝ-linear map. -/
-private noncomputable def realEmbedding (s : ℕ) :
+noncomputable def realEmbedding (s : ℕ) :
     (Fin s → ℝ) →L[ℝ] (Fin s → ℂ) :=
   ContinuousLinearMap.pi (fun j =>
     (Complex.ofRealCLM : ℝ →L[ℝ] ℂ).comp (ContinuousLinearMap.proj j))
 
 @[simp]
-private lemma realEmbedding_apply {s : ℕ} (x : Fin s → ℝ) :
+lemma realEmbedding_apply {s : ℕ} (x : Fin s → ℝ) :
     realEmbedding s x = Complex.ofReal ∘ x := by
   ext j; simp [realEmbedding]
 
 /-- Standard basis vectors are in the image of the real embedding. -/
-private lemma realEmbedding_single {s : ℕ} (j : Fin s) :
+lemma realEmbedding_single {s : ℕ} (j : Fin s) :
     realEmbedding s (Pi.single j 1) = Pi.single j (1 : ℂ) := by
   ext i; simp [realEmbedding, Pi.single_apply, apply_ite]
 
@@ -673,7 +673,7 @@ then `g` has infinite vanishing order at `z₀` (i.e., all iteratedFDeriv vanish
 
 The proof shows each `iteratedFDeriv ℂ k g z₀` is a ℂ-multilinear map that
 vanishes on real basis inputs (via the chain rule for `g ∘ ι`), hence is zero. -/
-private lemma order_eq_top_of_real_eq_zero {s : ℕ}
+lemma order_eq_top_of_real_eq_zero {s : ℕ}
     (g : (Fin s → ℂ) → ℂ) (x₀ : Fin s → ℝ)
     (hg : AnalyticAt ℂ g (Complex.ofReal ∘ x₀))
     (hgz : ∀ᶠ x in 𝓝 x₀, g (Complex.ofReal ∘ x) = 0) :

@@ -1,0 +1,161 @@
+import Mccalum.Generalized.ClusterAssembly
+import Mccalum.Generalized.MembershipComplexify
+import Mccalum.Generalized.ComplexifyGlue
+import Mccalum.Generalized.WeierstrassZariskiAxioms
+import Mccalum.Generalized.AnalyticOrderPoly
+import Mccalum.Generalized.ClusterCover
+
+/-!
+# A3 closed: real cluster → complex root structure
+
+`cluster_from_real` is the full A3 front-end. From the **real** section family `g`, witness `P`,
+analytic cofactors `A,B` with their elimination membership, and the section order invariance — plus
+the per-cluster **localization datum** (the multiplicity `m` of the cluster root at `t = 0`) — it
+constructs every input of `single_cluster_from_weierstrass` (complexification + the C-axiom
+application) and produces the holomorphic root sections of the section Weierstrass polynomial.
+
+This composes: `complexify_pseudopoly_prod`/`analyticAt_complexify_prod` (frictions #1/#2) →
+`map_agree_of_complexify` glue → `complexify_membership` (item (b)) → `weierstrass_preparation_analytic`
+(C axiom, item (a)) → `complexify_section_order_invariant` → `single_cluster_from_weierstrass`.
+-/
+
+noncomputable section
+
+open Polynomial Filter
+open scoped Topology
+
+variable {s e : ℕ}
+
+/-- **A3 closed.** Real data + per-cluster localization datum ⟹ complex single-cluster root
+structure. -/
+theorem cluster_from_real (m : ℕ) (hm_pos : 0 < m)
+    -- real section family with degree bound and analytic coefficients
+    (Ng : ℕ) (g : (Fin s → ℝ) × (Fin e → ℝ) → Polynomial ℝ) (hg_deg : ∀ w, (g w).natDegree ≤ Ng)
+    (hg_coeff : ∀ i, AnalyticAt ℝ (fun w => (g w).coeff i) 0)
+    -- witness
+    (P : (Fin s → ℝ) × (Fin e → ℝ) → ℝ) (hP_an : AnalyticAt ℝ P 0) (hP_ne : order ℝ P 0 ≠ ⊤)
+    -- analytic cofactors + elimination membership
+    (NA NB : ℕ) (A B : (Fin s → ℝ) × (Fin e → ℝ) → Polynomial ℝ)
+    (hA_deg : ∀ w, (A w).natDegree ≤ NA) (hB_deg : ∀ w, (B w).natDegree ≤ NB)
+    (hA_coeff : ∀ i, AnalyticAt ℝ (fun w => (A w).coeff i) 0)
+    (hB_coeff : ∀ i, AnalyticAt ℝ (fun w => (B w).coeff i) 0)
+    (hmem : ∀ᶠ w in 𝓝 (0 : (Fin s → ℝ) × (Fin e → ℝ)),
+      Polynomial.C (P w) = A w * g w + B w * derivative (g w))
+    -- section order invariance (real)
+    (hP_oi_real : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), order ℝ P (y, 0) = order ℝ P 0)
+    -- localization datum: the cluster root at `t = 0` has multiplicity `m`
+    (hm_root : (g 0).rootMultiplicity 0 = m)
+    -- section degree constancy (so `g(y,0) ≠ 0` near `0`)
+    (hg_deg_const : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), (g (y, 0)).natDegree = (g 0).natDegree) :
+    ∃ (a : Fin m → (CParam s e → ℂ)) (r : ℕ) (ψ : Fin r → ((Fin s → ℂ) → ℂ)) (mult : Fin r → ℕ),
+      (∀ i, AnalyticAt ℂ (a i) 0) ∧ (∀ i, a i 0 = 0) ∧
+      (∀ i, AnalyticAt ℂ (ψ i) 0) ∧ (∀ i, ψ i 0 = 0) ∧ (∀ i, 0 < mult i) ∧
+      (∑ i : Fin r, mult i = m) ∧
+      (∀ i j, i ≠ j → ¬ (ψ i =ᶠ[𝓝 (0 : Fin s → ℂ)] ψ j)) ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
+        (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ ∃ i, α = ψ i y) ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), Function.Injective (fun i => ψ i y) →
+        ∀ i, (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ i y) = mult i) ∧
+      -- A2-ready real-slice outputs
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℝ), Function.Injective (fun i => ψ i (realEmbedding s y)) → ∀ i,
+        ((g (y, 0)).map (algebraMap ℝ ℂ)).rootMultiplicity (ψ i (realEmbedding s y)) = mult i) ∧
+      (∃ δ₀ : ℝ, 0 < δ₀ ∧ ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), ∀ α : ℂ, ‖α‖ < δ₀ →
+        (((g (y, 0)).map (algebraMap ℝ ℂ)).IsRoot α ↔ ∃ i, α = ψ i (realEmbedding s y))) := by
+  -- complexify `g`, `A`, `B`, `P`
+  obtain ⟨gℂ, hgℂ_coeff, hgℂ_agree⟩ := complexify_pseudopoly_prod Ng g hg_deg hg_coeff
+  obtain ⟨Aℂ_fam, hAℂ_coeff, hAℂ_agree⟩ := complexify_pseudopoly_prod NA A hA_deg hA_coeff
+  obtain ⟨Bℂ_fam, hBℂ_coeff, hBℂ_agree⟩ := complexify_pseudopoly_prod NB B hB_deg hB_coeff
+  obtain ⟨Pℂ, hPℂ_an, hPℂ_agree, hPℂ_order⟩ := analyticAt_complexify_prod P hP_an
+  set g_poly := polyOfFamily Ng gℂ with hg_poly
+  set Aℂ := polyOfFamily NA Aℂ_fam with hAℂ
+  set Bℂ := polyOfFamily NB Bℂ_fam with hBℂ
+  have hg_poly_an : AnalyticCoeffs g_poly := analyticCoeffs_polyOfFamily Ng gℂ hgℂ_coeff
+  have hAℂ_an : AnalyticCoeffs Aℂ := analyticCoeffs_polyOfFamily NA Aℂ_fam hAℂ_coeff
+  have hBℂ_an : AnalyticCoeffs Bℂ := analyticCoeffs_polyOfFamily NB Bℂ_fam hBℂ_coeff
+  -- `Polynomial.map`-level agreements
+  have hg_map := map_agree_of_complexify Ng g gℂ hg_deg hgℂ_agree
+  have hA_map := map_agree_of_complexify NA A Aℂ_fam hA_deg hAℂ_agree
+  have hB_map := map_agree_of_complexify NB B Bℂ_fam hB_deg hBℂ_agree
+  have hP_map : ∀ᶠ w in 𝓝 (0 : (Fin s → ℝ) × (Fin e → ℝ)),
+      Pℂ (prodEmbedCLM s e w) = algebraMap ℝ ℂ (P w) := by
+    filter_upwards [hPℂ_agree] with w hw
+    rw [prodEmbedCLM_apply, Complex.coe_algebraMap]; exact hw
+  -- item (b): the eventual `polyToFun` membership
+  have hmem_poly := complexify_membership g A B P g_poly Aℂ Bℂ Pℂ hg_poly_an hAℂ_an hBℂ_an
+    hPℂ_an hg_map hA_map hB_map hP_map hmem
+  -- item (a): the C axiom
+  have hGℂ_an : AnalyticAt ℂ (polyToFun s e g_poly) 0 := polyToFun_analyticAt g_poly hg_poly_an
+  have hG0 : (fun t : ℂ => polyToFun s e g_poly ((0 : CParam s e), t))
+      = fun t => ((g 0).map (algebraMap ℝ ℂ)).eval t := by
+    have h0 := hg_map.self_of_nhds
+    rw [show prodEmbedCLM s e (0 : (Fin s → ℝ) × (Fin e → ℝ)) = 0 from map_zero _] at h0
+    funext t
+    rw [polyToFun_apply]
+    simp only []
+    rw [h0]
+  have hg0_ne : g 0 ≠ 0 := by
+    intro h; rw [h, rootMultiplicity_zero] at hm_root; omega
+  have hm_ord : analyticOrderAt (fun t : ℂ => ((g 0).map (algebraMap ℝ ℂ)).eval t) 0 = (m : ℕ∞) := by
+    have hgo := analyticOrderAt_polynomial_eval_ofReal hg0_ne (0 : ℝ)
+    rw [map_zero] at hgo
+    rw [hgo]; exact_mod_cast hm_root
+  have hord : analyticOrderAt (fun t : ℂ => polyToFun s e g_poly ((0 : CParam s e), t)) 0 = (m : ℕ∞) := by
+    rw [hG0]; exact hm_ord
+  obtain ⟨u, a, hu_an, hu0, ha_an, ha0, hfac_raw⟩ :=
+    weierstrass_preparation_analytic (polyToFun s e g_poly) hGℂ_an m hm_pos hord
+  have hfac : polyToFun s e g_poly =ᶠ[𝓝 0]
+      fun zt => u zt * polyToFun s e (weierstrassPolyFun m a) zt := by
+    filter_upwards [hfac_raw] with zt hzt
+    rw [hzt, polyToFun_weierstrassPolyFun]
+  -- `hP_ne` for the complexification
+  have hP_ne_C : order ℂ Pℂ 0 ≠ ⊤ := by rw [hPℂ_order]; exact hP_ne
+  -- section order (complex), via the localized lemma
+  obtain ⟨V, hVsub, hVopen, hV0⟩ := eventually_nhds_iff.mp hPℂ_an.eventually_analyticAt
+  set μ := (order ℝ P 0).toNat with hμdef
+  have hμ_eq : order ℝ P 0 = (μ : ℕ∞) := (ENat.coe_toNat hP_ne).symm
+  have hP_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ Pℂ ((y, 0) : CParam s e) = order ℂ Pℂ ((0, 0) : CParam s e) := by
+    have hμ0 : order ℂ Pℂ 0 = (μ : ℕ∞) := by rw [hPℂ_order, hμ_eq]
+    have hreal_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), order ℝ P (y, 0) = (μ : ℕ∞) := by
+      filter_upwards [hP_oi_real] with y hy; rw [hy, hμ_eq]
+    have hsec := complexify_section_order_invariant P Pℂ V hVopen hV0
+      (fun z hz => hVsub z hz) hP_an hPℂ_agree μ hμ0 hreal_oi
+    filter_upwards [hsec] with y hy
+    rw [hy, show ((0, 0) : CParam s e) = 0 from rfl, hμ0]
+  -- assemble the single cluster
+  obtain ⟨r, ψ, mult, hψ_an, hψ0, hmult_pos, hsum, hdistinct, hroots, hmults⟩ :=
+    single_cluster_from_weierstrass m hm_pos a ha_an ha0 g_poly u hu_an hfac
+      Pℂ hPℂ_an hP_ne_C Aℂ Bℂ hAℂ_an hBℂ_an hmem_poly hP_oi
+  -- section-level map agreement (specialise `hg_map` to `w = (y, 0)`)
+  have hfam_map : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+      g_poly.map (Pi.evalRingHom (fun _ => ℂ) ((realEmbedding s y, 0) : CParam s e))
+        = (g (y, 0)).map (algebraMap ℝ ℂ) := by
+    have htend : Filter.Tendsto (fun y : Fin s → ℝ => ((y, 0) : (Fin s → ℝ) × (Fin e → ℝ)))
+        (𝓝 0) (𝓝 0) := by
+      have hc : Continuous (fun y : Fin s → ℝ => ((y, 0) : (Fin s → ℝ) × (Fin e → ℝ))) := by fun_prop
+      simpa using hc.tendsto 0
+    filter_upwards [htend.eventually hg_map] with y hy
+    rwa [show prodEmbedCLM s e (y, 0) = ((realEmbedding s y, 0) : CParam s e) from by
+      rw [prodEmbedCLM_apply]; simp [realEmbedding_apply]] at hy
+  -- `g(y,0) ≠ 0` near `0` (degree `≥ m ≥ 1`)
+  have hdeg0_pos : 0 < (g 0).natDegree := by
+    have hdvd : (X : Polynomial ℝ) ^ m ∣ g 0 := by
+      have h := Polynomial.pow_rootMultiplicity_dvd (g 0) 0
+      rwa [map_zero, sub_zero, hm_root] at h
+    have hle := Polynomial.natDegree_le_of_dvd hdvd hg0_ne
+    rw [Polynomial.natDegree_pow, Polynomial.natDegree_X, mul_one] at hle
+    omega
+  have hfam_ne : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), (g (y, 0)).map (algebraMap ℝ ℂ) ≠ 0 := by
+    filter_upwards [hg_deg_const] with y hdy
+    have hne : g (y, 0) ≠ 0 := by
+      intro h; rw [h, Polynomial.natDegree_zero] at hdy; omega
+    exact (Polynomial.map_ne_zero_iff (algebraMap ℝ ℂ).injective).mpr hne
+  -- A2-ready outputs via the covering / multiplicity bridges
+  have hmult_match := multmatch_of_weierstrass m hm_pos a g_poly u hu0 hu_an hfac ψ mult hψ_an hψ0
+    hmults (fun y => (g (y, 0)).map (algebraMap ℝ ℂ)) hfam_ne hfam_map
+  obtain ⟨δ₀, hδ₀, hcover⟩ := cover_of_weierstrass m a g_poly u hu0 hu_an hfac ψ hroots
+    (fun y => (g (y, 0)).map (algebraMap ℝ ℂ)) hfam_map
+  exact ⟨a, r, ψ, mult, ha_an, ha0, hψ_an, hψ0, hmult_pos, hsum, hdistinct, hroots, hmults,
+    hmult_match, δ₀, hδ₀, hcover⟩
+
+end
