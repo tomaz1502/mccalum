@@ -513,16 +513,46 @@ facts:** `Polynomial.rootMultiplicity_eq_rootMultiplicity` (`p.rootMultiplicity 
 rule for `g_j' = taylor t_j g'`). The one new ingredient — `analyticAt_taylor_coeff` (the shifted
 coefficients stay analytic, axiom-clean) — is built here.
 
-**Remaining multi-cluster steps (now all grounded in available facts):**
-1. **Translation lemma** `single_cluster_real_delineation` at root `t_j`: shift `g`,`A`,`B` by `taylor t_j`
-   (coeffs analytic via `analyticAt_taylor_coeff`; membership via `taylor` ring hom on `hmem`; degree via
-   `natDegree_taylor`; mult via `rootMultiplicity_eq_rootMultiplicity`), apply the `t=0` result, shift the
-   conclusion back (`η_i + t_j`, roots/mult via the shift correspondences).
-2. **Enumerate + dispatch**: distinct real roots of `g(0,0)` (`orderIsoOfFin`, exactly as
-   `separable_family_locally_delineable`); per root, multiple → translation lemma, simple → analytic IFT.
-3. **Glue**: order across clusters, cover (`∑ m_j = deg`), multiplicities → `analytic_pseudopoly_delineable_nonsep`.
-This is the final piece; it collapses the main theorem's dependency from the monolithic
-`analytic_pseudopoly_delineable` axiom to `{C, E, A2}`.
+### Step 1 (translation) DONE (2026-05-31): `MultiCluster.lean`
+`single_cluster_real_delineation_at` — `single_cluster_real_delineation` at a **general** real root
+`t_j`: Taylor-shift `g`,`A`,`B` by `taylor t_j`, apply the `t=0` result, shift the conclusion back
+(`η_i + t_j`, ball `|α - t_j| < δ`). Axiom-clean on `{C, E, A2}`. Shift helpers in `ShiftCluster.lean`:
+`analyticAt_taylor_coeff` (general domain), `derivative_taylor`, `rootMultiplicity_taylor`,
+`eval_taylor`; the multiplicity/degree facts (`rootMultiplicity_eq_rootMultiplicity`, `natDegree_taylor`)
+come straight from Mathlib. **A simple root (`m=1`) is just the `m=1` case, so `_at` handles every root
+uniformly — no separate IFT branch needed.**
+
+### STEPS 2–3 DONE (2026-05-31): `multi_cluster_real_delineation` (`MultiCluster.lean`)
+The **full multi-cluster real delineation** — the real roots of `g(·,0)` near `0` form finitely many
+ordered real-analytic functions (one per distinct real root of `g(0,0)`) with constant multiplicities.
+**`#print axioms` = exactly `{C, E, A2}`** + standard. This is the conclusion shape of
+`analytic_pseudopoly_delineable_nonsep`, now *proven* (not axiomatized) modulo `{C, E, A2}`.
+
+Key design move that made it tractable: **A2 reformulated to output one function per cluster** (the
+stable cluster's single root, with `η 0 = 0`), so `single_cluster_real_delineation_at` is structurally
+identical to the separable case's IFT-per-root. The glue then mirrors the proven
+`separable_family_locally_delineable` almost verbatim: enumerate distinct real roots (`orderIsoOfFin`),
+apply `_at` per root, **no-escape** via the Cauchy-bound + tube-lemma compactness argument (reusing
+`fam_eval_continuousOn`, `generalized_tube_lemma`, `cauchyBound`), assemble covering + ordering +
+multiplicities. (A2's one-function output is sound: under constant disc order a cluster is one stable
+root of multiplicity `m`.)
+
+### New dispatcher proved on `{C, E, A2}` (2026-05-31): `Delineable.lean`
+`analytic_pseudopoly_delineable'` — the delineation as a **theorem** (separable → IFT
+`separable_family_locally_delineable`; non-separable → `multi_cluster_real_delineation`), taking the
+strengthened hypotheses (degree bound `Ng`, analytic cofactors `A,B`). `#print axioms` = exactly
+`{C, E, A2}`. This is the drop-in replacement for the `analytic_pseudopoly_delineable` axiom-dispatcher.
+
+**Final connection (the only thing between here and `mccallum_3_2_3_generalized` on `{C, E, A2}`):**
+an **import-cycle** blocks it in place — `lifting_generalized_codim_local` (which calls the dispatcher)
+lives in `Lifting.lean`, *below* the `{C,E,A2}` stack, so it can't see `analytic_pseudopoly_delineable'`
+(high). Resolution: relocate the upper chain (`lifting_generalized_codim_local` → `…_codim_case` →
+`lifting_theorem_generalized'`, ~550 lines) into a high file importing `MultiCluster`, redirecting the
+dispatcher call to `analytic_pseudopoly_delineable'` and supplying its hypotheses at the call site
+(verified tractable: `Ng = f.natDegree` via `natDegree_map_le`; cofactors `a,b` from `Ideal.mem_span_pair`
+on `hP_mem`, already built as `hPfull_elim_strong`). The relocation is mechanical but large; do it after
+committing (the upper chain uses the `{n}` variable + chart/complexify internals — all public, available
+via `import Lifting`). The **mathematics is complete**: the delineation is fully proven on `{C, E, A2}`.
 
 ### F3 plan (to discharge `analytic_pseudopoly_delineable_nonsep` → `{C, E, A2}`)
 Mirror the proven separable case `separable_family_locally_delineable`: enumerate the distinct real

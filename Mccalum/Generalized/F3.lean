@@ -38,13 +38,11 @@ theorem single_cluster_real_delineation (m : ℕ) (hm_pos : 0 < m)
     (hm_root : (g 0).rootMultiplicity 0 = m)
     (hg_deg_const : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), (g (y, 0)).natDegree = (g 0).natDegree) :
     ∃ (V : Set (Fin s → ℝ)) (δ : ℝ), IsOpen V ∧ (0 : Fin s → ℝ) ∈ V ∧ 0 < δ ∧
-      ∃ (k : ℕ) (η : Fin k → (Fin s → ℝ) → ℝ) (rmult : Fin k → ℕ),
-        (∀ i, AnalyticOn ℝ (η i) V) ∧
-        (∀ y ∈ V, ∀ i, |η i y| < δ) ∧
-        (∀ y ∈ V, ∀ i j : Fin k, i < j → η i y < η j y) ∧
-        (∀ y ∈ V, ∀ α : ℝ, (|α| < δ ∧ (g (y, 0)).IsRoot α) ↔ ∃ i : Fin k, α = η i y) ∧
-        (∀ i, 0 < rmult i) ∧
-        (∀ y ∈ V, ∀ i, (g (y, 0)).rootMultiplicity (η i y) = rmult i) := by
+      ∃ (η : (Fin s → ℝ) → ℝ),
+        AnalyticOn ℝ η V ∧ η 0 = 0 ∧
+        (∀ y ∈ V, |η y| < δ) ∧
+        (∀ y ∈ V, ∀ α : ℝ, (|α| < δ ∧ (g (y, 0)).IsRoot α) ↔ α = η y) ∧
+        (∀ y ∈ V, (g (y, 0)).rootMultiplicity (η y) = m) := by
   obtain ⟨a, r, ψ, mult, ha_an, ha0, hψ_an, hψ0, hmult_pos, hsum, hdistinct, hroots, hmults,
       hmult_match, δ₀, hδ₀, hcover⟩ :=
     cluster_from_real m hm_pos Ng g hg_deg hg_coeff P hP_an hP_ne NA NB A B hA_deg hB_deg

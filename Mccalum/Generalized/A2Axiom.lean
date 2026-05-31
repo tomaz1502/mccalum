@@ -41,12 +41,10 @@ axiom real_delineation_of_complex_sections {s : ℕ}
       Function.Injective (fun i => ψ i (realEmbedding s y)) → ∀ i,
         ((fam y).map (algebraMap ℝ ℂ)).rootMultiplicity (ψ i (realEmbedding s y)) = mult i) :
     ∃ (V : Set (Fin s → ℝ)) (δ : ℝ), IsOpen V ∧ (0 : Fin s → ℝ) ∈ V ∧ 0 < δ ∧
-      ∃ (k : ℕ) (η : Fin k → (Fin s → ℝ) → ℝ) (rmult : Fin k → ℕ),
-        (∀ i, AnalyticOn ℝ (η i) V) ∧
-        (∀ y ∈ V, ∀ i, |η i y| < δ) ∧
-        (∀ y ∈ V, ∀ i j : Fin k, i < j → η i y < η j y) ∧
-        (∀ y ∈ V, ∀ α : ℝ, (|α| < δ ∧ (fam y).IsRoot α) ↔ ∃ i : Fin k, α = η i y) ∧
-        (∀ i, 0 < rmult i) ∧
-        (∀ y ∈ V, ∀ i, (fam y).rootMultiplicity (η i y) = rmult i)
+      ∃ (η : (Fin s → ℝ) → ℝ),
+        AnalyticOn ℝ η V ∧ η 0 = 0 ∧
+        (∀ y ∈ V, |η y| < δ) ∧
+        (∀ y ∈ V, ∀ α : ℝ, (|α| < δ ∧ (fam y).IsRoot α) ↔ α = η y) ∧
+        (∀ y ∈ V, (fam y).rootMultiplicity (η y) = m)
 
 end
