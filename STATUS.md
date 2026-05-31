@@ -1,8 +1,18 @@
 # Generalized McCallum Formalization — Status
 
-## Main theorem
-`mccallum_3_2_3_generalized` (Projection.lean) — proved from `lifting_theorem_generalized'`.
-`non_null` removed; depends on **1 axiom** `analytic_pseudopoly_delineable` + standard. No sorries.
+## Main theorem — `{C, E, A2}` REACHED (2026-05-31)
+`mccallum_3_2_3_generalized` (Projection.lean) — `#print axioms` = **exactly the three named classical
+axioms** `weierstrass_preparation_analytic` / `weierstrass_division_analytic` / `weierstrass_division_unique`
+(C), `zariski_root_sections` (E), `real_delineation_of_complex_sections` (A2) + standard
+(`propext`, `Classical.choice`, `Quot.sound`). **No sorries; the old monolithic
+`analytic_pseudopoly_delineable_nonsep` axiom is eliminated.** Full library builds (2526 jobs).
+
+The delineation is now a *theorem* (`analytic_pseudopoly_delineable'`, `Delineable.lean`): separable
+case → analytic IFT; non-separable → `multi_cluster_real_delineation` (C+E+A2). The upper lifting chain
+(`lifting_generalized_codim_local` → `…_codim_case` → `lifting_theorem_generalized'`) was relocated from
+`Lifting.lean` to `Delineable.lean` (above the C/E/A2 stack) to break the import cycle, with the
+dispatcher call fed the analytic Bézout cofactors (`Ideal.mem_span_pair` on `hP_mem`, `natDegree_map_le`
+degree bounds). The remaining `{C, E, A2}` are the genuine classical inputs not in Mathlib.
 
 ## ROADMAP: proving the axiom (Weierstrass → Zariski)
 Full plan in **`WEIERSTRASS_ZARISKI_PLAN.md`** (6 phases A–F). Currently working **Phase A1**:

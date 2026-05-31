@@ -4,6 +4,7 @@ import Mccalum.OrderInvariantFactor
 import Mccalum.SquarefreeBasis
 import Mccalum.Projection
 import Mccalum.Generalized.Lifting
+import Mccalum.Generalized.Delineable
 
 /-!
 # Generalized Projection Theorem (Theorem 3.2.3')
