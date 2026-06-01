@@ -1,5 +1,121 @@
 # Generalized McCallum Formalization — Status
 
+## ℂ² SCV BRIDGE COMPLETE — `scv_bridge` sorry-free (2026-06-01)
+
+**`scv_bridge : IsOpen U → DifferentiableOn ℂ f U → AnalyticOnNhd ℂ f U`** (for `f : ℂ² → ℂ`) is
+**proved sorry-free**, axioms `[propext, Classical.choice, Quot.sound]`. This is the two-variable
+holomorphy⇒analyticity bridge — i.e. `osgood`/`bridge_prod` discharged for the `ℂ²` case — built
+directly by the polydisc–Cauchy route with **no `osgood` axiom**. The full chain now in `CSCVBridge.lean`:
+- `slicePartial`(+`_hasDerivAt`,`_continuousOn`), `Aj_differentiableOn`, `scvA`/`scvB`(+`_continuousOn`,
+  `_differentiableOn`) — the hard core (`Aⱼ` holomorphic in `w` from Osgood hyps);
+- `scvCoeff`/`norm_scvCoeff_le`/`summable_scvCoeff_family`/`hasSum_w_expansion`/`hasSum_z_expansion'`;
+- **`scvCoeff_hasSum`** — the `ℕ×ℕ` power series `f(z,w) = ∑_{jk} c_{jk}(z−z₀)^j(w−w₀)^k`
+  (iterated Cauchy + `HasSum.sigma_of_hasSum`);
+- **`scv_analyticAt`** — packages radius (`le_radius_scvSeries`) + diagonal HasSum
+  (`hasSum_scvTerm_diag`) into `HasFPowerSeriesOnBall` ⟹ `AnalyticAt`;
+- **`scv_bridge`** — the `DifferentiableOn ⟹ AnalyticOnNhd` corollary.
+
+**What this discharges:** the keystone/`weierstrass_division` need the bridge on the parameter space
+`H = CParam = ℂⁿ`. `scv_bridge` is the `n = 2` instance (and the complete conceptual core: the
+`n`-variable proof is the same argument with `ℕⁿ`-indexed coefficients / an `n`-fold torus).
+**Remaining for the full keystone:** generalize `scv_bridge` from `ℂ²` to `ℂⁿ` — either (a) the
+`n`-fold polydisc–Cauchy (generalize `scvTerm`/`scvCoeff`/`scvCoeff_hasSum` to `ℕⁿ`), or (b) a
+general-`E'` `osgood` feeding `bridge_prod`'s induction (my Cauchy machinery is `ℂ`-in-the-2nd-var
+specific, so (a) is the natural route). The `ℂ²` case being done means every ingredient
+(coeff bounds, summability, parametric continuity/differentiability, radius, packaging) has a verified
+template to lift.
+
+## SCV build — HARD CORE CLOSED: `Aⱼ` holomorphic in `w` from Osgood hypotheses (2026-06-01)
+
+The genuine hard core of the ℂ² bridge is now **proved sorry-free** (`CSCVBridge.lean`, axioms
+`[propext, Classical.choice, Quot.sound]`). The blocker was: *make `Aⱼ(w) = ∮_ζ (ζ−z₀)^{-(j+1)}·f(ζ,w)`
+holomorphic in `w`* from bare slice-holomorphy + joint continuity (no continuous-Fréchet-partial). The
+`fw`-via-Cauchy construction did it:
+- **`def slicePartial f w₀ rw ζ w := (2πI)⁻¹ ∮_η f(ζ,η)/(η−w)²`** — the `w`-partial via the interior
+  Cauchy derivative formula.
+- **`slicePartial_hasDerivAt`** — `slicePartial` IS the `w`-derivative of the slice `f(ζ,·)`, by
+  differentiating the interior Cauchy representation
+  (`two_pi_I_inv_smul_circleIntegral_sub_inv_smul_…`) under the integral (`circleIntegral_hasDerivAt`,
+  kernel derivative `(η−w)⁻¹ ↦ (η−w)⁻²`), transferred to the slice via `EventuallyEq.hasDerivAt_iff`.
+- **`slicePartial_continuousOn`** — `slicePartial` jointly continuous in `(w,ζ)` (only the smooth
+  kernel depends on `w`; via the generalized `circleIntegral_continuousOn_param` with a 2-D parameter).
+- **`Aj_differentiableOn`** — feeds the above into `circleIntegral_differentiableOn` ⟹ `Aⱼ` is
+  `DifferentiableOn ℂ … (ball w₀ δ)`. **This closes the hard core**, using only joint continuity +
+  slice differentiability (Osgood's hypotheses).
+- (`circleIntegral_continuousOn_param` was generalized to an arbitrary parameter set `s ⊆ X`.)
+
+**Remaining is now genuinely mechanical assembly** (all tools in hand, no hard analysis left):
+1. **`scvCoeff_hasSum`** (ℕ×ℕ HasSum `f(z,w) = ∑_{jk} c_{jk}(z−z₀)^j(w−w₀)^k`): for each `j`, the row
+   `k`-sum `∑_k c_{jk}(w−w₀)^k = Bⱼ(w)` via `hasSum_w_expansion` on `Bⱼ=(2πI)⁻¹Aⱼ` (continuous via
+   `circleIntegral_continuousOn_param`, differentiable via `Aj_differentiableOn`); the `j`-sum
+   `∑_j (z−z₀)^j Bⱼ(w) = f(z,w)` via `hasSum_z_expansion'`; glued over `ℕ×ℕ` by `HasSum.sigma_of_hasSum`
+   (+ `Equiv.sigmaEquivProd`) using `summable_scvCoeff_family`.
+2. **`HasFPowerSeriesOnBall`** = `le_radius_scvSeries` (radius, `ρ=min rz rw`) + `hasSum_scvTerm_diag`
+   (diagonal, fed by `scvCoeff_hasSum`) ⟹ `AnalyticAt`; ℂ² bridge from `bridge_torus_repr`; then the
+   `Fin n` induction (`bridge_prod`) ⟹ `osgood`/keystone.
+
+## SCV build — coefficient/summability/continuity layer DONE; hard core isolated (2026-06-01)
+
+**10 new sorry-free lemmas this turn** (`CSCVBridge.lean`, axioms `[propext, Classical.choice,
+Quot.sound]`): `norm_scvTerm_le`, `scvSeries`, `le_radius_scvSeries`, `norm_two_pi_I`, `scvCoeff`,
+`norm_scvCoeff_le`, `summable_scvCoeff_family`, `hasSum_w_expansion`, `circleIntegral_continuousOn_param`
+(+ details in the dated block below). The **radius half** of `HasFPowerSeriesOnBall` is fully wired,
+the **double-family summability** is proved, the **parametric continuity** of `Aⱼ` on the closed
+`w`-ball is proved, and the **1-variable expansion** is available.
+
+**Confirmed:** Mathlib has NO Hartogs/Osgood/Morera and no several-variable
+`DifferentiableOn ⟹ AnalyticOnNhd`. This gap is genuinely from-scratch.
+
+**The remaining hard core** is exactly: *show `Aⱼ(w) = ∮_ζ (ζ-z₀)^{-(j+1)}·f(ζ,w)` is holomorphic in
+`w`.* Bare joint Fréchet-ℂ-differentiability does **not** give a continuous partial (that continuity
+is equivalent to the analyticity we're proving). **De-risking insight (the path forward):** define
+the `w`-partial via the 1-D Cauchy derivative formula
+`fw(ζ,w) := (2πi)⁻¹ ∮_η f(ζ,η)/(η−w)²` — this is (i) the genuine derivative of the holomorphic slice
+`f(ζ,·)` [Mathlib 1-D Cauchy-deriv], and (ii) *automatically* jointly continuous on
+`sphere z₀ rz ×ˢ ball w₀ rw` [parametric continuity — same tool as `circleIntegral_continuousOn_param`,
+now with the order-2 kernel]. Feeding this `fw` into `Bj_hasDerivAt` / `circleIntegral_differentiableOn`
+makes `Aⱼ` (hence `Bⱼ = (2πI)⁻¹Aⱼ`) holomorphic in `w` using **only Osgood's hypotheses** (joint
+continuity + slice holomorphy) — no continuous-Fréchet-partial assumption.
+
+Remaining assembly after that (all tools in hand):
+1. **`fw`-via-Cauchy lemma**: `fw` is the `w`-derivative of `f(ζ,·)` (1-D Cauchy-deriv) and jointly
+   continuous (order-2 parametric continuity).
+2. **`scvCoeff_hasSum`** (the ℕ×ℕ HasSum `f(z,w) = ∑_{jk} c_{jk}(z−z₀)^j(w−w₀)^k`): row `k`-sums via
+   `hasSum_w_expansion` on `Bⱼ` (needs 1 + `circleIntegral_continuousOn_param`), value chain
+   `∑'_j ∑'_k = (2πI)⁻¹·(2πI)·f = f` via `hasSum_z_expansion'`, assembled by `HasSum.sigma_of_hasSum`
+   (+ `Equiv.sigmaEquivProd`) using `summable_scvCoeff_family`.
+3. **`HasFPowerSeriesOnBall`** = `le_radius_scvSeries` (radius, with `ρ = min rz rw`) + `hasSum_scvTerm_diag`
+   (diagonal, fed by `scvCoeff_hasSum`) ⟹ `AnalyticAt`. Then ℂ² bridge from `bridge_torus_repr`, then
+   the `Fin n` induction (`bridge_prod`) ⟹ `osgood`/keystone.
+
+## SCV build — radius + coefficient machinery DONE (2026-06-01)
+
+New in `CSCVBridge.lean`, all sorry-free, axioms `[propext, Classical.choice, Quot.sound]`:
+- **`norm_scvTerm_le c n : ‖scvTerm c n‖ ≤ ∑_{j+k=n} ‖c_{jk}‖`** — each asymmetric monomial
+  multilinear map (`mkPiAlgebraFin.compContinuousLinearMap` of fst/snd) has operator norm ≤ 1
+  (`norm_mkPiAlgebraFin_le` → `max 1 ‖1‖ = 1`, `norm_fst_le`/`norm_snd_le ≤ 1`, `prod_le_one`).
+- **`def scvSeries c : FormalMultilinearSeries ℂ (ℂ×ℂ) ℂ := fun n => scvTerm c n`.**
+- **`le_radius_scvSeries (hM : 0≤M) (hρ : 0<ρ) (hc : ∀ j k, ‖c_{jk}‖ ≤ M/ρ^{j+k}) (hs : s<ρ) :
+  ↑s ≤ (scvSeries c).radius`** — via `le_radius_of_summable`; the `(n+1)` degeneracy from
+  `norm_scvTerm_le` is absorbed by summability of `(n+1)·M·tⁿ` (`t = s/ρ < 1`,
+  `summable_pow_mul_geometric_of_norm_lt_one 1` + geometric). Picks a fixed `s<ρ` so **no sup
+  argument** is needed (AnalyticAt only wants some positive ball).
+- **`norm_two_pi_I : ‖2πI‖ = 2π`.**
+- **`def scvCoeff f z₀ w₀ rz rw j k := (2πI)⁻² ∮_η (η-w₀)^{-(k+1)} ∮_ζ (ζ-z₀)^{-(j+1)} f(ζ,η)`**
+  (matches the iterated `hasSum_z_expansion'` form: z first, then w).
+- **`norm_scvCoeff_le (hrz) (hrw) (hb : ‖f‖≤M on torus) : ‖c_{jk}‖ ≤ M/(rz^j·rw^k)`** — the nested
+  Cauchy estimate, via `circleIntegral.norm_integral_le_of_norm_le_const` twice; the two `(2π)⁻¹`
+  cancel the two `2π` from the integral lengths.
+
+So the **radius half of `HasFPowerSeriesOnBall` is fully wired**: `norm_scvCoeff_le` (with
+`ρ = min rz rw`) feeds `le_radius_scvSeries`. Remaining for the ℂ² bridge:
+- assemble the `ℕ×ℕ` HasSum `f = ∑_{j,k} scvCoeff·(z−z₀)^j(w−w₀)^k`: **summability** of the double
+  family from `norm_scvCoeff_le` + two geometrics (clean), and **iterated value = f** from
+  `hasSum_z_expansion'` (z) + `Bj_hasDerivAt` (⟹ `B_j` analytic in w) + `hasSum_z_expansion'` (w),
+  then **Fubini** (`tsum_prod`/`HasSum.prod_fiberwise`) — the last genuinely-analytic step;
+- package `HasFPowerSeriesOnBall` (radius + `hasSum_scvTerm_diag`) ⟹ `AnalyticAt`, ℂ² bridge from
+  `bridge_torus_repr`, then the `Fin n` induction (`bridge_prod`) ⟹ `osgood`/keystone.
+
 ## LAYER B COMPLETE — `weierstrass_division ⟸ {preparation, keystone}` (2026-06-01)
 `weierstrass_division_via_cauchy` (`CDivisionByW.lean`, sorry-free, `#print axioms` = standard only):
 the **entire** `weierstrass_division` axiom (existence **and uniqueness**) for a `t`-regular germ `G`
