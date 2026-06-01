@@ -1,5 +1,25 @@
 # Generalized McCallum Formalization — Status
 
+## C collapsed to ONE axiom — base is now `{C, E}` = two axioms (2026-06-01)
+**`#print axioms mccallum_3_2_3_generalized` = `{weierstrass_division, zariski_single_branch}` +
+standard.** The whole generalized McCallum theorem rests on exactly **two** non-standard axioms, each a
+verbatim classical theorem: **C = `weierstrass_division`** (convergent Weierstrass division by a
+`t`-regular germ — existence + uniqueness, the Phase-C primitive) and **E = `zariski_single_branch`**
+(Theorem 4.1.1). Full build green (2528 jobs).
+
+The other Phase-C interfaces are now **theorems** derived from `weierstrass_division`:
+- `weierstrass_division_analytic` / `_unique` — the special case `G = h` (in `WeierstrassZariskiAxioms.lean`);
+- `weierstrass_preparation_analytic` — the corollary "divide `tᵐ` by `G`; the quotient is a unit"
+  (`WeierstrassPrep.lean`). Proof = the *unit argument*: restrict to the line `w=0`, set
+  `Ep = Xᵐ − ∑ρᵢ(0)Xⁱ`; from `Ep.eval =ᶠ q(0,·)·G(0,·)` and `analyticOrderAt(G(0,·)) = m` get
+  `rootMult₀(Ep) = ord(q(0,·)) + m ≤ natDegree Ep = m`, forcing `ord(q(0,·)) = 0` (`q(0)≠0`, unit) and
+  `rootMult₀(Ep) = m` (so `Xᵐ ∣ Ep`, hence `ρᵢ(0)=0`); then `u = q⁻¹`, `aᵢ = −ρᵢ`.
+
+Both `{C, E}` are audited as faithful to the thesis (E ↔ Thm 4.1.1; C ↔ Thm 2.1.10 + classical
+division). Remaining work to discharge them is the deep analysis: **C** via the Cauchy-integral
+division formula (Mathlib has one-var Cauchy + parametric-integral derivative; only *formal* Weierstrass);
+**E** = Zariski equisingularity / Chapter 4 (Puiseux–Newton–monodromy, none in Mathlib).
+
 ## Main theorem — `{C, E}` base REACHED, A2 ELIMINATED (2026-05-31)
 `mccallum_3_2_3_generalized` (Projection.lean) — `#print axioms` = **exactly two classical inputs**:
 `weierstrass_preparation_analytic` / `weierstrass_division_analytic` / `weierstrass_division_unique`

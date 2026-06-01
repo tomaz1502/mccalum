@@ -1,6 +1,7 @@
 import Mccalum.Order
 import Mathlib.RingTheory.Polynomial.Resultant.Basic
 import Mathlib.Analysis.Analytic.Order
+import Mathlib.Analysis.Analytic.Constructions
 import Mathlib.Analysis.Calculus.FDeriv.Analytic
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Topology.MetricSpace.Pseudo.Pi
@@ -56,63 +57,90 @@ def weierstrassDiscFn {s e : ℕ} (m : ℕ) (a : Fin m → (CParam s e → ℂ))
     CParam s e → ℂ :=
   fun w => Polynomial.discr (weierstrassPoly m a w)
 
-/-- **Convergent Weierstrass preparation (Phase C, AXIOM).**
+/-- **Convergent Weierstrass division (Phase C, the single AXIOM).**
 
-If `G : (ℂˢ × ℂᵉ) × ℂ → ℂ` is analytic at the origin and its restriction `t ↦ G(0, t)` to the
-distinguished line vanishes to order exactly `m > 0` at `t = 0`, then near the origin `G` factors
-as a **unit** germ `u` (with `u(0) ≠ 0`) times a **monic Weierstrass polynomial** in `t` of degree
-`m` whose coefficients `a_i` are analytic and vanish at the origin:
+The one classical analytic input of Phase C, in its primitive form (division by an arbitrary
+`t`-regular germ). If `G : (ℂˢ × ℂᵉ) × ℂ → ℂ` is analytic at `0` and its restriction `t ↦ G(0,t)`
+vanishes to order exactly `m` at `t = 0` (so `G` is "`t`-regular of order `m`"), then **(existence)**
+every analytic germ `F` divides as `F = q·G + r` with `q` analytic and `r = ∑_{i<m} ρ_i(z) t^i` a
+degree-`<m` polynomial remainder (analytic coefficients), and **(uniqueness)** the only such division
+of the zero germ is the trivial one.
 
-`G(w, t) = u(w, t) · (t^m + ∑_{i<m} a_i(w) · t^i)`  near `0`.
-
-This is the classical convergent (analytic) Weierstrass preparation theorem. Mathlib has only the
-*formal* version (`PowerSeries.exists_isWeierstrassFactorization`); the convergence of the factors
-is the deep content. -/
-axiom weierstrass_preparation_analytic {s e : ℕ}
+This is the classical convergent (analytic) Weierstrass division theorem (existence + uniqueness),
+which is the *primitive* of Phase C: Weierstrass **preparation** is the corollary obtained by
+dividing `t^m` by `G` (`weierstrass_preparation_analytic`), and division **by a Weierstrass
+polynomial** (`weierstrass_division_analytic` / `_unique`) is the special case `G = h`. Mathlib has
+only the *formal* version (`PowerSeries.exists_isWeierstrassDivision`); the convergence of `q`, `r` is
+the deep content (classically via the Cauchy-integral division formula). -/
+axiom weierstrass_division {s e : ℕ}
     (G : CParam s e × ℂ → ℂ) (hG : AnalyticAt ℂ G 0)
-    (m : ℕ) (hm_pos : 0 < m)
-    (hm : analyticOrderAt (fun t : ℂ => G (0, t)) 0 = (m : ℕ∞)) :
-    ∃ (u : CParam s e × ℂ → ℂ) (a : Fin m → (CParam s e → ℂ)),
-      AnalyticAt ℂ u 0 ∧ u 0 ≠ 0 ∧
-      (∀ i, AnalyticAt ℂ (a i) 0) ∧ (∀ i, a i 0 = 0) ∧
-      G =ᶠ[𝓝 0] fun wt => u wt * (weierstrassPoly m a wt.1).eval wt.2
+    (m : ℕ) (hreg : analyticOrderAt (fun t : ℂ => G (0, t)) 0 = (m : ℕ∞)) :
+    (∀ F : CParam s e × ℂ → ℂ, AnalyticAt ℂ F 0 →
+      ∃ (q : CParam s e × ℂ → ℂ) (ρ : Fin m → (CParam s e → ℂ)),
+        AnalyticAt ℂ q 0 ∧ (∀ i, AnalyticAt ℂ (ρ i) 0) ∧
+        F =ᶠ[𝓝 0] fun wt => q wt * G wt + ∑ i : Fin m, ρ i wt.1 * wt.2 ^ (i : ℕ)) ∧
+    (∀ (q : CParam s e × ℂ → ℂ) (ρ : Fin m → (CParam s e → ℂ)),
+      AnalyticAt ℂ q 0 → (∀ i, AnalyticAt ℂ (ρ i) 0) →
+      (fun wt => q wt * G wt + ∑ i : Fin m, ρ i wt.1 * wt.2 ^ (i : ℕ)) =ᶠ[𝓝 0] 0 →
+      q =ᶠ[𝓝 0] 0 ∧ ∀ i, ρ i =ᶠ[𝓝 (0 : CParam s e)] 0)
 
-/-- **Convergent Weierstrass division (Phase C, AXIOM) — existence.**
+/-- Pointwise expansion of the Weierstrass polynomial's evaluation. -/
+private lemma weierstrassPoly_eval_eq {s e : ℕ} (m : ℕ) (a : Fin m → (CParam s e → ℂ))
+    (w : CParam s e) (t : ℂ) :
+    (weierstrassPoly m a w).eval t = t ^ m + ∑ i : Fin m, a i w * t ^ (i : ℕ) := by
+  simp only [weierstrassPoly, eval_add, eval_pow, eval_X, eval_finset_sum, eval_mul, eval_C]
 
-For a monic Weierstrass polynomial `h(z,t) = t^m + ∑ a_i(z) t^i` (coefficients analytic, `a_i(0)=0`)
-and *any* germ `F` analytic at `0`, there exist an analytic quotient `q` and a degree-`< m`
-**polynomial remainder** `r(z,t) = ∑_{i<m} ρ_i(z) t^i` (coefficients analytic) with
+/-- The Weierstrass polynomial's evaluation `(w,t) ↦ h(w,t)` is analytic at `0`. -/
+private lemma weierstrassPolyEval_analyticAt {s e : ℕ} (m : ℕ) (a : Fin m → (CParam s e → ℂ))
+    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) :
+    AnalyticAt ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2) 0 := by
+  have heq : (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2)
+      = fun wt => wt.2 ^ m + ∑ i : Fin m, a i wt.1 * wt.2 ^ (i : ℕ) :=
+    funext fun wt => weierstrassPoly_eval_eq m a wt.1 wt.2
+  rw [heq]
+  have hsnd : AnalyticAt ℂ (fun wt : CParam s e × ℂ => wt.2) 0 := analyticAt_snd
+  have hfst : AnalyticAt ℂ (fun wt : CParam s e × ℂ => wt.1) 0 := analyticAt_fst
+  refine (hsnd.pow m).add (Finset.analyticAt_fun_sum _ fun i _ => ?_)
+  exact ((ha_an i).comp_of_eq hfst rfl).mul (hsnd.pow (i : ℕ))
 
-`F(z,t) = q(z,t) · h(z,t) + ∑_{i<m} ρ_i(z) t^i`  near `0`.
+/-- On the distinguished line `w = 0`, the Weierstrass polynomial is `t ↦ t^m`, of order `m`. -/
+private lemma weierstrassPolyEval_order {s e : ℕ} (m : ℕ) (a : Fin m → (CParam s e → ℂ))
+    (ha0 : ∀ i, a i 0 = 0) :
+    analyticOrderAt (fun t : ℂ => (weierstrassPoly m a (0 : CParam s e)).eval t) 0 = (m : ℕ∞) := by
+  have heq : (fun t : ℂ => (weierstrassPoly m a (0 : CParam s e)).eval t) = fun t : ℂ => t ^ m := by
+    funext t; rw [weierstrassPoly_eval_eq]; simp [ha0]
+  rw [heq, show (fun t : ℂ => t ^ m) = (id : ℂ → ℂ) ^ m from rfl,
+    analyticOrderAt_pow analyticAt_id m, analyticOrderAt_id]
+  simp [nsmul_eq_mul]
 
-This is the analytic Weierstrass division theorem — the classical companion of
-`weierstrass_preparation_analytic` (division follows from preparation). It is the interface needed
-to push **germ-ring** Bézout cofactors down to **polynomial-in-`t`** cofactors over `𝒪ₙ[t]`, so that
-`norm_identity_elim` (which lives in the polynomial ring) applies to the monic factor `h` — the
-final step closing Phase D1. -/
-axiom weierstrass_division_analytic {s e : ℕ}
+/-- **Weierstrass division by a Weierstrass polynomial** — derived from `weierstrass_division` as the
+special case `G = h` (a Weierstrass polynomial is `t`-regular of order `m`, since `h(0,t) = t^m`). -/
+theorem weierstrass_division_analytic {s e : ℕ}
     (m : ℕ) (a : Fin m → (CParam s e → ℂ))
     (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
     (F : CParam s e × ℂ → ℂ) (hF : AnalyticAt ℂ F 0) :
     ∃ (q : CParam s e × ℂ → ℂ) (ρ : Fin m → (CParam s e → ℂ)),
       AnalyticAt ℂ q 0 ∧ (∀ i, AnalyticAt ℂ (ρ i) 0) ∧
       F =ᶠ[𝓝 0] fun wt => q wt * (weierstrassPoly m a wt.1).eval wt.2
-        + ∑ i : Fin m, ρ i wt.1 * wt.2 ^ (i : ℕ)
+        + ∑ i : Fin m, ρ i wt.1 * wt.2 ^ (i : ℕ) :=
+  (weierstrass_division (fun wt => (weierstrassPoly m a wt.1).eval wt.2)
+    (weierstrassPolyEval_analyticAt m a ha_an) m (weierstrassPolyEval_order m a ha0)).1 F hF
 
-/-- **Convergent Weierstrass division (Phase C, AXIOM) — uniqueness.**
-
-The quotient/remainder of Weierstrass division are unique; equivalently, the only division of the
-zero germ is the trivial one. This is the part used in the D1 descent: if a *polynomial-in-`t`* germ
-is divisible by the monic `h` with an a-priori only-analytic quotient, that quotient is forced to be
-polynomial (its non-polynomial part would be a nontrivial division of zero). -/
-axiom weierstrass_division_unique {s e : ℕ}
+/-- **Uniqueness of Weierstrass division by a Weierstrass polynomial** — the `G = h` case of
+`weierstrass_division`'s uniqueness clause. -/
+theorem weierstrass_division_unique {s e : ℕ}
     (m : ℕ) (a : Fin m → (CParam s e → ℂ))
     (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
     (q : CParam s e × ℂ → ℂ) (ρ : Fin m → (CParam s e → ℂ))
     (hq : AnalyticAt ℂ q 0) (hρ : ∀ i, AnalyticAt ℂ (ρ i) 0)
     (hzero : (fun wt => q wt * (weierstrassPoly m a wt.1).eval wt.2
         + ∑ i : Fin m, ρ i wt.1 * wt.2 ^ (i : ℕ)) =ᶠ[𝓝 0] 0) :
-    q =ᶠ[𝓝 0] 0 ∧ ∀ i, ρ i =ᶠ[𝓝 (0 : CParam s e)] 0
+    q =ᶠ[𝓝 0] 0 ∧ ∀ i, ρ i =ᶠ[𝓝 (0 : CParam s e)] 0 :=
+  (weierstrass_division (fun wt => (weierstrassPoly m a wt.1).eval wt.2)
+    (weierstrassPolyEval_analyticAt m a ha_an) m (weierstrassPolyEval_order m a ha0)).2 q ρ hq hρ hzero
+
+-- `weierstrass_preparation_analytic` is now a **theorem**, derived from `weierstrass_division`
+-- (the unit argument) in `Mccalum.Generalized.WeierstrassPrep`.
 
 /-- **Zariski's theorem 4.1.1 — single holomorphic root section (Phase E, AXIOM).**
 

@@ -2,6 +2,7 @@ import Mccalum.Generalized.ClusterAssembly
 import Mccalum.Generalized.MembershipComplexify
 import Mccalum.Generalized.ComplexifyGlue
 import Mccalum.Generalized.WeierstrassZariskiAxioms
+import Mccalum.Generalized.WeierstrassPrep
 import Mccalum.Generalized.AnalyticOrderPoly
 import Mccalum.Generalized.ClusterCover
 
