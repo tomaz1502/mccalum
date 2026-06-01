@@ -1,5 +1,152 @@
 # Generalized McCallum Formalization — Status
 
+## LAYER B COMPLETE — `weierstrass_division ⟸ {preparation, keystone}` (2026-06-01)
+`weierstrass_division_via_cauchy` (`CDivisionByW.lean`, sorry-free, `#print axioms` = standard only):
+the **entire** `weierstrass_division` axiom (existence **and uniqueness**) for a `t`-regular germ `G`
+now follows, machine-checked, from just **two** inputs — a preparation `G = u·W` (Layer C) and the
+**keystone** (= `osgood`, the SCV bridge) — both as hypotheses. The full Cauchy-integral proof of
+Weierstrass division is done:
+- **Existence**: `weierstrass_division_W_exists` (scalar Cauchy division `cauchy_division_scalar` +
+  keystone for analyticity of `Q`, `ρ_k` + contour/domain extraction).
+- **Uniqueness**: `weierstrass_division_W_unique` (Lagrange root bound → residue-at-infinity
+  `circleIntegral_eq_zero_of_decay` via `rational_decay` → Cauchy recovery `cauchy_recovery_zero` →
+  identity theorem `cauchy_uniqueness_scalar`; then `ρ_i =ᶠ 0` via `eq_zero_of_infinite_isRoot`).
+  **Independent of the argument principle** (uses only elementary polynomial estimates + Mathlib's
+  annulus Cauchy–Goursat + identity theorem).
+- **Layer A** (`weierstrass_division_of_prep_div`) moves the unit `u`.
+
+So the Cauchy proof of `C = weierstrass_division` is reduced to exactly **`{preparation (Layer C),
+osgood}`**, with every other piece proved sorry-free. `mccallum_3_2_3_generalized` still rests on
+`{weierstrass_division, zariski_single_branch}` (the discharge files are standalone WIP, not yet wired
+into the main axiom path).
+
+## Assembly spine started — Layer A PROVED (2026-06-01)
+`CWeierstrassAssembly.lean` (standalone, not imported by `Mccalum.lean`) is the **assembly spine**
+that derives the `weierstrass_division` axiom from its Cauchy-integral ingredients, each layer taking
+the deeper one's output as an explicit hypothesis. Architecture:
+
+```
+weierstrass_division (division by a general t-regular germ G)
+  ⟸ Layer A  { preparation: G = u·W ;  division by W (∃ + uniqueness) }   ← PROVED, sorry-free
+  ⟸ Layer B  division by W   [keystone; Cauchy reproducing formula + difference-quotient brick]
+  ⟸ Layer C  preparation G = u·W   [keystone + argument principle + Newton identities]
+```
+
+**Layer A — `weierstrass_division_of_prep_div` (sorry-free, `#print axioms` = standard only).** The
+exact `weierstrass_division` conclusion (existence + uniqueness) follows from preparation `G = u·W`
+(`u` an analytic unit, `u 0 ≠ 0`) + division-by-`W` by **pure analytic-germ algebra**: divide `F` by
+`W` to get `F = Q·W + r`, set `q = Q·u⁻¹` (`u⁻¹` analytic since `u 0 ≠ 0`); then `q·G = Q·W`, so
+`F = q·G + r` with the *same* degree-`<m` remainder `r`. Uniqueness transports via `q·G = (q·u)·W`.
+No analysis beyond `AnalyticAt.mul`/`.inv` + `EventuallyEq`. This is the top of the tree: the axiom is
+now machine-checked to follow from {preparation, division-by-W}.
+
+**Layer B — first algebra brick PROVED.** `diffQuotient_eq_poly` (`CDivisionAlgebra.lean`,
+sorry-free): the difference-quotient double sum `∑_j W_j ∑_{i<j} ζ^i t^{j-1-i}` reindexes to a genuine
+degree-`<m` polynomial in `t`, `∑_{k<n} c_k(ζ)·t^k` with `c_k(ζ) = ∑_{k<j≤n} W_j·ζ^{j-1-k}`
+(`n = natDegree W`). This is the form that makes the Cauchy remainder visibly `∑_{k<m} ρ_k(z)·t^k`
+with `ρ_k(z) = (2πi)⁻¹∮ (F/W)·c_k dζ` (contour-integral coefficients). Proved by a `Finset.sum_bij'`
+reindex `(j,i) ↦ (j-1-i, j)`.
+
+**Layer B — scalar Cauchy division core PROVED.** `cauchy_division_scalar` (`CCauchyDivision.lean`,
+sorry-free, `#print axioms` standard only): the genuine one-variable analytic heart. For a polynomial
+`P` non-vanishing on `|ζ|=R` and `F` holomorphic on the closed disc,
+
+  `F t = q·P(t) + ∑_{k<deg P} ρ_k·t^k`   for `|t|<R`,
+
+with `q = (2πi)⁻¹∮ F/(P·(ζ−t))` and `ρ_k = (2πi)⁻¹∮ F·c_k/P` the explicit Cauchy contour integrals
+(`c_k(ζ) = ∑_{k<j≤deg P} P_j ζ^{j-1-k}`). Proof = Mathlib's Cauchy reproducing formula
+(`two_pi_I_inv_smul_circleIntegral_sub_inv_smul_…`) + the split `F/(ζ−t) = P(t)·F/(P(ζ)(ζ−t)) +
+F·(P(ζ)−P(t))/(P(ζ)(ζ−t))`, with the second term turned into the explicit degree-`<m` polynomial via
+`eval_sub_eval_eq_mul` + `diffQuotient_eq_poly`, then term-by-term integration. **No argument
+principle.** This is the per-parameter statement.
+
+**Layer B parametric packaging — first bricks PROVED** (`CDivisionByW.lean`, all sorry-free, standard
+axioms):
+- `weierstrassPoly_monic`, `weierstrassPoly_natDegree`: `W = X^m + ∑_{i<m} a_i X^i` is monic of degree
+  exactly `m` (aligns the scalar lemma's `∑_{k<deg P}` with the target `∑ i : Fin m`).
+- `weierstrassEval_analyticAt` (any point `(0,ζ₀)`), `weierstrassEval_continuous`,
+  `weierstrassEval_zero` (`W(0,ζ) = ζ^m`).
+- `qIntegrand_analyticAt`: the Cauchy **quotient** integrand `(z,t,ζ) ↦ F(z,ζ)/(W(z,ζ)·(ζ−t))` is
+  jointly analytic at a contour point `((0,0),ζ₀)` (`ζ₀≠0`) — the keystone input for `Q`.
+- `weierstrassPoly_coeff_analyticAt`: each `z ↦ W(z,·).coeff j` is analytic in `z`.
+- `rhoIntegrand_analyticAt`: the Cauchy **remainder** integrand `(z,ζ) ↦ F(z,ζ)·c_k(z,ζ)/W(z,ζ)`
+  (`c_k = ∑_{k<j≤m} W(z,·).coeff j·ζ^{j-1-k}`) is jointly analytic at `(0,ζ₀)` — the keystone input
+  for the remainder coefficients `ρ_k`. **Both keystone inputs (`Q` and `ρ`) are now done.**
+
+**Contour + domain extraction — PROVED** (`CDivisionByW.lean`, sorry-free, standard axioms):
+- `weierstrass_contour`: for any `R > 0`, `W(z, ·) ≠ 0` on the circle `|ζ| = R` for all `z` near `0`
+  (`W(0,ζ) = ζ^m ≠ 0`; tube lemma on the open "analytic-and-nonzero" set — run directly via joint
+  analyticity at `(0,ζ)`, since the coefficients are only analytic at `0`, not globally continuous,
+  so the Mathlib `exists_contour_ne_zero` brick — which needs global continuity — doesn't apply).
+- `analyticAt_slice` / `exists_slice_analytic`: from `F` analytic at `0`, the slices `F(z,·)` are
+  analytic on a common polydisc `‖z‖,‖ζ‖ < ρ` (⟹ the scalar lemma's `ContinuousOn`/`DifferentiableAt`
+  hypotheses on any closed `ζ`-disc `R < ρ`).
+
+**CAPSTONE (existence) PROVED — `weierstrass_division_W_exists`** (`CDivisionByW.lean`, sorry-free,
+`#print axioms` standard only). Given the **keystone** as an explicit hypothesis (contour integrals
+of jointly-analytic integrands are analytic in the parameter — exactly what `osgood` yields, stated
+generically over a finite-dim complex normed space `H`), every analytic `F` divides as
+`F =ᶠ[𝓝 0] Q·W + ∑_{i<m} ρ_i·t^i` with `Q`, `ρ_i` analytic — **exactly Layer A's `hdivW_exist`**.
+Assembled from: `cauchy_division_scalar` applied per-`z` (slice domain from `exists_slice_analytic`,
+contour from `weierstrass_contour`), `qIntegrand_analyticAt`/`rhoIntegrand_analyticAt` fed to the
+keystone for analyticity of `Q`/`ρ_i`, and `weierstrassPoly_natDegree` + `Fin.sum_univ_eq_sum_range`
+for `range m`↔`Fin m`. **This is the constructive heart of Layer B, done.**
+
+**FULL CHAIN WIRED — `weierstrass_division_via_cauchy`** (`CDivisionByW.lean`, sorry-free, standard
+axioms): the complete `weierstrass_division` conclusion (existence **and** uniqueness) for a
+`t`-regular germ `G` now follows, machine-checked, from
+`weierstrass_division ⟸ {preparation (G = u·W), keystone, uniqueness-of-division-by-W}`:
+existence from the capstone, uniqueness threaded as a hypothesis, assembled through Layer A
+(`weierstrass_division_of_prep_div`). The whole Cauchy-proof skeleton of `weierstrass_division` is
+thus in place except for three named inputs: **preparation** (Layer C), **keystone** (= `osgood`), and
+**uniqueness-of-division-by-W**.
+
+**Uniqueness analysis (route found — does NOT need the argument principle).** `hdivW_uniq` reduces to:
+for `z` near `0`, the remainder `r(z,·)` (degree `< m`) is `0`. Cleanest route discovered:
+1. *Elementary root bound* — **PROVED**: `weierstrass_roots_eventually_in_ball` (`CDivisionByW.lean`,
+   sorry-free, standard axioms). Every root `α` of `W(z,·)=t^m+∑a_i(z)t^i` satisfies
+   `|α|^m ≤ ∑|a_i(z)||α|^i`; choosing `δ` with `δm < min(1, R^m)`, once `|a_i(z)| ≤ δ` the root is
+   forced into `|α| < 1` then `|α|^m ≤ δm < R^m`. Hence **`∀ᶠ z, all roots of W(z,·) lie in `|ζ| < R`**
+   — *no argument principle / no Mathlib continuity-of-roots needed*.
+2. *Residue at infinity* — **PROVED**: `circleIntegral_eq_zero_of_decay` (`CCauchyDivision.lean`,
+   sorry-free, standard axioms). If `g` is holomorphic on the closed exterior `{|z| ≥ R}` and decays
+   `‖g z‖ ≤ C/‖z‖²` there, then `∮_{|z|=R} g = 0` — via Mathlib's **annulus** Cauchy–Goursat
+   (`circleIntegral_eq_of_differentiable_on_annulus_off_countable`: `∮_R = ∮_{R'}`) plus the bound
+   `‖∮_{R'}‖ ≤ 2πC/R' → 0`. Applied to the proper rational `r(ζ)/(W(ζ)(ζ−t))` (all poles inside, by
+   the root bound), this forces the Cauchy quotient formula to *recover* `q`, so the zero germ gives
+   `q ≡ 0`, `r ≡ 0`.
+3. *Quotient recovery* — **PROVED**: `cauchy_recovery_zero` (`CCauchyDivision.lean`, sorry-free,
+   standard axioms). If `Q·P + r = 0` on the circle `|ζ|=R` (`P ≠ 0` there) and the remainder integral
+   `∮ r/(P(ζ−t)) = 0` (the residue input), then the Cauchy formula recovers `Q(t) = 0` for `|t| < R`
+   (`Q(t) = (2πi)⁻¹∮ Q(ζ)/(ζ−t) = (2πi)⁻¹∮ −r(ζ)/(P(ζ)(ζ−t)) = 0`).
+
+This makes uniqueness **independent of Layer C** — a separate, mostly-elementary effort. **All three
+of its cores — root bound, residue at infinity, quotient recovery — are now machine-checked.**
+
+**Per-parameter scalar uniqueness — PROVED**: `cauchy_uniqueness_scalar` (`CCauchyDivision.lean`,
+sorry-free, standard axioms) combines the **identity theorem**
+(`AnalyticOnNhd.eqOn_zero_of_preconnected_of_eventuallyEq_zero`: `Q·P + r =ᶠ 0` near `0` ⟹ `= 0` on
+the whole disc `ball 0 R'`, hence on the contour) with `cauchy_recovery_zero`: given `Q` holomorphic
+on `ball 0 R'` (`R' > R`), `P ≠ 0` on `|ζ|=R`, `Q·P + r =ᶠ 0`, and the residue input `hres`, it
+concludes `Q(t) = 0` for `|t| < R`.
+
+**Decay bound — PROVED** (`CCauchyDivision.lean`, sorry-free, standard axioms):
+- `norm_eval_le`: `‖p.eval ζ‖ ≤ (∑ⱼ‖p_j‖)·‖ζ‖^{deg p}` for `‖ζ‖ ≥ 1` (polynomial growth, upper).
+- `rational_decay`: for `W` monic of degree `m ≥ 1` and `deg r < m`, `‖r(ζ)/(W(ζ)(ζ−t))‖ ≤ C/‖ζ‖²`
+  for all `‖ζ‖ ≥ R₀` (`C = 4·A_r`). Uses the upper bound for `r`, the monic lower bound
+  `‖W(ζ)‖ ≥ ‖ζ‖^m/2` (via `degree_sub_lt` on `W − X^m`), and `‖ζ−t‖ ≥ ‖ζ‖/2`. The residue lemma
+  `circleIntegral_eq_zero_of_decay` was generalized to need decay only for *large* `‖ζ‖` (no
+  compact-annulus argument). **This discharges the residue hypothesis `hres`.**
+
+Remaining for `hdivW_uniq` — the **parametric assembly only**: apply `cauchy_uniqueness_scalar` at
+each `z` near `0` (slice holomorphy from `Q` analytic at `0`; `W ≠ 0` outside from the root bound;
+`hres` from `rational_decay` + `circleIntegral_eq_zero_of_decay`) to get `Q =ᶠ 0`, then `ρ_i =ᶠ 0`
+from `H =ᶠ 0` (a degree-`<m` poly zero on a `t`-disc is `0`). All technical cores are now proved;
+this is pure wiring.
+
+Then Layer C (preparation, needs the argument principle) supplies the last hypothesis.
+`#print axioms mccallum_3_2_3_generalized` unchanged.
+
 ## C discharge — Cauchy-integral proof scoped + first lemmas proved (2026-06-01)
 Scoping doc: **`thesis/generalized/C_cauchy_scope.md`** (full plan, Mathlib inventory, dependency
 order). Two genuinely-missing Mathlib ingredients identified as the critical path:
@@ -47,6 +194,17 @@ an open ball (Fréchet differentiate under the integral, via Mathlib's
 `hasFDerivAt_integral_of_dominated_of_fderiv_le`). **This pins the entire remaining gap to *exactly*
 the bridge**: the multi-parameter keystone is now `circleIntegral_differentiableOn_multi` (proved) +
 `DifferentiableOn ℂ ⇒ AnalyticOnNhd ℂ` on `ℂⁿ` (`CBridge.osgood`, the one open lemma).
+
+`circleIntegral_analyticAt_multi` (sorry-free) makes that reduction **machine-checked**: it takes the
+bridge `DifferentiableOn ℂ ⇒ AnalyticOnNhd ℂ` on `H` as an explicit hypothesis and concludes the
+multi-parameter keystone `AnalyticAt`. `#print axioms` = standard only (the bridge is a hypothesis,
+not an axiom) — i.e. the multi-parameter keystone provably follows from the single bridge lemma.
+
+*Note on axiom reduction:* turning `weierstrass_division` into a theorem (so the main theorem would
+use the bridge instead) is **not** a reduction — the full Cauchy proof also needs the *argument
+principle* (only its `z=0` base case is proved) plus the large power-sum/division assembly, so it
+would trade one clean classical axiom for several deeper ones. The bricks are progress toward
+*eliminating* `weierstrass_division` outright, not toward swapping it.
 
 **One-parameter keystone — FULLY PROVED (`CParamIntegral.lean`, sorry-free, wired into the build).**
 Three bricks of the Cauchy-integral proof of `weierstrass_division`:

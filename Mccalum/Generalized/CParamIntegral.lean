@@ -199,3 +199,20 @@ theorem circleIntegral_differentiableOn_multi
   exact (circleIntegral_hasFDerivAt hδ'pos hR (hΦ.mono (Set.prod_mono hsubc le_rfl))
     (hΦ'.mono (Set.prod_mono hsubc le_rfl))
     (fun w hw ζ hζ => hderiv w (hsubb hw) ζ hζ)).differentiableAt.differentiableWithinAt
+
+/-- **Multi-parameter keystone, modulo the bridge (sorry-free).** Given the several-variable
+holomorphy⇒analyticity bridge as a hypothesis (`DifferentiableOn ℂ ⇒ AnalyticOnNhd ℂ` on `H`, which
+`CBridge.osgood` yields by induction on dimension), the parametric circle integral
+`z ↦ ∮ Φ(z,ζ) dζ` is `AnalyticAt` in the multi-dimensional parameter `z ∈ H`. This makes the reduction
+"multi-parameter keystone ⟸ (proved differentiability) + bridge" machine-checked: the *only* missing
+input is `hbridge`. -/
+theorem circleIntegral_analyticAt_multi
+    (hbridge : ∀ (f : H → ℂ) (U : Set H), IsOpen U → DifferentiableOn ℂ f U → AnalyticOnNhd ℂ f U)
+    {Φ : H → ℂ → ℂ} {Φ' : H → ℂ → (H →L[ℂ] ℂ)} {c : ℂ} {R : ℝ} {z₀ : H} {δ : ℝ}
+    (hδ : 0 < δ) (hR : 0 ≤ R)
+    (hΦ : ContinuousOn (fun p : H × ℂ => Φ p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
+    (hΦ' : ContinuousOn (fun p : H × ℂ => Φ' p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
+    (hderiv : ∀ z ∈ ball z₀ δ, ∀ ζ ∈ sphere c R, HasFDerivAt (fun w => Φ w ζ) (Φ' z ζ) z) :
+    AnalyticAt ℂ (fun z => ∮ ζ in C(c, R), Φ z ζ) z₀ :=
+  hbridge _ _ isOpen_ball (circleIntegral_differentiableOn_multi hδ hR hΦ hΦ' hderiv)
+    z₀ (mem_ball_self hδ)
