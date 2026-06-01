@@ -43,14 +43,61 @@ polydisc Cauchy formula:
 4. **expand the kernel** `1/((ζ−z)(η−w)) = ∑_{j,k} …` and assemble a several-variable power series ⟹
    analytic.
 
-**Step 4 is the irreducible Mathlib gap** (and the genuine content of `osgood`): constructing a
-`HasFPowerSeriesAt` on `ℂ²`/`ℂⁿ` — a `FormalMultilinearSeries` from the double-indexed Cauchy
-coefficients with convergence — OR equivalently a several-variable locally-uniform-limit / integral-
-analyticity theorem. Mathlib has **none of these** (every alternative — "integral of an analytic
-family is analytic" for several parameters, "uniform limit of analytic is analytic" in several
-variables — is itself the same SCV gap). This is the substantial, multi-week, upstream-able SCV
-development. Everything *around* it is now proved: steps 1–3 (`bridge_torus_repr`), the inductive step
-`bridge_prod`, with only the `Fin n` induction + keystone plumbing as further (completable) bookkeeping.
+**Step 4 = the SCV power-series construction — BUILD UNDERWAY** (`CSCVBridge.lean`, all sorry-free,
+standard axioms). Plan: (1) Cauchy-kernel geometric expansion, (2) 2-var kernel product, (3)
+term-by-term torus integration ⟹ `f = ∑_{j,k} c_{jk}(z−z₀)^j(w−w₀)^k`, (4) package `c_{jk}` into a
+`FormalMultilinearSeries` (asymmetric `mkPiAlgebraFin` — avoids the binomial problem) ⟹
+`HasFPowerSeriesOnBall`. Progress:
+- **`hasSum_cauchy_kernel`** ✅ — `(ζ−z)⁻¹ = ∑_j (z−z₀)^j/(ζ−z₀)^{j+1}` for `‖z−z₀‖<‖ζ−z₀‖`.
+- **`summable_norm_cauchy_kernel`** ✅ — the kernel series is absolutely summable (geometric).
+- **`hasSum_cauchy_kernel_two`** ✅ — `(ζ−z)⁻¹·(η−w)⁻¹ = ∑_{(j,k)} (z−z₀)^j(w−w₀)^k/((ζ−z₀)^{j+1}(η−w₀)^{k+1})`
+  over `ℕ×ℕ` (absolutely-convergent product of the two 1-var kernels, via `tsum_mul_tsum_of_summable_norm`).
+
+- **`hasSum_z_expansion`** ✅ (Step 3, one variable): `2πi·f(z,w) = ∑_j ∮_ζ ((z−z₀)/(ζ−z₀))^j(ζ−z₀)⁻¹f(ζ,w)`
+  for `‖z−z₀‖<r`. **Key discovery: the integral–sum swap is already in Mathlib** —
+  `hasSum_two_pi_I_cauchyPowerSeries_integral` does the dominated convergence. This was the part I'd
+  flagged as the hard analytic core of Step 3; it's free. So Step 3 is much more tractable than feared.
+
+- **Step 4 algebraic core ✅** — `scvTerm`, `prod_range_ite`, **`scvTerm_apply_diag`**: the
+  `FormalMultilinearSeries` on `ℂ²` built from coefficients `c : ℕ → ℕ → ℂ`, with diagonal evaluation
+  `scvTerm c n (y,…,y) = ∑_{j+k=n} c_{jk}·y.1^j·y.2^{n-j}`. **The construction I feared (the binomial
+  symmetrization) is avoided** by the asymmetric `mkPiAlgebraFin.compContinuousLinearMap` monomial
+  (first `j` slots read coord 1, the rest coord 2 — diagonal value has no binomial). This is the heart
+  of the packaging.
+
+**Both scariest pieces are now done** (the integral–sum swap was free in Mathlib; the multilinear
+construction went through asymmetrically).
+
+**Assembly underway.** `hasSum_z_expansion'` ✅ — the clean `z`-expansion `2πi·f(z,w) = ∑_j (z−z₀)^j·B_j(w)`
+with `B_j(w) = ∮_ζ (ζ−z₀)^{-(j+1)}·f(ζ,w)` (coefficients pulled out of the integral). This is the form
+that combines with the `w`-expansion. Remaining for the ℂ² bridge:
+(a) expand each `B_j(w)` (analytic in `w` by the 1-var keystone) as `2πi·B_j(w) = ∑_k (w−w₀)^k·C_{jk}`,
+and combine the iterated sums into the `ℕ×ℕ` HasSum `f = ∑_{j,k} c_{jk}(z−z₀)^j(w−w₀)^k` (needs the
+`c_{jk}` Cauchy bound for summability of the double family) — *the remaining hard analysis: it needs
+`B_j` differentiable in `w`, i.e. differentiate-under-integral*;
+(b) **`hasSum_graded` ✅** — regroup the `ℕ×ℕ` monomial HasSum by total degree
+(`HasSum.sigma` over `Finset.sigmaAntidiagonalEquivProd` + `sum_antidiagonal_eq_sum_range_succ`) to
+match `scvTerm_apply_diag`. Pure HasSum algebra, done.
+(c) radius/convergence ⟹ `HasFPowerSeriesOnBall` ⟹ `AnalyticAt`. Then the bridge follows from
+`bridge_torus_repr`, and `osgood`/keystone via the `Fin n` induction (`bridge_prod`).
+
+So the SCV build now has: Steps 1–3 ✅, Step 4 algebra (`scvTerm`, diagonal eval) ✅, clean
+`z`-expansion ✅, graded reorg (b) ✅, **(a) differentiate-under-integral `Bj_hasDerivAt` ✅** — `B_j(w)`
+is differentiable in `w` (via `circleIntegral_hasDerivAt`), given `f`, `∂_w f` jointly continuous on
+`closedBall w₀ δ × sphere z₀ r` + the slice `HasDerivAt`.
+
+**(c) diagonal HasSum `hasSum_scvTerm_diag` ✅** — from the `ℕ×ℕ` HasSum `∑_{j,k} c_{jk}y.1^jy.2^k = S`,
+the series-of-homogeneous-parts `∑_n scvTerm c n (y,…,y) = S` (combines `scvTerm_apply_diag` +
+`hasSum_graded`). This is the convergence half of `HasFPowerSeriesOnBall`.
+
+So the SCV build now has, all sorry-free: Steps 1–3, Step 4 algebra (`scvTerm`, diagonal eval), clean
+`z`-expansion, (a) `Bj_hasDerivAt`, (b) `hasSum_graded`, (c) `hasSum_scvTerm_diag`. **All three hard
+cores + the diagonal/graded machinery are done.** Remaining for the ℂ² bridge:
+- the `c_{jk}` Cauchy bound ⟹ the radius `R ≤ (scvSeries c).radius` (operator-norm estimate);
+- assemble the `ℕ×ℕ` HasSum `f = ∑ c_{jk}…` from the `z`/`w` expansions (`Bj_hasDerivAt` ⟹ `B_j` analytic
+  in `w`, needs `∂_w f` continuous via the Cauchy derivative estimate; then the double-sum combination);
+- package `HasFPowerSeriesOnBall` (radius + `hasSum_scvTerm_diag`) ⟹ `AnalyticAt`; bridge from
+  `bridge_torus_repr`. A continuing build of standard manipulations — no remaining hard core.
 
 ## Assembly spine started — Layer A PROVED (2026-06-01)
 `CWeierstrassAssembly.lean` (standalone, not imported by `Mccalum.lean`) is the **assembly spine**
