@@ -1,5 +1,28 @@
 # Generalized McCallum Formalization — Status
 
+## C discharge — Cauchy-integral proof scoped + first lemmas proved (2026-06-01)
+Scoping doc: **`thesis/generalized/C_cauchy_scope.md`** (full plan, Mathlib inventory, dependency
+order). Two genuinely-missing Mathlib ingredients identified as the critical path:
+1. **Several-variable holomorphy ⇒ analyticity** (`DifferentiableOn ℂ f U → AnalyticOnNhd ℂ f U` for
+   `U` open in `ℂⁿ`). Mathlib has this **only for one variable** (`DifferentiableOn.analyticAt`,
+   `f : ℂ → E`). The `n`-variable lift is the keystone bottleneck — PR-sized, upstreamable.
+2. **Argument principle** (`(2πi)⁻¹∮ G'/G = #zeros`). Mathlib has **none** (only Jensen's averaged
+   form). Needed for the *propagation* `z=0 → z near 0`.
+
+**Proved this session (sorry-free, WIP files, off the main axiom path):**
+- `CKeystone.lean` — `circleIntegral_analyticAt_of_differentiable_nhds`: the keystone's analyticity
+  step for **one** complex parameter (Mathlib's `DifferentiableOn.analyticAt` makes it free given
+  differentiability on a nbhd). Documents the `n`-variable gap.
+- `CArgPrinciple.lean` — the **argument-principle base case** `∮_{|ζ|=R} logDeriv(ζᵐ·v) dζ = 2πi·m`
+  (`circleIntegral_logDeriv_pow_mul`), fully proved, via: `circleIntegral_const_div_center`
+  (`∮ a/ζ = 2πi·a`, Cauchy formula) + `circleIntegral_logDeriv_eq_zero` (`∮ v'/v = 0`, Cauchy–Goursat)
+  + `logDeriv_mul`/`logDeriv_pow` for the split. This is the `analyticOrderAt = m` ⟹ contour-integral
+  connection, the heart of the argument-principle base case.
+
+Remaining for C: the two gaps above (1 = keystone `n`-var bridge; 2 = argument-principle propagation),
+then assembly (preparation via power sums + division-by-`W` via the polynomial difference quotient).
+`#print axioms mccallum_3_2_3_generalized` unchanged = `{weierstrass_division, zariski_single_branch}`.
+
 ## C collapsed to ONE axiom — base is now `{C, E}` = two axioms (2026-06-01)
 **`#print axioms mccallum_3_2_3_generalized` = `{weierstrass_division, zariski_single_branch}` +
 standard.** The whole generalized McCallum theorem rests on exactly **two** non-standard axioms, each a

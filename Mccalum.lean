@@ -3,6 +3,8 @@ import Mccalum.Delineability
 import Mccalum.DiscrMul
 import Mccalum.DiscrNonzero
 import Mccalum.DiscrProdInvariant
+import Mccalum.Generalized.CArgPrinciple
+import Mccalum.Generalized.CKeystone
 import Mccalum.Generalized.Lifting
 import Mccalum.Generalized.Projection
 import Mccalum.Generalized.SimpleRoots
