@@ -23,6 +23,17 @@ Remaining for C: the two gaps above (1 = keystone `n`-var bridge; 2 = argument-p
 then assembly (preparation via power sums + division-by-`W` via the polynomial difference quotient).
 `#print axioms mccallum_3_2_3_generalized` unchanged = `{weierstrass_division, zariski_single_branch}`.
 
+**`n`-variable bridge started — `CBridge.lean` (standalone WIP, has one `sorry`; deliberately NOT in
+`Mccalum.lean` so the main library stays sorry-free).** Contents:
+- `bridge_one_var` — the one-complex-variable base case, **proved** (it is Mathlib's
+  `DifferentiableOn.analyticOnNhd`).
+- `osgood` — the genuine several-complex-variables core, isolated with a `sorry` + precise proof
+  outline (Hörmander Thm 2.2.8): Cauchy in `z` ⇒ `f = ∑ aₖ(w)(z−z₀)ᵏ` with `aₖ(w)` a contour integral
+  of the `w`-analytic family `f(ζ,·)`; the `w`-analyticity of `aₖ` is the keystone in fewer variables,
+  so the rigorous proof is a **simultaneous induction on `dim` of `{osgood, bridge, keystone}`**. This
+  is the missing SCV development — a multi-week, upstream-Mathlib-sized contribution. The whole `ℂⁿ`
+  bridge (and hence the keystone) reduces to `osgood` by induction on dimension (outline in-file).
+
 ## C collapsed to ONE axiom — base is now `{C, E}` = two axioms (2026-06-01)
 **`#print axioms mccallum_3_2_3_generalized` = `{weierstrass_division, zariski_single_branch}` +
 standard.** The whole generalized McCallum theorem rests on exactly **two** non-standard axioms, each a
