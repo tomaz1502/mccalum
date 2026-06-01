@@ -33,13 +33,28 @@ fixed `w` near `w₀`, and analytic in `w` for each fixed `z` near `z₀`), then
 at `(z₀, w₀)`.
 
 Proof outline (Hörmander, Thm 2.2.8 / Osgood): Cauchy in `z` on a small circle `∂D(z₀, r)` gives
-`f(z,w) = ∑_k a_k(w)·(z − z₀)^k`, with `a_k(w) = (2πi)⁻¹ ∮_{∂D} f(ζ,w)/(ζ − z₀)^{k+1} dζ`. Each `a_k`
-is analytic in `w` because it is a contour integral of the `w`-analytic family `f(ζ, ·)` — i.e. the
-**keystone** ("parametric contour integral is analytic") in the `E'` variables. The joint power series
-in `(z, w)` then assembles from the `a_k`. The `w`-keystone in turn reduces (differentiate under the
-integral + this very bridge) to this lemma in *fewer* `E'` variables, so the rigorous statement is a
-**simultaneous induction on `dim E'`** of `{osgood, bridge, keystone}`. That interconnected induction,
-plus the multivariable power-series bookkeeping, is the missing development. -/
+`f(z,w) = ∑_k a_k(w)·(z − z₀)^k`, with `a_k(w) = (2πi)⁻¹ ∮_{∂D} f(ζ,w)/(ζ − z₀)^{k+1} dζ`.
+
+**Recommended formalization route — vector-valued holomorphy** (cleanest given Mathlib; from this
+file's exploration). Let `K ⊆ E'` be a small closed ball around `w₀` and `H := C(K, ℂ)` the Banach
+space of continuous functions on `K` (sup norm). Consider `g : ℂ → H`, `g z := (w ↦ f (z, w))|_K`.
+* `g` is **ℂ-differentiable** near `z₀` (the difference quotients converge in sup-norm, from joint
+  continuity + analyticity in `z`). Then by Mathlib's one-variable `Differentiable.analyticAt`
+  — which holds for **any** complex Banach codomain — `g` is **analytic**, so
+  `g z = ∑_k a_k · (z − z₀)^k` with `a_k ∈ H`, the series converging **in sup-norm, i.e. uniformly in
+  `w ∈ K`**. This handles the `z`-direction *and the uniformity* for free — the main payoff.
+* Each coefficient `a_k ∈ H` is then shown **analytic in `w`** (it is a `w`-Taylor datum of the
+  `w`-analytic slices; or a contour integral of the `w`-analytic family `f(ζ,·)`).
+* The uniform-in-`w` series `∑_k a_k(w)(z−z₀)^k` with `a_k` analytic in `w` assembles to a **joint**
+  power series at `(z₀, w₀)` (each partial sum is jointly analytic; uniform convergence upgrades the
+  limit — the analogue of `TendstoLocallyUniformlyOn.differentiableOn`, which Mathlib currently has
+  only for the **one-variable** domain `ℂ`).
+
+The two remaining obligations (`a_k` analytic in `w`; uniform-limit ⇒ jointly analytic in several
+variables) still recurse on `dim E'` through the keystone, so the rigorous result is a **simultaneous
+induction on `dim E'`** of `{osgood, bridge, keystone}`. This is the missing SCV development — Mathlib
+has *no* several-complex-variables analyticity (no multivariable Cauchy formula; the
+several-variable locally-uniform-limit theorem is also absent). A multi-session / upstream effort. -/
 theorem osgood {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℂ E']
     {f : ℂ × E' → ℂ} {z₀ : ℂ} {w₀ : E'}
     (hcont : ContinuousAt f (z₀, w₀))

@@ -23,6 +23,45 @@ Remaining for C: the two gaps above (1 = keystone `n`-var bridge; 2 = argument-p
 then assembly (preparation via power sums + division-by-`W` via the polynomial difference quotient).
 `#print axioms mccallum_3_2_3_generalized` unchanged = `{weierstrass_division, zariski_single_branch}`.
 
+**Weierstrass-division bricks — all SCV-bridge-free pieces PROVED (sorry-free, wired in).** Toward
+discharging `weierstrass_division` by the Cauchy-integral proof, every brick that does *not* require
+the several-variable analyticity bridge is now proved:
+- `CDivisionAlgebra.lean` — **difference-quotient factorization** `W(ζ)−W(t) = (ζ−t)·Q` with `Q` of
+  `t`-degree `< deg W` (`eval_sub_eval_eq_mul`, `diffQuotient_tdeg_lt`). The remainder structure for
+  division by a Weierstrass polynomial. Pure algebra.
+- `CContour.lean` — **contour setup** (`exists_contour_ne_zero`): the multiplicity-`m` zero is
+  isolated (finite order ⇒ isolated zeros), so `G(z₀,·) ≠ 0` on a circle `|t| = ε`, and (tube lemma)
+  `G(z,·) ≠ 0` there for all `z` near `z₀`. The contour for the Cauchy quotient.
+- `CArgPrinciple.lean` — argument-principle **base case** `∮ logDeriv(ζᵐ·v) = 2πi·m`.
+- `CParamIntegral.lean` — the **one-parameter keystone** (below).
+
+The single remaining obstruction for the whole Cauchy proof is the **several-variable
+holomorphy⇒analyticity bridge** (`CBridge.osgood`): it gates the *multi-parameter* keystone (the
+integrals depend on `z ∈ ℂⁿ`), which in turn gates the preparation (power sums) and division-by-`W`
+assemblies. The 1-variable base case is proved; the `n`-variable lift is the multi-month SCV wall.
+
+**Multi-parameter differentiate-under-integral — PROVED (`CParamIntegral.lean`, sorry-free).**
+`circleIntegral_hasFDerivAt` / `circleIntegral_differentiableOn_multi`: for a parameter `z` in a
+proper complex normed space `H` (e.g. `ℂⁿ` / `CParam`), `z ↦ ∮ Φ(z,ζ) dζ` is `DifferentiableOn ℂ` on
+an open ball (Fréchet differentiate under the integral, via Mathlib's
+`hasFDerivAt_integral_of_dominated_of_fderiv_le`). **This pins the entire remaining gap to *exactly*
+the bridge**: the multi-parameter keystone is now `circleIntegral_differentiableOn_multi` (proved) +
+`DifferentiableOn ℂ ⇒ AnalyticOnNhd ℂ` on `ℂⁿ` (`CBridge.osgood`, the one open lemma).
+
+**One-parameter keystone — FULLY PROVED (`CParamIntegral.lean`, sorry-free, wired into the build).**
+Three bricks of the Cauchy-integral proof of `weierstrass_division`:
+- `circleIntegral_hasDerivAt` — **differentiate under a parametric circle integral** (via Mathlib's
+  `hasDerivAt_integral_of_dominated_loc_of_deriv_le`; the domination is a constant bound on `Φ'` over
+  the compact `closedBall z₀ δ × sphere c R`).
+- `circleIntegral_differentiableOn` — differentiability on the open ball (pointwise at each interior
+  point).
+- `circleIntegral_analyticAt` — **the one-parameter keystone**: `z ↦ ∮ Φ(z,ζ) dζ` is `AnalyticAt` in
+  `z ∈ ℂ`, given `Φ, Φ'` jointly continuous + the pointwise `z`-derivative (= what joint analyticity
+  supplies). Closes via Mathlib's one-variable `DifferentiableOn.analyticAt`.
+This is the **base case of the SCV recursion**, now verified. Remaining toward the keystone: the
+*several*-parameter lift (the `n`-variable bridge below) and the analyticity-hypothesis extraction
+(`uncurry Φ` analytic ⇒ `Φ,Φ'` jointly continuous — partial-derivative-of-analytic-is-analytic).
+
 **`n`-variable bridge started — `CBridge.lean` (standalone WIP, has one `sorry`; deliberately NOT in
 `Mccalum.lean` so the main library stays sorry-free).** Contents:
 - `bridge_one_var` — the one-complex-variable base case, **proved** (it is Mathlib's
