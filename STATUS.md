@@ -20,6 +20,38 @@ osgood}`**, with every other piece proved sorry-free. `mccallum_3_2_3_generalize
 `{weierstrass_division, zariski_single_branch}` (the discharge files are standalone WIP, not yet wired
 into the main axiom path).
 
+### `osgood` started — deployment scaffolding (`bridge_prod`)
+Survey: Mathlib has the **torus integral** (`TorusIntegral.lean`) and the **1-variable** bridge
+(`DifferentiableOn.analyticOnNhd`), but **no** several-variable bridge and **no** Hartogs/separately-
+holomorphic. Key observation: the keystone needs the bridge for **joint** ℂ-differentiability (the
+*easier* direction), deployed via `osgood` as the inductive core.
+
+`bridge_prod` (`CBridge.lean`): the **inductive step**, formalized (compiles; its only `sorry` is
+`osgood`). Given the bridge on `E'` (induction hypothesis) and `osgood`, it lifts the bridge to
+`ℂ × E'`: jointly-differentiable ⟹ `z`-slices analytic (`bridge_one_var`) + `w`-slices analytic
+(`E'`-bridge) + continuous ⟹ (`osgood`) jointly analytic. Iterating from `bridge_one_var` gives the
+bridge on `ℂⁿ`.
+
+**Polydisc–Cauchy route for the bridge (cleaner than `osgood` — avoids separate-analyticity).** Since
+the keystone needs only the *joint*-differentiable ⇒ analytic direction, the bridge follows from the
+polydisc Cauchy formula:
+1–3. **`bridge_torus_repr` PROVED** (`CBridge.lean`, sorry-free, standard axioms): a jointly
+   ℂ-differentiable `f : ℂ² → ℂ` equals, on a small polydisc, the **iterated double Cauchy integral**
+   `f(z,w) = (2πi)⁻²∮_ζ∮_η f(ζ,η)/((ζ−z)(η−w))` — 1-var Cauchy in `z` on the holomorphic slice, then
+   1-var Cauchy in `w` for each `ζ` on the `z`-circle, substituted under the outer integral.
+   (`bridge_z_repr` is the standalone Step-1 version.)
+4. **expand the kernel** `1/((ζ−z)(η−w)) = ∑_{j,k} …` and assemble a several-variable power series ⟹
+   analytic.
+
+**Step 4 is the irreducible Mathlib gap** (and the genuine content of `osgood`): constructing a
+`HasFPowerSeriesAt` on `ℂ²`/`ℂⁿ` — a `FormalMultilinearSeries` from the double-indexed Cauchy
+coefficients with convergence — OR equivalently a several-variable locally-uniform-limit / integral-
+analyticity theorem. Mathlib has **none of these** (every alternative — "integral of an analytic
+family is analytic" for several parameters, "uniform limit of analytic is analytic" in several
+variables — is itself the same SCV gap). This is the substantial, multi-week, upstream-able SCV
+development. Everything *around* it is now proved: steps 1–3 (`bridge_torus_repr`), the inductive step
+`bridge_prod`, with only the `Fin n` induction + keystone plumbing as further (completable) bookkeeping.
+
 ## Assembly spine started — Layer A PROVED (2026-06-01)
 `CWeierstrassAssembly.lean` (standalone, not imported by `Mccalum.lean`) is the **assembly spine**
 that derives the `weierstrass_division` axiom from its Cauchy-integral ingredients, each layer taking
