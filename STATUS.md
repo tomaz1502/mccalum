@@ -1,5 +1,143 @@
 # Generalized McCallum Formalization — Status
 
+## ℕⁿ MULTI-INDEX BUILD STARTED — polarization-free foundation DONE (2026-06-01)
+
+Corrected the Phase-2 strategy: the operator-FMS induction hits a polarization gap (Mathlib lacks the
+multilinear-map polarization inequality). The **right, polarization-free route** generalizes the proven
+`ℂ²` `scvCoeff` construction to `ℂⁿ` with `ℕⁿ`-multi-index **scalar** coefficients (so coefficient
+bounds are clean iterated 1-variable Cauchy estimates). New `CSCVMultiIndex.lean`, sorry-free, axioms
+`[propext, Classical.choice, Quot.sound]`:
+- **`mtTerm c assign`** — the asymmetric `N`-multilinear map on `ℂⁿ = Fin n → ℂ` whose `i`-th slot
+  reads coordinate `assign i` (via Pi-projections); `mtTerm_apply_diag` (diagonal `c·∏ᵢ y(assign i)`),
+  `norm_mtTerm_le` (`≤ ‖c‖`). Generalizes `scvTerm`/`mlTerm` from 2 to `n` coordinates.
+- **`mtSeries c`** (the joint FMS, degree-`N` term `∑_{assign : Fin N → Fin n} mtTerm`),
+  `mtSeries_apply_diag`, `norm_mtSeries_le`.
+- **`le_radius_mtSeries`** — radius from the `n`-fold Cauchy bound `‖c N assign‖ ≤ M/rᴺ` (the `nᴺ`
+  monomial count shrinks the radius by `n`; **no polarization**).
+
+- **`summable_mt_family`** — summability of the multi-index family `c N assign · ∏ᵢ y(assign i)` over
+  all assignments `⟨N, assign⟩`, from the `n`-fold Cauchy bound + `n·‖y‖ < r` (dominated by
+  `M·(n‖y‖/r)ᴺ`, per-degree fiber finite). The HasSum prerequisite.
+
+**Remaining for the ℂⁿ bridge:** (1) the scalar `n`-fold nested-Cauchy coefficient + its bound
+(generalize `scvCoeff`/`norm_scvCoeff_le`, iterated); (2) the diagonal `HasSum` (the `n`-fold iterated
+Cauchy value `f = ∑_α c_α (z−z₀)^α` — induction on `n` + the assign-split bijection regrouping
+`(k, assign')` ↔ `assign` by which slots map to coord 0; this is the crux, uses `summable_mt_family`);
+(3) package `HasFPowerSeriesOnBall` ⟹ `AnalyticAt` ⟹ `HoloBridge ℂⁿ` ⟹ keystone. The algebraic
+foundation + summability are now in place sorry-free; the iterated-Cauchy value (2) is the remaining
+substantial (induction-on-dimension) step, with every technique already proven in `ℂ²`.
+
+## `bridge_step` Phase 2 — parametric Fréchet derivative DONE (2026-06-01)
+
+`CSCVBridgeStep.lean`, sorry-free, axioms `[propext, Classical.choice, Quot.sound]`:
+- **`slice_hasFDerivAt`** — the `w`-slice Fréchet derivative `(fderiv ℂ f (ζ,w)).comp inr`.
+- **`stepB_hasFDerivAt`** [needs `FiniteDimensional ℂ E'`, `MeasurableSpace`/`BorelSpace E'`] — `Bₖ`
+  has a Fréchet derivative in `w` (differentiate under the circle integral). Adapts
+  `circleIntegral_hasFDerivAt` but gets the derivative bound from `norm_partialFDeriv_le` (not
+  continuity of the `w`-partial — the regularity we're proving) and measurability from
+  `measurable_fderiv` + finite-dimensionality. **This was the hardest measure-theoretic piece.**
+
+**Remaining for `bridge_step`:** (1) `Bₖ` analytic on `ball w₀ rw` — now easy: `stepB_hasFDerivAt`
+(at each interior point) ⟹ `DifferentiableOn` ⟹ IH `HoloBridge E'` ⟹ `AnalyticOnNhd` ⟹ `qₖ` + `hA`;
+(2) **coefficient bound** `‖qₖ,ₘ‖ ≤ M/(rzᵏ·rwᵐ)` — the `z`-Cauchy estimate gives `‖Bₖ‖ ≤ Mf/rzᵏ`, then
+the multivariable **Cauchy coefficient estimate** `‖qₖ,ₘ‖ ≤ (sup‖Bₖ‖)/rwᵐ` (from `HasFPowerSeriesOnBall`
++ sup bound) — *not directly in Mathlib*; the diagonal 1-var estimate + polarization works (the
+polarization factor just shrinks the effective `w`-radius, fine for `AnalyticAt`); (3) assemble via
+`combination_analyticAt` + `holoBridge_pi` ⟹ keystone.
+
+## `bridge_step` Phase 2 — z-series + w-partial bound DONE (2026-06-01)
+
+`CSCVBridgeStep.lean`, sorry-free, axioms `[propext, Classical.choice, Quot.sound]`:
+- **`stepB f z₀ rz k w := (2πI)⁻¹ ∮_ζ (ζ−z₀)^{-(k+1)} f(ζ,w)`** and **`stepB_hasSum`** — the `z`-series
+  `f(z,w) = ∑ₖ (z−z₀)ᵏ Bₖ(w)` (= `combination_analyticAt`'s `hC`), free via the existing 1-variable
+  `hasSum_w_expansion` applied to the holomorphic `z`-slice.
+- **`norm_partialFDeriv_le`** — the multivariable-regularity estimate (the `E'`-analog of
+  `slicePartial`): `f` differentiable + bounded by `Mf` on `closedBall p ρ` ⟹
+  `‖(fderiv ℂ f p).comp inr‖ ≤ Mf/ρ`. Proof: along each complex line `h ↦ f(p+h·(0,v))` the 1-variable
+  Cauchy derivative estimate (`Complex.norm_deriv_le_of_forall_mem_sphere_norm_le`) gives the bound.
+
+**Remaining for `bridge_step`:** (1) `Bₖ` differentiable on `ball w₀ rw` — parametric Fréchet-derivative
+under the integral (`hasFDerivAt_integral_of_dominated_of_fderiv_le`), domination from
+`norm_partialFDeriv_le`, measurability from `fderiv` measurable; (2) `Bₖ` analytic via the IH
+`HoloBridge E'`; (3) coefficient bounds `‖qₖ,ₘ‖ ≤ M/(rzᵏ·rwᵐ)` (Cauchy estimate on the `z`-circle +
+Mathlib's coefficient-from-sup bound) ⟹ `hb`, `hA`; (4) assemble via `combination_analyticAt` and feed
+`holoBridge_pi` ⟹ keystone.
+
+## COMBINATION LEMMA — analytic core `combination_analyticAt` DONE (2026-06-01)
+
+`CSCVCombination.lean`, sorry-free, axioms `[propext, Classical.choice, Quot.sound]`. The full joint
+power-series machinery for `bridge_step` is built and the **analytic core is proved**:
+- `mlSeries q` (the joint FMS, degree-`n` term `∑_{k≤n} mlTerm qₖ,ₙ₋ₖ k`, via `mlCoeffTerm` with the
+  `Fin (k+(n-k)) → Fin n` transport `domDomCongr`), `mlSeries_apply_diag`, `norm_mlSeries_le`.
+- `le_radius_mlSeries` (radius from `‖qₖ,ₘ‖ ≤ M/(rzᵏ·rwᵐ)`; the double `(n+1)` degeneracy absorbed by
+  `(n+1)cⁿ`, `c = s/min(rz,rw)`).
+- `hasSum_antidiagonal` (generic `ℕ×ℕ → degree-n` regroup).
+- **`combination_analyticAt`** — given coefficient series `qₖ`/functions `Bₖ` with Cauchy bound `hb`,
+  `w`-expansion `hA` (`∑ₘ qₖ,ₘ(t,…,t) = Bₖ(w₀+t)`), and `z`-series `hC` (`f = ∑ₖ (z−z₀)ᵏBₖ(w)`), it
+  packages `HasFPowerSeriesOnBall f (mlSeries q) (z₀,w₀)` ⟹ `AnalyticAt ℂ f (z₀,w₀)`. The `ℕ×ℕ` HasSum
+  + Fubini mirrors `scvCoeff_hasSum`.
+
+**Remaining for `bridge_step` (Phase 2)** — derive `combination_analyticAt`'s hypotheses from "f jointly
+ℂ-differentiable on the polydisc + IH `HoloBridge E'`":
+- **`hC` (z-series): FREE** — apply the existing 1-variable `hasSum_w_expansion` to each `z`-slice
+  `f(·,w)` (it's general in `g : ℂ → ℂ`); `Bₖ(w) := (2πI)⁻¹ ∮_ζ (ζ−z₀)^{-(k+1)} f(ζ,w)`.
+- **`Bₖ` analytic in `w`** (⟹ `qₖ`, `hA`, `hb` via Cauchy estimates) — the one remaining hard input.
+  Needs `Bₖ` differentiable on `E'` (then IH). Via `circleIntegral_differentiableOn_multi` /
+  Mathlib's parametric-FDeriv theorem, which needs the `w`-Fréchet-partial `∂_w f(ζ,w)` measurable +
+  *dominated* (a uniform bound `‖∂_w f(ζ,w)‖ ≤ C` on `sphere z₀ rz × closedBall w₀ rw`). The bound is
+  the `E'`-analog of `slicePartial`: directional 1-var Cauchy (`f(ζ, w+ηv)` holomorphic in `η`) gives
+  `‖∂_w f(ζ,w)·v‖ ≤ C‖v‖` uniformly. This is the multivariable regularity step still to build.
+
+## COMBINATION LEMMA — multilinear term kernel DONE (2026-06-01)
+
+New `CSCVCombination.lean`, sorry-free, axioms `[propext, Classical.choice, Quot.sound]`. The hardest
+new primitive for `bridge_step` (the multivariable Weierstrass combination) is built: the **multilinear
+generalization of `scvTerm`**, with `ContinuousMultilinearMap`-valued coefficients `b = qⱼ,ₖ` (the
+`k`-th homogeneous part of the analytic coefficient `Bⱼ`):
+- **`def mlTerm (b : ContinuousMultilinearMap ℂ (fun _:Fin m => E') ℂ) (k) :
+  ContinuousMultilinearMap ℂ (fun _:Fin (k+m) => ℂ × E') ℂ`** — built via
+  `curryFinFinset` (a `LinearIsometryEquiv`, all coords are the same space `ℂ × E'`) of
+  `(scalar z-product).smulRight (b ∘ snd-projections)`. The `Finset` split is `firstFin k m` (first
+  `k` indices, with `firstFin_card`/`firstFin_compl_card`).
+- **`mlTerm_apply_diag : mlTerm b k (fun _ => (s,t)) = sᵏ • b (t,…,t)`** — the diagonal value
+  (`curryFinFinset_symm_apply_const` + `mkPiAlgebraFin_apply`).
+- **`norm_mlTerm_le : ‖mlTerm b k‖ ≤ ‖b‖`** — operator norm (isometry + `norm_smulRight` +
+  `norm_compContinuousLinearMap_le`, projections have norm ≤ 1).
+
+This was the main feasibility risk of the combination (the `ContinuousMultilinearMap` plumbing) and it's
+resolved. **Remaining for `bridge_step`** (re-runs the `ℂ²` `scv_analyticAt`/`scvCoeff_hasSum` template
+with `mlTerm` in place of the scalar `scvTerm`): the joint series `p_N := ∑_{k≤N} mlTerm qₖ,N₋ₖ k`, its
+radius bound (from `norm_mlTerm_le` + Cauchy bounds `‖qₖ,ₘ‖ ≤ C M^k/ρ^m`), the diagonal `HasSum`
+(generalized `z`-Cauchy expansion `f = ∑ⱼ (z−z₀)ʲBⱼ(w)` + `Bⱼ` analytic-in-`w` via the IH +
+`circleIntegral_differentiableOn_multi`), and packaging into `HasFPowerSeriesOnBall`. Then `bridge_step`
+feeds `holoBridge_pi` ⟹ `HoloBridge ℂⁿ` ⟹ keystone.
+
+## n-VARIABLE INDUCTION SCAFFOLDING — reduces ℂⁿ bridge to ONE lemma (2026-06-01)
+
+New `CSCVBridgeN.lean`, all sorry-free, axioms `[propext, Classical.choice, Quot.sound]`. Confirmed
+the keystone is **already wired** to the bridge: `CParamIntegral.circleIntegral_analyticAt_multi` takes
+`hbridge : ∀ f U, IsOpen U → DifferentiableOn ℂ f U → AnalyticOnNhd ℂ f U` (on `H`) and produces the
+multi-parameter analyticity. So keystone ⟸ `HoloBridge H`.
+- **`def HoloBridge E := ∀ {f U}, IsOpen U → DifferentiableOn ℂ f U → AnalyticOnNhd ℂ f U`.**
+- **`holoBridge_C`** (base `ℂ`, from `bridge_one_var`), **`holoBridge_CC`** (`ℂ²`, from `scv_bridge`),
+  **`holoBridge_finZero`** (`Fin 0 → ℂ`, subsingleton).
+- **`HoloBridge.congr (e : E ≃L[ℂ] E')`** — the bridge transports across continuous-linear isos.
+- **`holoBridge_pi (hstep : ∀ E', HoloBridge E' → HoloBridge (ℂ × E')) : ∀ n, HoloBridge (Fin n → ℂ)`**
+  — the full `ℂⁿ` induction (`ℂⁿ⁺¹ ≅ ℂ × ℂⁿ` via `Fin.consEquivL`), conditional on the inductive step.
+
+**So the ENTIRE `n`-variable bridge — hence the keystone, hence `weierstrass_division`'s
+keystone input — now reduces to the single lemma `bridge_step : HoloBridge E' → HoloBridge (ℂ × E')`**
+(= `CBridge.bridge_prod` *without* `osgood`). The two-variable instance (`E' = ℂ`) is **proved**
+(`scv_bridge`). The remaining content of `bridge_step` is the *combination*: "a power series in `z`
+with analytic-in-`w` coefficients (geometric bounds) is jointly analytic on `ℂ × E'` " = multivariable
+Weierstrass, absent from Mathlib (`Differentiable ⇒ Analytic` and `LocallyUniformLimit` are both
+ℂ-domain-only). Two routes for it: (a) the multilinear-FMS construction (generalize `scvTerm`/
+`scvCoeff_hasSum` to `ContinuousMultilinearMap`-valued `w`-coefficients via `domCoprod`/`curryFinFinset`),
+or (b) the vector-valued-holomorphy route (`g : ℂ → C(K,ℂ)` analytic by Mathlib's Banach-codomain
+1-var theorem) — both still require assembling the joint series. This is the one remaining mountain on
+the keystone side; `bridge_step`'s inductive `Aⱼ`-analytic-in-`w` part is free from the IH +
+`CParamIntegral.circleIntegral_differentiableOn_multi`.
+
 ## ℂ² SCV BRIDGE COMPLETE — `scv_bridge` sorry-free (2026-06-01)
 
 **`scv_bridge : IsOpen U → DifferentiableOn ℂ f U → AnalyticOnNhd ℂ f U`** (for `f : ℂ² → ℂ`) is
