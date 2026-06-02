@@ -1,5 +1,59 @@
 # Generalized McCallum Formalization — Status
 
+## ✅ SCV BRIDGE COMPLETE + KEYSTONE FULLY WIRED (2026-06-02)
+
+The several-complex-variables holomorphy⇒analyticity bridge is **finished, sorry-free, axioms only
+`[propext, Classical.choice, Quot.sound]`**, and the keystone behind `weierstrass_division` is now an
+unconditional theorem (no `osgood`/bridge hypothesis). Full build green (2853 jobs).
+
+**`CSCVIterated.lean`** — the genuine SCV content:
+- **`multiIndexCauchy`** (the n-dimensional Cauchy induction): `f` differentiable+bounded(`M`) on a
+  closed polydisc has, for any working radius `0<r<R`, the multi-index expansion
+  `f(z₀+y) = ∑_{α} c_α ∏ⱼ yⱼ^{αⱼ}` with `‖c_α‖ ≤ M/r^{|α|}` for `‖y‖<r`. Induction on dimension: peel
+  coordinate 0 by the 1-var Cauchy expansion (`stepB_hasSum`), `Bₖ` differentiable (`stepB_hasFDerivAt`)
+  + bounded (`norm_stepB_le`), IH on each `Bₖ`, reassemble along `Fin.cons`. Carrying a working radius
+  `r<R` avoids any radius-independence/Cauchy-theorem detour.
+- Supporting: `summable_multiIndex_pow`, `exists_realize` (realizability of a multi-index by an
+  assignment, induction on `n` via `Fin.append`), `realizeAssign`, the cons scaffolding.
+
+**`CSCVPackage.lean`** — packaging + wiring:
+- **`hasSum_degree_regroup`** — regroup a multi-index `HasSum`/`Summable` by total degree via
+  `Finset.Nat.sigmaAntidiagonalTupleEquivTuple` (no multiplicities).
+- **`miSeries`** / `analyticAt_of_multiIndex` — build the `FormalMultilinearSeries` (degree-`N` term
+  sums `mtTerm (c α)(realizeAssign N α)` over `antidiagonalTuple n N`), prove radius + value via the
+  regrouping, get `HasFPowerSeriesOnBall` ⟹ `AnalyticAt`.
+- **`holoBridge_finToC : ∀ n, HoloBridge (Fin n → ℂ)`** and **`holoBridge_findim`** (any finite-dim
+  `ℂ`-space, by CLE transport) — the bridge proper.
+- **`circleIntegral_analyticAt_keystone`** — the multi-parameter keystone, now unconditional
+  (`circleIntegral_analyticAt_multi` fed `holoBridge_findim`).
+- **`circleIntegral_analyticAt_fiber`** — the keystone in the exact fiber form
+  `(∀ ζ∈sphere, AnalyticAt Φ (p₀,ζ)) ⟹ AnalyticAt (∮ Φ(·,ζ))` consumed by
+  `weierstrass_division_W_exists`. Verified to discharge that hypothesis (tube lemma + analytic-locus
+  open + analytic⇒fderiv-continuous).
+
+**Net:** the keystone input to `weierstrass_division` (Layer B) is fully proved. Remaining to discharge
+the `weierstrass_division` axiom entirely: **Layer C** (preparation via the argument principle — base
+case `z=0` done, propagation open) and the separate `zariski_single_branch` axiom.
+
+## ITERATED-VALUE INDUCTION STARTED — combinatorial scaffolding DONE (2026-06-02)
+
+`CSCVIterated.lean`, sorry-free, axioms `[propext, Classical.choice, Quot.sound]`. The remaining crux —
+the multi-index Cauchy value `f(z₀+y) = ∑_{α : Fin n → ℕ} c_α · ∏ⱼ yⱼ^{αⱼ}` by induction on dimension
+— is set up in the **clean multi-index formulation** (one monomial per `α`, no multiplicity):
+- **`multiIndexCauchy_zero`** — base case `n = 0` (single-point domain, constant `f`).
+- **`prod_pow_cons`** — the monomial `Fin.cons` split `∏ⱼ yⱼ^{(cons k β)ⱼ} = y₀ᵏ · ∏ᵢ y_{i+1}^{βᵢ}`
+  (the key identity; no multinomial factor, which is exactly why multi-index beats assignment-based).
+- **`hasSum_cons`** — `cons`-reindexing of `HasSum` (`Fin.consEquiv`): combines the `k`-sum and `β`-sum
+  into the full `Fin (n+1) → ℕ` sum.
+
+**Remaining: the analytic inductive step `n → n+1`** — peel the first coordinate via the 1-variable
+Cauchy expansion (reuse `stepB_hasSum`/`stepB_hasFDerivAt` with `g := fun p => f (Fin.cons p.1 p.2)` :
+`ℂ × (Fin n → ℂ) → ℂ`), get `Bₖ` analytic in the `n` remaining variables (induction hypothesis), bound
+them (Cauchy estimate), and assemble via `hasSum_cons` + `prod_pow_cons` + `HasSum.sigma_of_hasSum`.
+The summability of the `(k,β)` family is a product-of-geometrics (itself a short induction on `n`).
+Then package into `HoloBridge ℂⁿ` ⟹ keystone. The combinatorial scaffolding is now in place; the step is
+the substantial analytic piece, reusing the proven `ℂ²` machinery.
+
 ## ℕⁿ MULTI-INDEX BUILD STARTED — polarization-free foundation DONE (2026-06-01)
 
 Corrected the Phase-2 strategy: the operator-FMS induction hits a polarization gap (Mathlib lacks the
