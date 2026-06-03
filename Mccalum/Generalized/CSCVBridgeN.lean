@@ -1,5 +1,4 @@
-import Mccalum.Generalized.CSCVBridge
-import Mccalum.Generalized.CBridge
+import Mccalum.Generalized.CParamIntegral
 
 /-!
 # Several-complex-variables bridge — the `n`-variable induction (scaffolding)
