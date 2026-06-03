@@ -1,4 +1,4 @@
-import Mccalum.Generalized.WeierstrassZariskiAxioms
+import Mccalum.Generalized.WeierstrassDefs
 
 /-!
 # Assembling `weierstrass_division` from its Cauchy-integral ingredients (WIP)

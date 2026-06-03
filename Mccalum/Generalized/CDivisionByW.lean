@@ -1,5 +1,5 @@
 import Mccalum.Generalized.CCauchyDivision
-import Mccalum.Generalized.WeierstrassZariskiAxioms
+import Mccalum.Generalized.WeierstrassDefs
 import Mccalum.Generalized.CWeierstrassAssembly
 
 /-!
@@ -88,22 +88,6 @@ theorem weierstrassEval_continuous (m : ℕ) (a : Fin m → (CParam s e → ℂ)
   rw [heq]
   exact (continuous_snd.pow m).add
     (continuous_finset_sum _ fun i _ => ((ha_cont i).comp continuous_fst).mul (continuous_snd.pow _))
-
-/-- A Weierstrass polynomial is **monic** (leading term `X^m`, the rest of degree `< m`). -/
-theorem weierstrassPoly_monic (m : ℕ) (a : Fin m → (CParam s e → ℂ)) (w : CParam s e) :
-    (weierstrassPoly m a w).Monic := by
-  rw [weierstrassPoly]
-  exact monic_X_pow_add (degree_sum_fin_lt (fun i => a i w))
-
-/-- A Weierstrass polynomial has **degree exactly `m`**. -/
-theorem weierstrassPoly_natDegree (m : ℕ) (a : Fin m → (CParam s e → ℂ)) (w : CParam s e) :
-    (weierstrassPoly m a w).natDegree = m := by
-  rw [weierstrassPoly]
-  have hdeg : (X ^ m + ∑ i : Fin m, C (a i w) * X ^ (i : ℕ) : Polynomial ℂ).degree = (m : WithBot ℕ) := by
-    rw [degree_add_eq_left_of_degree_lt, degree_X_pow]
-    rw [degree_X_pow]
-    exact degree_sum_fin_lt (fun i => a i w)
-  exact natDegree_eq_of_degree_eq_some hdeg
 
 /-- Each coefficient `z ↦ W(z, ·).coeff j` of a Weierstrass polynomial is **analytic** in `z`
 (`coeff j` is `1`/`0` for `j = m`/`j > m` and `a_j(z)` for `j < m` — in all cases a constant plus a

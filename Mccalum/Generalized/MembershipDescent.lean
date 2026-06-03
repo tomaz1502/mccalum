@@ -29,35 +29,35 @@ variable {s e : ℕ}
   funext zt; rw [polyToFun_apply]; simp
 
 /-- The degree-`<m` remainder polynomial `∑_{i<m} C(ρᵢ)·Xⁱ`. -/
-def remPoly {m : ℕ} (ρ : Fin m → (CParam s e → ℂ)) : (CParam s e → ℂ)[X] :=
+def remPolyFun {m : ℕ} (ρ : Fin m → (CParam s e → ℂ)) : (CParam s e → ℂ)[X] :=
   ∑ i : Fin m, Polynomial.C (ρ i) * X ^ (i : ℕ)
 
-lemma polyToFun_remPoly {m : ℕ} (ρ : Fin m → (CParam s e → ℂ)) :
-    polyToFun s e (remPoly ρ) = fun zt => ∑ i : Fin m, ρ i zt.1 * zt.2 ^ (i : ℕ) := by
-  rw [remPoly, map_sum]
+lemma polyToFun_remPolyFun {m : ℕ} (ρ : Fin m → (CParam s e → ℂ)) :
+    polyToFun s e (remPolyFun ρ) = fun zt => ∑ i : Fin m, ρ i zt.1 * zt.2 ^ (i : ℕ) := by
+  rw [remPolyFun, map_sum]
   funext zt
   rw [Finset.sum_apply]
   refine Finset.sum_congr rfl (fun i _ => ?_)
   simp only [map_mul, map_pow, polyToFun_C, polyToFun_X, Pi.mul_apply, Pi.pow_apply]
 
-lemma remPoly_natDegree_lt {m : ℕ} (hm : 0 < m) (ρ : Fin m → (CParam s e → ℂ)) :
-    (remPoly ρ).natDegree < m := by
-  rcases eq_or_ne (remPoly ρ) 0 with h0 | h0
+lemma remPolyFun_natDegree_lt {m : ℕ} (hm : 0 < m) (ρ : Fin m → (CParam s e → ℂ)) :
+    (remPolyFun ρ).natDegree < m := by
+  rcases eq_or_ne (remPolyFun ρ) 0 with h0 | h0
   · rw [h0, natDegree_zero]; exact hm
-  · rw [Polynomial.natDegree_lt_iff_degree_lt h0, remPoly]
+  · rw [Polynomial.natDegree_lt_iff_degree_lt h0, remPolyFun]
     exact weierstrassPolyFun_lower_degree_lt m ρ
 
 /-- The coefficients of the remainder polynomial are analytic at `0`. -/
-lemma remPoly_coeff_analyticAt {m : ℕ} (ρ : Fin m → (CParam s e → ℂ))
+lemma remPolyFun_coeff_analyticAt {m : ℕ} (ρ : Fin m → (CParam s e → ℂ))
     (hρ : ∀ i, AnalyticAt ℂ (ρ i) 0) (k : ℕ) :
-    AnalyticAt ℂ ((remPoly ρ).coeff k) 0 := by
+    AnalyticAt ℂ ((remPolyFun ρ).coeff k) 0 := by
   set S := AnalyticAtSubring s e
   let pS : S[X] := ∑ i : Fin m, Polynomial.C (⟨ρ i, hρ i⟩ : S) * X ^ (i : ℕ)
-  have hmap : pS.map S.subtype = remPoly ρ := by
-    simp only [pS, remPoly, Polynomial.map_sum, Polynomial.map_mul, Polynomial.map_pow,
+  have hmap : pS.map S.subtype = remPolyFun ρ := by
+    simp only [pS, remPolyFun, Polynomial.map_sum, Polynomial.map_mul, Polynomial.map_pow,
       Polynomial.map_X, Polynomial.map_C]
     rfl
-  have hc : (remPoly ρ).coeff k = ↑(pS.coeff k) := by rw [← hmap, Polynomial.coeff_map]; rfl
+  have hc : (remPolyFun ρ).coeff k = ↑(pS.coeff k) := by rw [← hmap, Polynomial.coeff_map]; rfl
   rw [hc]; exact (pS.coeff k).2
 
 /-- A polynomial over `CParam s e → ℂ` with analytic-at-`0` coefficients (the analytic-coeff
@@ -100,9 +100,9 @@ lemma analyticCoeffs_derivative {p : (CParam s e → ℂ)[X]} (hp : AnalyticCoef
     show ((i : CParam s e → ℂ) + 1) = fun _ => ((i : ℂ) + 1) from by funext _; simp]
   exact (hp (i + 1)).mul analyticAt_const
 
-lemma analyticCoeffs_remPoly {m : ℕ} (ρ : Fin m → (CParam s e → ℂ))
-    (hρ : ∀ i, AnalyticAt ℂ (ρ i) 0) : AnalyticCoeffs (remPoly ρ) :=
-  remPoly_coeff_analyticAt ρ hρ
+lemma analyticCoeffs_remPolyFun {m : ℕ} (ρ : Fin m → (CParam s e → ℂ))
+    (hρ : ∀ i, AnalyticAt ℂ (ρ i) 0) : AnalyticCoeffs (remPolyFun ρ) :=
+  remPolyFun_coeff_analyticAt ρ hρ
 
 lemma analyticCoeffs_divByMonic {p h : (CParam s e → ℂ)[X]}
     (hp : AnalyticCoeffs p) (hh : AnalyticCoeffs h) (hmonic : h.Monic) :
@@ -133,26 +133,26 @@ theorem membership_descent {m : ℕ} (hm : 0 < m) (a : Fin m → (CParam s e →
   obtain ⟨qΓ, ρΓ, hqΓ, hρΓ, hdivΓ⟩ := weierstrass_division_analytic m a ha_an ha0 Γ hΓ
   obtain ⟨qΔ, ρΔ, hqΔ, hρΔ, hdivΔ⟩ := weierstrass_division_analytic m a ha_an ha0 Δ hΔ
   -- Divisions in `polyToFun` form: `Γ =ᶠ qΓ·H + polyToFun rΓ`, etc.
-  have hΓ_eq : Γ =ᶠ[𝓝 0] fun zt => qΓ zt * H zt + polyToFun s e (remPoly ρΓ) zt := by
+  have hΓ_eq : Γ =ᶠ[𝓝 0] fun zt => qΓ zt * H zt + polyToFun s e (remPolyFun ρΓ) zt := by
     filter_upwards [hdivΓ] with zt hzt
-    rw [hzt, polyToFun_remPoly, hH, polyToFun_weierstrassPolyFun]
-  have hΔ_eq : Δ =ᶠ[𝓝 0] fun zt => qΔ zt * H zt + polyToFun s e (remPoly ρΔ) zt := by
+    rw [hzt, polyToFun_remPolyFun, hH, polyToFun_weierstrassPolyFun]
+  have hΔ_eq : Δ =ᶠ[𝓝 0] fun zt => qΔ zt * H zt + polyToFun s e (remPolyFun ρΔ) zt := by
     filter_upwards [hdivΔ] with zt hzt
-    rw [hzt, polyToFun_remPoly, hH, polyToFun_weierstrassPolyFun]
+    rw [hzt, polyToFun_remPolyFun, hH, polyToFun_weierstrassPolyFun]
   -- collected quotient germ and the polynomial `P₀`
   set k : CParam s e × ℂ → ℂ := fun zt => qΓ zt * H zt + qΔ zt * H' zt with hk_def
   have hk_an : AnalyticAt ℂ k 0 := (hqΓ.mul hHan).add (hqΔ.mul hH'an)
   set P0 : (CParam s e → ℂ)[X] :=
-    Polynomial.C P - remPoly ρΓ * weierstrassPolyFun m a - remPoly ρΔ * derivative (weierstrassPolyFun m a)
+    Polynomial.C P - remPolyFun ρΓ * weierstrassPolyFun m a - remPolyFun ρΔ * derivative (weierstrassPolyFun m a)
     with hP0
   have hP0_coeff : AnalyticCoeffs P0 := by
     rw [hP0]
     exact analyticCoeffs_sub (analyticCoeffs_sub (analyticCoeffs_C hP_an)
-      (analyticCoeffs_mul (analyticCoeffs_remPoly ρΓ hρΓ) hh_an))
-      (analyticCoeffs_mul (analyticCoeffs_remPoly ρΔ hρΔ) hh'_an)
+      (analyticCoeffs_mul (analyticCoeffs_remPolyFun ρΓ hρΓ) hh_an))
+      (analyticCoeffs_mul (analyticCoeffs_remPolyFun ρΔ hρΔ) hh'_an)
   -- `polyToFun P₀ = polyToFun (C P) − polyToFun rΓ · H − polyToFun rΔ · H'`
   have hP0exp : polyToFun s e P0 = fun zt => polyToFun s e (Polynomial.C P) zt
-      - polyToFun s e (remPoly ρΓ) zt * H zt - polyToFun s e (remPoly ρΔ) zt * H' zt := by
+      - polyToFun s e (remPolyFun ρΓ) zt * H zt - polyToFun s e (remPolyFun ρΔ) zt * H' zt := by
     rw [hP0, map_sub, map_sub, map_mul, map_mul]; rfl
   -- `k · H =ᶠ polyToFun P₀`
   have hkH : (fun zt => k zt * H zt) =ᶠ[𝓝 0] polyToFun s e P0 := by
@@ -165,13 +165,13 @@ theorem membership_descent {m : ℕ} (hm : 0 < m) (a : Fin m → (CParam s e →
   have hcore : k =ᶠ[𝓝 0] polyToFun s e (P0 /ₘ weierstrassPolyFun m a) :=
     analytic_mul_weierstrass_eq_poly_of_coeffs hm a ha_an ha0 k hk_an P0 hP0_coeff hkH
   -- assemble `A := P₀/ₘh + rΓ`, `B := rΔ`
-  refine ⟨P0 /ₘ weierstrassPolyFun m a + remPoly ρΓ, remPoly ρΔ,
+  refine ⟨P0 /ₘ weierstrassPolyFun m a + remPolyFun ρΓ, remPolyFun ρΔ,
     analyticCoeffs_add (analyticCoeffs_divByMonic hP0_coeff hh_an hmonic)
-      (analyticCoeffs_remPoly ρΓ hρΓ), analyticCoeffs_remPoly ρΔ hρΔ, ?_⟩
-  have hRHS : polyToFun s e ((P0 /ₘ weierstrassPolyFun m a + remPoly ρΓ) * weierstrassPolyFun m a
-        + remPoly ρΔ * derivative (weierstrassPolyFun m a))
+      (analyticCoeffs_remPolyFun ρΓ hρΓ), analyticCoeffs_remPolyFun ρΔ hρΔ, ?_⟩
+  have hRHS : polyToFun s e ((P0 /ₘ weierstrassPolyFun m a + remPolyFun ρΓ) * weierstrassPolyFun m a
+        + remPolyFun ρΔ * derivative (weierstrassPolyFun m a))
       = fun zt => polyToFun s e (P0 /ₘ weierstrassPolyFun m a) zt * H zt
-        + polyToFun s e (remPoly ρΓ) zt * H zt + polyToFun s e (remPoly ρΔ) zt * H' zt := by
+        + polyToFun s e (remPolyFun ρΓ) zt * H zt + polyToFun s e (remPolyFun ρΔ) zt * H' zt := by
     rw [map_add, map_mul, map_add, map_mul]
     funext zt; simp only [Pi.add_apply, Pi.mul_apply]; ring
   rw [hRHS]

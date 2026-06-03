@@ -68,17 +68,6 @@ lemma weierstrassPolyFun_degree (hm : 0 < m) : (weierstrassPolyFun m a).degree =
 lemma weierstrassPolyFun_natDegree (hm : 0 < m) : (weierstrassPolyFun m a).natDegree = m :=
   natDegree_eq_of_degree_eq_some (weierstrassPolyFun_degree m a hm)
 
-/-- The pointwise Weierstrass polynomial is monic. -/
-lemma weierstrassPoly_monic (hm : 0 < m) (w : CParam s e) : (weierstrassPoly m a w).Monic := by
-  rw [← weierstrassPolyFun_map_eval m a w]
-  exact (weierstrassPolyFun_monic m a).map _
-
-/-- The pointwise Weierstrass polynomial has degree exactly `m`. -/
-lemma weierstrassPoly_natDegree (hm : 0 < m) (w : CParam s e) :
-    (weierstrassPoly m a w).natDegree = m := by
-  rw [← weierstrassPolyFun_map_eval m a w, (weierstrassPolyFun_monic m a).natDegree_map,
-    weierstrassPolyFun_natDegree m a hm]
-
 /-- The resultant of the function-coefficient Weierstrass polynomial against its derivative — a
 single function `CParam s e → ℂ`. (Discriminant of the family, up to a sign unit.) -/
 def weierstrassResFun : CParam s e → ℂ :=
@@ -99,10 +88,10 @@ lemma weierstrassResFun_eq_discFn (hm : 0 < m) (w : CParam s e) :
     weierstrassResFun m a w = (-1) ^ (m * (m - 1) / 2) * weierstrassDiscFn m a w := by
   rw [weierstrassResFun_apply]
   have hdeg : 0 < (weierstrassPoly m a w).degree := by
-    rw [← natDegree_pos_iff_degree_pos, weierstrassPoly_natDegree m a hm]; exact hm
-  have hnd := weierstrassPoly_natDegree m a hm w
+    rw [← natDegree_pos_iff_degree_pos, weierstrassPoly_natDegree m a w]; exact hm
+  have hnd := weierstrassPoly_natDegree m a w
   have h := resultant_deriv hdeg
-  rw [hnd, (weierstrassPoly_monic m a hm w).leadingCoeff, mul_one] at h
+  rw [hnd, (weierstrassPoly_monic m a w).leadingCoeff, mul_one] at h
   rw [h, weierstrassDiscFn]
 
 /-- The resultant function and the discriminant function share vanishing order (they differ by the

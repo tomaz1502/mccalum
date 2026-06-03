@@ -1,5 +1,5 @@
 import Mccalum.Generalized.CSCVPackage
-import Mccalum.Generalized.WeierstrassZariskiAxioms
+import Mccalum.Generalized.WeierstrassDefs
 import Mccalum.Generalized.CArgPrinciple
 
 /-!

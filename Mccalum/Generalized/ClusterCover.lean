@@ -167,7 +167,7 @@ lemma multmatch_of_weierstrass (m : ℕ) (hm_pos : 0 < m) (a : Fin m → (CParam
   have hord : analyticOrderAt fEval α = analyticOrderAt hEval α :=
     analyticOrderAt_eq_of_unit_factor huSec_an huSecα hhEval_an hfac_germ
   rw [hfEval, hhEval, analyticOrderAt_polynomial_eval hfam_y_ne α,
-    analyticOrderAt_polynomial_eval (weierstrassPoly_monic m a hm_pos z).ne_zero α] at hord
+    analyticOrderAt_polynomial_eval (weierstrassPoly_monic m a z).ne_zero α] at hord
   have hrm : (fam y).rootMultiplicity α = (weierstrassPoly m a z).rootMultiplicity α := by
     exact_mod_cast hord
   rw [hrm]; exact hmult_y hinj i
