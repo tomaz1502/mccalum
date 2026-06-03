@@ -96,36 +96,6 @@ theorem order_invariant_nowhere_vanishing_on_open
   have hord : polyOrder n P a = 0 := by rw [hP_oi a ha a₀ ha₀S]; exact hord₀
   exact (polyOrder_zero_iff n P a).mp hord
 
-/-- If `P ∈ ⟨f, f'⟩ ∩ ℝ[x]` and `P(a) ≠ 0`, then `f(a, ·)` has no repeated roots.
-
-The proof evaluates the Bézout identity `C(P) = A·f + B·f'` at `(a, y)`: if `y` is a
-common root of `f(a,·)` and `f'(a,·)`, both terms vanish, giving `P(a) = 0`. -/
-theorem no_repeated_roots_of_elim_nonvanishing
-    (f : PolyR n)
-    (P : MvPolyR n)
-    (hP_mem : Polynomial.C P ∈
-      Ideal.span ({f, Polynomial.derivative f} : Set (PolyR n)))
-    (a : Fin n → ℝ)
-    (hP_nz : MvPolynomial.eval a P ≠ 0) :
-    ∀ y : ℝ, (specialize f a).IsRoot y →
-      ¬ (specialize (Polynomial.derivative f) a).IsRoot y := by
-  intro y hfy hf'y
-  apply hP_nz
-  obtain ⟨A, B, hAB⟩ := Ideal.mem_span_pair.mp hP_mem
-  have heq : specialize (Polynomial.C P) a = specialize (A * f + B * Polynomial.derivative f) a := by
-    rw [hAB]
-  have h1 : (specialize (Polynomial.C P) a).eval y = MvPolynomial.eval a P := by
-    simp [specialize, Polynomial.map_C]
-  have h2 : (specialize (A * f + B * Polynomial.derivative f) a).eval y =
-      (specialize A a).eval y * (specialize f a).eval y +
-      (specialize B a).eval y * (specialize (Polynomial.derivative f) a).eval y := by
-    simp [specialize, Polynomial.map_add, Polynomial.map_mul,
-      Polynomial.eval_add, Polynomial.eval_mul]
-  rw [Polynomial.IsRoot] at hfy hf'y
-  have h3 := congrArg (Polynomial.eval y) heq
-  rw [h1] at h3
-  rw [h2, hfy, hf'y, mul_zero, mul_zero, add_zero] at h3
-  exact h3
 
 /-- If `P ∈ ⟨f, f'⟩ ∩ ℝ[x]` and `P(a) ≠ 0`, then `f(a, ·)` is separable (coprime with
 its derivative). This is because the Bézout identity `C(P) = A·f + B·f'` specializes to
@@ -575,40 +545,6 @@ theorem norm_identity_elim
   simp only [Fintype.card_fin, AdjoinRoot.powerBasis'_dim] at hnorm
   exact ⟨Algebra.norm R (AdjoinRoot.mk h b), hnorm.symm⟩
 
-/-- **D2 wiring (Phase D validation).** Given a monic `h` (the Weierstrass polynomial — here
-arbitrary, i.e. a *stub* Weierstrass output) and a witness `P ∈ ⟨h, h'⟩` of constant vanishing
-order on a connected `S`, the resultant `res(h, h')` (= discriminant up to leading coefficient)
-has constant order on `S`.
-
-This is the algebraic spine of Phase D, assembled entirely from **proven** lemmas:
-`norm_identity_elim` (`P^m = res(h,h')·Q`, generic over any `CommRing`) + the reverse-order bridge
-`order_invariant_factor_of_mul`. It validates that "witness order-invariance ⟹ discriminant
-order-invariance" closes. The eventual proof instantiates `h` with the Weierstrass polynomial over
-the holomorphic germ ring (Phase B); here the wiring is checked over `MvPolynomial`, where the
-bridge already exists. -/
-theorem disc_order_invariant_of_witness {n : ℕ}
-    (S : Set (Fin n → ℝ)) (hS : IsPreconnected S)
-    (h : Polynomial (MvPolyR n)) (hh_monic : h.Monic)
-    (P : MvPolyR n) (hP_ne : P ≠ 0)
-    (hP_mem : Polynomial.C P ∈
-      Ideal.span ({h, Polynomial.derivative h} : Set (Polynomial (MvPolyR n))))
-    (hres_ne : Polynomial.resultant h (Polynomial.derivative h) ≠ 0)
-    (hP_oi : OrderInvariantMv P S) :
-    OrderInvariantMv (Polynomial.resultant h (Polynomial.derivative h)) S := by
-  obtain ⟨Q, hQ⟩ := norm_identity_elim (MvPolyR n) h (Polynomial.derivative h) hh_monic P hP_mem
-  have hpow : ∀ m : ℕ, OrderInvariantMv (P ^ m) S := by
-    intro m
-    induction m with
-    | zero =>
-      intro a _ b _
-      rw [pow_zero, (polyOrder_zero_iff n 1 a).mpr (by simp),
-        (polyOrder_zero_iff n 1 b).mpr (by simp)]
-    | succ k ih => rw [pow_succ]; exact order_invariant_mul_mv S _ P ih hP_oi
-  have hPdeg_oi : OrderInvariantMv (Polynomial.resultant h (Polynomial.derivative h) * Q) S := by
-    rw [← hQ]; exact hpow h.natDegree
-  have hQ_ne : Q ≠ 0 := fun hQ0 =>
-    pow_ne_zero h.natDegree hP_ne (by rw [hQ, hQ0, mul_zero])
-  exact (order_invariant_factor_of_mul S hS _ Q hres_ne hQ_ne hPdeg_oi).1
 
 /-! ### Complexification of real-analytic functions
 

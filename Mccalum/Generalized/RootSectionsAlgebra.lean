@@ -25,9 +25,6 @@ open Polynomial
 
 variable {r : ℕ} (c : Fin r → ℂ) (e : Fin r → ℕ)
 
-/-- The product `∏ᵢ (X − C cᵢ)^{eᵢ}` is nonzero. -/
-lemma prod_X_sub_C_pow_ne_zero : (∏ i : Fin r, (X - C (c i)) ^ (e i)) ≠ 0 :=
-  Finset.prod_ne_zero_iff.mpr fun i _ => pow_ne_zero _ (X_sub_C_ne_zero (c i))
 
 /-- **F2 exhaustiveness.** The roots of `∏ᵢ (X − C cᵢ)^{eᵢ}` (with `eᵢ > 0`) are exactly the `cᵢ`. -/
 lemma isRoot_prod_X_sub_C_pow (he : ∀ i, 0 < e i) (α : ℂ) :

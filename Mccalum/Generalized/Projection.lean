@@ -138,68 +138,7 @@ lemma prod_eq_mul_cofactorProd (A : Finset (PolyR n)) (F : PolyR n) (hF : F ∈ 
 
 /-! ### Algebraic helper lemmas for elimination ideal membership -/
 
-/-- The resultant-like factor `cofactor(F) · cofactor(G) · C(r(F,G))` belongs to
-`⟨f, f'⟩` where `f = ∏ H ∈ A, H`. Since `C(r) ∈ ⟨F, G⟩`, multiplying generators
-by cofactors yields multiples of `f`. -/
-lemma cofactors_mul_r_mem (A : Finset (PolyR n)) (F G : PolyR n)
-    (hF : F ∈ A) (hG : G ∈ A)
-    (r_FG : MvPolyR n)
-    (hr : Polynomial.C r_FG ∈ Ideal.span ({F, G} : Set (PolyR n))) :
-    cofactorProd A F * cofactorProd A G * Polynomial.C r_FG ∈
-      Ideal.span ({∏ H ∈ A, H, Polynomial.derivative (∏ H ∈ A, H)} : Set (PolyR n)) := by
-  obtain ⟨u, v, huv⟩ := Ideal.mem_span_pair.mp hr
-  rw [← huv]
-  have h1 : F * cofactorProd A F = ∏ H ∈ A, H := (prod_eq_mul_cofactorProd A F hF).symm
-  have h2 : G * cofactorProd A G = ∏ H ∈ A, H := (prod_eq_mul_cofactorProd A G hG).symm
-  have key : cofactorProd A F * cofactorProd A G * (u * F + v * G) =
-      (u * cofactorProd A G + v * cofactorProd A F) * (∏ H ∈ A, H) := by
-    calc cofactorProd A F * cofactorProd A G * (u * F + v * G)
-        = u * (F * cofactorProd A F) * cofactorProd A G +
-          v * cofactorProd A F * (G * cofactorProd A G) := by ring
-      _ = u * (∏ H ∈ A, H) * cofactorProd A G +
-          v * cofactorProd A F * (∏ H ∈ A, H) := by rw [h1, h2]
-      _ = (u * cofactorProd A G + v * cofactorProd A F) * (∏ H ∈ A, H) := by ring
-  rw [key]
-  exact Ideal.mul_mem_left _ _ (Ideal.subset_span (Set.mem_insert _ _))
 
-/-- The discriminant-like factor `cofactor(F)² · C(d(F))` belongs to `⟨f, f'⟩`.
-Uses the product rule: `f' = F'·G_F + F·G_F'`, giving
-`G_F²·(u·F + v·F') = (u·G_F - v·G_F')·f + v·G_F·f'`. -/
-lemma cofactor_sq_mul_d_mem (A : Finset (PolyR n)) (F : PolyR n) (hF : F ∈ A)
-    (d_F : MvPolyR n)
-    (hd : Polynomial.C d_F ∈ Ideal.span ({F, Polynomial.derivative F} : Set (PolyR n))) :
-    cofactorProd A F ^ 2 * Polynomial.C d_F ∈
-      Ideal.span ({∏ H ∈ A, H, Polynomial.derivative (∏ H ∈ A, H)} : Set (PolyR n)) := by
-  obtain ⟨u, v, huv⟩ := Ideal.mem_span_pair.mp hd
-  rw [← huv]
-  have h1 : F * cofactorProd A F = ∏ H ∈ A, H := (prod_eq_mul_cofactorProd A F hF).symm
-  have hder : Polynomial.derivative (∏ H ∈ A, H) =
-      Polynomial.derivative F * cofactorProd A F +
-        F * Polynomial.derivative (cofactorProd A F) := by
-    conv_lhs => rw [prod_eq_mul_cofactorProd A F hF]
-    exact Polynomial.derivative_mul
-  have key : cofactorProd A F ^ 2 * (u * F + v * Polynomial.derivative F) =
-      (u * cofactorProd A F - v * Polynomial.derivative (cofactorProd A F)) * (∏ H ∈ A, H) +
-      v * cofactorProd A F * Polynomial.derivative (∏ H ∈ A, H) := by
-    calc cofactorProd A F ^ 2 * (u * F + v * Polynomial.derivative F)
-        = u * (F * cofactorProd A F) * cofactorProd A F +
-          v * cofactorProd A F *
-            (Polynomial.derivative F * cofactorProd A F +
-              F * Polynomial.derivative (cofactorProd A F)) -
-          v * Polynomial.derivative (cofactorProd A F) *
-            (F * cofactorProd A F) := by ring
-      _ = u * (∏ H ∈ A, H) * cofactorProd A F +
-          v * cofactorProd A F * Polynomial.derivative (∏ H ∈ A, H) -
-          v * Polynomial.derivative (cofactorProd A F) * (∏ H ∈ A, H) := by
-        rw [h1, ← hder]
-      _ = (u * cofactorProd A F - v * Polynomial.derivative (cofactorProd A F)) * (∏ H ∈ A, H) +
-          v * cofactorProd A F * Polynomial.derivative (∏ H ∈ A, H) := by ring
-  rw [key]
-  apply Ideal.add_mem
-  · exact Ideal.mul_mem_left _ _
-      (Ideal.subset_span (Set.mem_insert _ _))
-  · exact Ideal.mul_mem_left _ _
-      (Ideal.subset_span (Set.mem_insert_of_mem _ (Set.mem_singleton_iff.mpr rfl)))
 
 /-! ### Nullstellensatz for elimination ideals -/
 

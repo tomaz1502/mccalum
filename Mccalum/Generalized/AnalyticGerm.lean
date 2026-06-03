@@ -44,35 +44,7 @@ def AnalyticGerm : Subring (Germ (𝓝 (0 : Fin n → ℂ)) ℂ) where
 /-- `𝒪ₙ` is a commutative ring (inherited from the germ ring). -/
 example : CommRing (AnalyticGerm n) := inferInstance
 
-/-- A germ in `𝒪ₙ` with an analytic representative nonzero at `0` is a unit (its pointwise
-inverse `g⁻¹` is analytic near `0` and provides the inverse germ). -/
-theorem AnalyticGerm.isUnit_of_rep_ne_zero {n : ℕ} (b : AnalyticGerm n)
-    (g : (Fin n → ℂ) → ℂ) (hg : AnalyticAt ℂ g 0) (hg0 : g 0 ≠ 0)
-    (hgb : (↑g : Germ (𝓝 (0 : Fin n → ℂ)) ℂ) = b.1) : IsUnit b := by
-  have hinv : AnalyticAt ℂ g⁻¹ 0 := hg.inv hg0
-  have hgg : (g * g⁻¹ : (Fin n → ℂ) → ℂ) =ᶠ[𝓝 (0 : Fin n → ℂ)] 1 := by
-    filter_upwards [hg.continuousAt.eventually_ne hg0] with x hx
-    simp [Pi.mul_apply, Pi.inv_apply, mul_inv_cancel₀ hx]
-  have hmem : (↑g⁻¹ : Germ (𝓝 (0 : Fin n → ℂ)) ℂ) ∈ AnalyticGerm n := ⟨g⁻¹, hinv, rfl⟩
-  refine isUnit_of_mul_eq_one ⟨↑g⁻¹, hmem⟩ (Subtype.ext ?_)
-  show b.1 * (↑g⁻¹ : Germ (𝓝 (0 : Fin n → ℂ)) ℂ) = 1
-  rw [← hgb, ← Filter.Germ.coe_mul, Filter.Germ.coe_eq.mpr hgg, Filter.Germ.coe_one]
 
-/-- `𝒪ₙ` is a **local ring**: a germ is a unit iff its value at `0` is nonzero; otherwise `1 - g`
-has value `1 ≠ 0` and is a unit. -/
-instance (n : ℕ) : IsLocalRing (AnalyticGerm n) := by
-  apply IsLocalRing.of_isUnit_or_isUnit_one_sub_self
-  intro a
-  obtain ⟨f, hf, hfa⟩ := a.2
-  by_cases h0 : f 0 = 0
-  · right
-    refine AnalyticGerm.isUnit_of_rep_ne_zero (1 - a) (1 - f)
-      (analyticAt_const.sub hf) (by simp [Pi.sub_apply, h0]) ?_
-    show (↑(1 - f) : Germ (𝓝 (0 : Fin n → ℂ)) ℂ) = (1 - a).1
-    have hra : ((1 - a : AnalyticGerm n) : Germ (𝓝 (0 : Fin n → ℂ)) ℂ) = 1 - a.1 := by
-      push_cast; ring
-    rw [hra, Filter.Germ.coe_sub, Filter.Germ.coe_one, hfa]
-  · exact Or.inl (AnalyticGerm.isUnit_of_rep_ne_zero a f hf h0 hfa)
 
 /-! ## B2 — the vanishing order / valuation on `𝒪ₙ` -/
 

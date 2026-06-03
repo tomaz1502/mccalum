@@ -33,13 +33,6 @@ theorem eval_sub_eval_eq_mul (W : Polynomial R) (ζ t : R) :
           rw [geom_sum₂_mul]
     _ = (ζ - t) * (W.coeff j * ∑ i ∈ range j, ζ ^ i * t ^ (j - 1 - i)) := by ring
 
-/-- Each `t`-monomial of `Q(ζ, t)` has degree `< natDegree W` in `t` (the inner exponent
-`j - 1 - i ≤ natDegree − 1` for `i < j ≤ natDegree`). This is the degree-`<m` property of the
-division remainder, read off the double sum directly. -/
-theorem diffQuotient_tdeg_lt (W : Polynomial R) (ζ : R) {j i : ℕ}
-    (hj : j ∈ range (W.natDegree + 1)) (hi : i ∈ range j) (hpos : 0 < W.natDegree) :
-    j - 1 - i < W.natDegree := by
-  simp only [Finset.mem_range] at hj hi; omega
 
 /-- **Difference quotient as an explicit degree-`<m` polynomial in `t`** (the reindexing brick).
 Collecting the double sum `∑_j W_j ∑_{i<j} ζ^i t^{j-1-i}` by the power `k` of `t` gives a genuine

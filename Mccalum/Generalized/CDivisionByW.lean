@@ -77,17 +77,6 @@ theorem qIntegrand_analyticAt (m : ℕ) (a : Fin m → (CParam s e → ℂ))
     exact mul_ne_zero (pow_ne_zero m hζ₀) hζ₀
   exact hFc.div (hW.mul hsub) hden_ne
 
-/-- The evaluation `(z, ζ) ↦ W(z, ζ)` is jointly continuous. -/
-theorem weierstrassEval_continuous (m : ℕ) (a : Fin m → (CParam s e → ℂ))
-    (ha_cont : ∀ i, Continuous (a i)) :
-    Continuous (fun zζ : CParam s e × ℂ => (weierstrassPoly m a zζ.1).eval zζ.2) := by
-  have heq : (fun zζ : CParam s e × ℂ => (weierstrassPoly m a zζ.1).eval zζ.2)
-      = fun zζ => zζ.2 ^ m + ∑ i : Fin m, a i zζ.1 * zζ.2 ^ (i : ℕ) := by
-    funext zζ
-    simp only [weierstrassPoly, eval_add, eval_pow, eval_X, eval_finset_sum, eval_mul, eval_C]
-  rw [heq]
-  exact (continuous_snd.pow m).add
-    (continuous_finset_sum _ fun i _ => ((ha_cont i).comp continuous_fst).mul (continuous_snd.pow _))
 
 /-- Each coefficient `z ↦ W(z, ·).coeff j` of a Weierstrass polynomial is **analytic** in `z`
 (`coeff j` is `1`/`0` for `j = m`/`j > m` and `a_j(z)` for `j < m` — in all cases a constant plus a

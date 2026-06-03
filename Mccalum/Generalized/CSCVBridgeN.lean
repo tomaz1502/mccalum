@@ -27,11 +27,7 @@ open scoped Topology
 def HoloBridge (E : Type*) [NormedAddCommGroup E] [NormedSpace ℂ E] : Prop :=
   ∀ {f : E → ℂ} {U : Set E}, IsOpen U → DifferentiableOn ℂ f U → AnalyticOnNhd ℂ f U
 
-/-- **Base case `ℂ`** — the one-variable bridge (`DifferentiableOn ⇒ AnalyticOnNhd`, Mathlib). -/
-theorem holoBridge_C : HoloBridge ℂ := fun hU hf => bridge_one_var hU hf
 
-/-- **Two-variable instance** of the inductive step, already proved by the polydisc–Cauchy route. -/
-theorem holoBridge_CC : HoloBridge (ℂ × ℂ) := fun hU hf => scv_bridge hU hf
 
 /-- **Transport along a continuous linear equivalence.** The bridge is invariant under `ℂ`-linear
 isomorphisms (analyticity/differentiability compose with the linear iso both ways). -/
@@ -60,15 +56,5 @@ theorem holoBridge_finZero : HoloBridge (Fin 0 → ℂ) := by
   have hc : AnalyticAt ℂ (fun _ : (Fin 0 → ℂ) => f x) x := analyticAt_const
   exact hc.congr (by filter_upwards with y using congrArg f (Subsingleton.elim x y))
 
-/-- **The `ℂⁿ` bridge by induction**, conditional on the inductive step
-`bridge_step : HoloBridge E' → HoloBridge (ℂ × E')`. The two-variable instance of `bridge_step` is
-already proved (`scv_bridge`); the general step is the one remaining lemma (multivariable Weierstrass).
-The split `ℂⁿ⁺¹ ≅ ℂ × ℂⁿ` is `Fin.consEquivL`. -/
-theorem holoBridge_pi (hstep : ∀ {E' : Type} [NormedAddCommGroup E'] [NormedSpace ℂ E'],
-    HoloBridge E' → HoloBridge (ℂ × E')) : ∀ n : ℕ, HoloBridge (Fin n → ℂ)
-  | 0 => holoBridge_finZero
-  | (n + 1) =>
-    HoloBridge.congr (Fin.consEquivL (R := ℂ) (M := fun _ : Fin (n + 1) => ℂ))
-      (hstep (holoBridge_pi hstep n))
 
 end

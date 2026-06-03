@@ -40,12 +40,6 @@ lemma polyToFun_remPolyFun {m : ℕ} (ρ : Fin m → (CParam s e → ℂ)) :
   refine Finset.sum_congr rfl (fun i _ => ?_)
   simp only [map_mul, map_pow, polyToFun_C, polyToFun_X, Pi.mul_apply, Pi.pow_apply]
 
-lemma remPolyFun_natDegree_lt {m : ℕ} (hm : 0 < m) (ρ : Fin m → (CParam s e → ℂ)) :
-    (remPolyFun ρ).natDegree < m := by
-  rcases eq_or_ne (remPolyFun ρ) 0 with h0 | h0
-  · rw [h0, natDegree_zero]; exact hm
-  · rw [Polynomial.natDegree_lt_iff_degree_lt h0, remPolyFun]
-    exact weierstrassPolyFun_lower_degree_lt m ρ
 
 /-- The coefficients of the remainder polynomial are analytic at `0`. -/
 lemma remPolyFun_coeff_analyticAt {m : ℕ} (ρ : Fin m → (CParam s e → ℂ))

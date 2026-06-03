@@ -100,16 +100,6 @@ theorem circleIntegral_differentiableOn
     (fun w hw ζ hζ => hderiv w (hsubb hw) ζ hζ)
   exact hd.differentiableAt.differentiableWithinAt
 
-/-- **One-parameter keystone (sorry-free).** A parametric circle integral whose integrand and
-`z`-derivative are jointly continuous (with the pointwise `z`-derivative) is `AnalyticAt` in `z`. -/
-theorem circleIntegral_analyticAt
-    {Φ Φ' : ℂ → ℂ → ℂ} {c : ℂ} {R : ℝ} {z₀ : ℂ} {δ : ℝ}
-    (hδ : 0 < δ) (hR : 0 ≤ R)
-    (hΦ : ContinuousOn (fun p : ℂ × ℂ => Φ p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
-    (hΦ' : ContinuousOn (fun p : ℂ × ℂ => Φ' p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
-    (hderiv : ∀ z ∈ ball z₀ δ, ∀ ζ ∈ sphere c R, HasDerivAt (fun w => Φ w ζ) (Φ' z ζ) z) :
-    AnalyticAt ℂ (fun z => ∮ ζ in C(c, R), Φ z ζ) z₀ :=
-  (circleIntegral_differentiableOn hδ hR hΦ hΦ' hderiv).analyticAt (ball_mem_nhds z₀ hδ)
 
 /-! ## Multi-parameter version (parameter in a complex normed space `H`)
 

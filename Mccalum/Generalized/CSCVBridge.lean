@@ -25,59 +25,8 @@ noncomputable section
 open Complex Metric
 open scoped Real Topology
 
-/-- **Cauchy-kernel geometric expansion.** For `‖z − z₀‖ < ‖ζ − z₀‖`,
-`∑_j (z−z₀)^j / (ζ−z₀)^{j+1} = (ζ − z)⁻¹` (a `HasSum`). The summand is the `z`-power-series coefficient
-of the Cauchy kernel; this is the engine that turns the Cauchy integral into a power series. -/
-theorem hasSum_cauchy_kernel {z₀ z ζ : ℂ} (h : ‖z - z₀‖ < ‖ζ - z₀‖) :
-    HasSum (fun j : ℕ => (z - z₀) ^ j / (ζ - z₀) ^ (j + 1)) ((ζ - z)⁻¹) := by
-  have hζ0 : ζ - z₀ ≠ 0 := fun h0 => absurd h (by rw [h0, norm_zero]; exact not_lt.mpr (norm_nonneg _))
-  have hζ0pos : 0 < ‖ζ - z₀‖ := norm_pos_iff.mpr hζ0
-  have hζz : ζ - z ≠ 0 := fun h0 => by rw [sub_eq_zero] at h0; rw [h0] at h; exact lt_irrefl _ h
-  have hq : ‖(z - z₀) / (ζ - z₀)‖ < 1 := by rw [norm_div]; exact (div_lt_one hζ0pos).mpr h
-  have hmul := (hasSum_geometric_of_norm_lt_one hq).mul_right (ζ - z₀)⁻¹
-  have hf : (fun j : ℕ => (z - z₀) ^ j / (ζ - z₀) ^ (j + 1))
-      = fun j : ℕ => ((z - z₀) / (ζ - z₀)) ^ j * (ζ - z₀)⁻¹ := by
-    funext j; rw [div_pow, pow_succ, div_mul_eq_div_div, div_eq_mul_inv]
-  have hs : (ζ - z)⁻¹ = (1 - (z - z₀) / (ζ - z₀))⁻¹ * (ζ - z₀)⁻¹ := by
-    have h1q : 1 - (z - z₀) / (ζ - z₀) = (ζ - z) / (ζ - z₀) := by field_simp; ring
-    rw [h1q, inv_div]; field_simp
-  rw [hf, hs]; exact hmul
 
-/-- The Cauchy-kernel series is **absolutely** summable (geometric). -/
-theorem summable_norm_cauchy_kernel {z₀ z ζ : ℂ} (h : ‖z - z₀‖ < ‖ζ - z₀‖) :
-    Summable (fun j : ℕ => ‖(z - z₀) ^ j / (ζ - z₀) ^ (j + 1)‖) := by
-  have hζ0 : ζ - z₀ ≠ 0 := fun h0 => absurd h (by rw [h0, norm_zero]; exact not_lt.mpr (norm_nonneg _))
-  have hq : ‖z - z₀‖ / ‖ζ - z₀‖ < 1 := (div_lt_one (norm_pos_iff.mpr hζ0)).mpr h
-  have heq : (fun j : ℕ => ‖(z - z₀) ^ j / (ζ - z₀) ^ (j + 1)‖)
-      = fun j : ℕ => (‖z - z₀‖ / ‖ζ - z₀‖) ^ j * ‖ζ - z₀‖⁻¹ := by
-    funext j
-    rw [norm_div, norm_pow, norm_pow, div_pow, pow_succ, div_mul_eq_div_div, div_eq_mul_inv]
-  rw [heq]
-  exact (summable_geometric_of_lt_one (by positivity) hq).mul_right _
 
-/-- **Two-variable Cauchy-kernel expansion.** For `(z,w)` inside the polydisc and `(ζ,η)` on the torus
-(`‖z−z₀‖ < ‖ζ−z₀‖`, `‖w−w₀‖ < ‖η−w₀‖`), the product kernel `(ζ−z)⁻¹·(η−w)⁻¹` expands as the double
-power series `∑_{(j,k)} (z−z₀)^j(w−w₀)^k / ((ζ−z₀)^{j+1}(η−w₀)^{k+1})` — a `HasSum` over `ℕ × ℕ` (the
-absolutely-convergent product of the two one-variable kernels). -/
-theorem hasSum_cauchy_kernel_two {z₀ z ζ w₀ w η : ℂ}
-    (hz : ‖z - z₀‖ < ‖ζ - z₀‖) (hw : ‖w - w₀‖ < ‖η - w₀‖) :
-    HasSum (fun jk : ℕ × ℕ => (z - z₀) ^ jk.1 * (w - w₀) ^ jk.2 /
-        ((ζ - z₀) ^ (jk.1 + 1) * (η - w₀) ^ (jk.2 + 1)))
-      ((ζ - z)⁻¹ * (η - w)⁻¹) := by
-  have hfn := summable_norm_cauchy_kernel hz
-  have hgn := summable_norm_cauchy_kernel hw
-  have hprod : HasSum (fun x : ℕ × ℕ =>
-      (z - z₀) ^ x.1 / (ζ - z₀) ^ (x.1 + 1) * ((w - w₀) ^ x.2 / (η - w₀) ^ (x.2 + 1)))
-      ((ζ - z)⁻¹ * (η - w)⁻¹) := by
-    rw [← (hasSum_cauchy_kernel hz).tsum_eq, ← (hasSum_cauchy_kernel hw).tsum_eq,
-      tsum_mul_tsum_of_summable_norm hfn hgn]
-    exact (summable_mul_of_summable_norm hfn hgn).hasSum
-  have hfeq : (fun jk : ℕ × ℕ => (z - z₀) ^ jk.1 * (w - w₀) ^ jk.2 /
-        ((ζ - z₀) ^ (jk.1 + 1) * (η - w₀) ^ (jk.2 + 1)))
-      = fun x : ℕ × ℕ =>
-        (z - z₀) ^ x.1 / (ζ - z₀) ^ (x.1 + 1) * ((w - w₀) ^ x.2 / (η - w₀) ^ (x.2 + 1)) := by
-    funext jk; rw [div_mul_div_comm]
-  rw [hfeq]; exact hprod
 
 /-- **Step 3 (one variable): the Cauchy integral expands as a power series with explicit integral
 coefficients.** For a slice `g = f(·, w)` holomorphic on the closed disc `|ζ − z₀| ≤ r`,
@@ -188,28 +137,6 @@ theorem hasSum_graded {c : ℕ → ℕ → ℂ} {S : ℂ} (y : ℂ × ℂ)
   rw [hfeq] at hsig
   exact hsig
 
-/-- **(a) differentiate-under-integral for the `z`-coefficient `B_j`.** Given `f` and its `w`-partial
-`fw = ∂_w f` jointly continuous on `closedBall w₀ δ × sphere z₀ r`, and the slice `w ↦ f(ζ,w)` has
-derivative `fw(ζ,w)`, the coefficient `B_j(w) = ∮_ζ (ζ−z₀)^{-(j+1)}·f(ζ,w)` is differentiable in `w`,
-with derivative obtained by differentiating under the integral. (Uses `circleIntegral_hasDerivAt`.) -/
-theorem Bj_hasDerivAt {f fw : ℂ × ℂ → ℂ} {z₀ w₀ : ℂ} {r δ : ℝ} (hr : 0 < r) (hδ : 0 < δ) (j : ℕ)
-    (hf : ContinuousOn (fun p : ℂ × ℂ => f (p.2, p.1)) (closedBall w₀ δ ×ˢ sphere z₀ r))
-    (hfw : ContinuousOn (fun p : ℂ × ℂ => fw (p.2, p.1)) (closedBall w₀ δ ×ˢ sphere z₀ r))
-    (hderiv : ∀ w ∈ ball w₀ δ, ∀ ζ ∈ sphere z₀ r,
-      HasDerivAt (fun w' => f (ζ, w')) (fw (ζ, w)) w) :
-    HasDerivAt (fun w => ∮ ζ in C(z₀, r), ((ζ - z₀) ^ (j + 1))⁻¹ • f (ζ, w))
-      (∮ ζ in C(z₀, r), ((ζ - z₀) ^ (j + 1))⁻¹ • fw (ζ, w₀)) w₀ := by
-  -- the polynomial factor is continuous and nonvanishing on `sphere z₀ r`
-  have hfac : ContinuousOn (fun p : ℂ × ℂ => ((p.2 - z₀) ^ (j + 1))⁻¹)
-      (closedBall w₀ δ ×ˢ sphere z₀ r) := by
-    refine ContinuousOn.inv₀ ((continuous_snd.sub continuous_const).pow _).continuousOn ?_
-    rintro ⟨w, ζ⟩ ⟨-, hζ⟩
-    rw [mem_sphere_iff_norm] at hζ
-    refine pow_ne_zero _ (sub_ne_zero.mpr ?_)
-    intro h; rw [h, sub_self, norm_zero] at hζ; exact (ne_of_lt hr) hζ
-  exact circleIntegral_hasDerivAt (Φ := fun w ζ => ((ζ - z₀) ^ (j + 1))⁻¹ • f (ζ, w))
-    (Φ' := fun w ζ => ((ζ - z₀) ^ (j + 1))⁻¹ • fw (ζ, w)) hδ hr.le (hfac.smul hf) (hfac.smul hfw)
-    fun w hw ζ hζ => (hderiv w hw ζ hζ).const_smul ((ζ - z₀) ^ (j + 1))⁻¹
 
 /-- **(c) diagonal HasSum.** The `n`-th-degree HasSum that `HasFPowerSeriesOnBall` needs on the
 diagonal: from the `ℕ×ℕ` monomial HasSum `∑_{j,k} c_{jk}·y.1^j·y.2^k = S`, the series of homogeneous

@@ -1254,26 +1254,7 @@ private theorem finSuccEquiv_pderiv_zero (p : MvPolynomial (Fin (n + 1)) ℝ) :
         MvPolynomial.finSuccEquiv_X_succ, Polynomial.derivative_mul,
         Polynomial.derivative_C, mul_zero, add_zero, ih]
 
-/-- `pderiv 0 (toMvPoly f) = toMvPoly (derivative f)`. -/
-theorem pderiv_zero_toMvPoly (f : PolyR n) :
-    MvPolynomial.pderiv 0 (toMvPoly f) = toMvPoly (Polynomial.derivative f) := by
-  have hinj := (MvPolynomial.finSuccEquiv ℝ n).injective
-  apply hinj
-  unfold toMvPoly
-  rw [finSuccEquiv_pderiv_zero,
-    (MvPolynomial.finSuccEquiv ℝ n).apply_symm_apply,
-    (MvPolynomial.finSuccEquiv ℝ n).apply_symm_apply]
 
-/-- Evaluation of `pderiv 0 (toMvPoly f)` at `(y, a)` equals `(derivative (specialize f a)).eval y`. -/
-theorem eval_pderiv_zero_toMvPoly
-    (f : PolyR n) (a : Fin n → ℝ) (y : ℝ) :
-    MvPolynomial.eval (Fin.cons y a) (MvPolynomial.pderiv 0 (toMvPoly f)) =
-    Polynomial.eval y (Polynomial.derivative (specialize f a)) := by
-  rw [pderiv_zero_toMvPoly]
-  unfold toMvPoly specialize
-  rw [MvPolynomial.eval_eq_eval_mv_eval',
-    (MvPolynomial.finSuccEquiv ℝ n).apply_symm_apply,
-    Polynomial.derivative_map]
 
 /-! ### orderFull = 1 at simple roots -/
 

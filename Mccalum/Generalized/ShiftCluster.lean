@@ -40,11 +40,6 @@ lemma eval_taylor {R : Type*} [CommRing R] (c b : R) (q : R[X]) :
     (taylor c q).eval b = q.eval (b + c) := by
   rw [taylor_apply, eval_comp, eval_add, eval_X, eval_C]
 
-/-- The derivative commutes with the Taylor shift. -/
-lemma derivative_taylor {R : Type*} [CommRing R] (c : R) (p : R[X]) :
-    derivative (taylor c p) = taylor c (derivative p) := by
-  simp only [taylor_apply, derivative_comp, derivative_add, derivative_X, derivative_C,
-    add_zero, one_mul]
 
 /-- Root multiplicity under the Taylor shift: `(taylor c q).rootMultiplicity b = q.rootMultiplicity (b+c)`. -/
 lemma rootMultiplicity_taylor {R : Type*} [CommRing R] (c b : R) (q : R[X]) :

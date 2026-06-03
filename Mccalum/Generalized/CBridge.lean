@@ -126,26 +126,6 @@ irreducible Mathlib gap**: constructing a `HasFPowerSeriesAt` on `ℂ²` (a `For
 from the double-indexed coefficients with convergence) — Mathlib has no several-variable
 power-series-from-integral nor a several-variable locally-uniform-limit theorem. -/
 
-/-- **Step 1: `z`-slice Cauchy representation** of a jointly ℂ-differentiable function. On a small
-polydisc around `(z₀, w₀) ∈ U`, `f(z, w) = (2πi)⁻¹∮_{|ζ−z₀|=r} f(ζ,w)/(ζ − z) dζ`. The slice `f(·,w)`
-is holomorphic on the closed disc (restriction of the jointly-differentiable `f`), so this is the
-one-variable Cauchy integral formula. Completable; the first concrete step of the polydisc route. -/
-theorem bridge_z_repr {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℂ E']
-    {f : ℂ × E' → ℂ} {U : Set (ℂ × E')} (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    {z₀ : ℂ} {w₀ : E'} (hp : (z₀, w₀) ∈ U) :
-    ∃ r > 0, ∃ v ∈ 𝓝 w₀, ∀ w ∈ v, ∀ z ∈ ball z₀ r,
-      f (z, w) = (2 * π * I : ℂ)⁻¹ • ∮ ζ in C(z₀, r), (ζ - z)⁻¹ • f (ζ, w) := by
-  obtain ⟨u, v, hu_o, hv_o, hz₀u, hw₀v, huv⟩ := isOpen_prod_iff.mp hU z₀ w₀ hp
-  obtain ⟨r, hr, hball⟩ := Metric.isOpen_iff.mp hu_o z₀ hz₀u
-  refine ⟨r / 2, by positivity, v, hv_o.mem_nhds hw₀v, fun w hwv z hz => ?_⟩
-  have hmemU : ∀ ζ ∈ closedBall z₀ (r / 2), (ζ, w) ∈ U := fun ζ hζ =>
-    huv (Set.mk_mem_prod (hball (closedBall_subset_ball (by linarith) hζ)) hwv)
-  have hslice_diff : ∀ ζ ∈ closedBall z₀ (r / 2), DifferentiableAt ℂ (fun ζ' => f (ζ', w)) ζ :=
-    fun ζ hζ => (hf.differentiableAt (hU.mem_nhds (hmemU ζ hζ))).comp ζ
-      (DifferentiableAt.prodMk differentiableAt_id (differentiableAt_const w))
-  exact (two_pi_I_inv_smul_circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
-    Set.countable_empty hz (fun ζ hζ => (hslice_diff ζ hζ).continuousAt.continuousWithinAt)
-    (fun ζ hζ => hslice_diff ζ (ball_subset_closedBall hζ.1))).symm
 
 /-- **Steps 1–3 combined: the iterated (torus) Cauchy representation on `ℂ²`.** A jointly
 ℂ-differentiable `f : ℂ × ℂ → ℂ` equals, on a small polydisc around `(z₀, w₀)`, the iterated double

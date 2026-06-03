@@ -152,32 +152,6 @@ lemma analytic_mul_weierstrass_eq_poly {m : ℕ} (hm : 0 < m) (a : Fin m → (CP
   filter_upwards [hq0] with zt h
   simpa [sub_eq_zero] using h
 
-/-- **Full uniqueness of Weierstrass division.** Two divisions of the same germ by a Weierstrass
-polynomial agree (quotients and degree-`<m` remainders). Derived from the zero-germ form
-`weierstrass_division_unique` by subtraction. -/
-lemma weierstrass_division_unique' (m : ℕ) (a : Fin m → (CParam s e → ℂ))
-    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
-    (q q' : CParam s e × ℂ → ℂ) (ρ ρ' : Fin m → (CParam s e → ℂ))
-    (hq : AnalyticAt ℂ q 0) (hq' : AnalyticAt ℂ q' 0)
-    (hρ : ∀ i, AnalyticAt ℂ (ρ i) 0) (hρ' : ∀ i, AnalyticAt ℂ (ρ' i) 0)
-    (heq : (fun wt => q wt * (weierstrassPoly m a wt.1).eval wt.2
-            + ∑ i : Fin m, ρ i wt.1 * wt.2 ^ (i : ℕ))
-        =ᶠ[𝓝 0] fun wt => q' wt * (weierstrassPoly m a wt.1).eval wt.2
-            + ∑ i : Fin m, ρ' i wt.1 * wt.2 ^ (i : ℕ)) :
-    q =ᶠ[𝓝 0] q' ∧ ∀ i, ρ i =ᶠ[𝓝 (0 : CParam s e)] ρ' i := by
-  have hzero : (fun wt => (fun zt => q zt - q' zt) wt * (weierstrassPoly m a wt.1).eval wt.2
-        + ∑ i : Fin m, (fun w => ρ i w - ρ' i w) wt.1 * wt.2 ^ (i : ℕ)) =ᶠ[𝓝 0] 0 := by
-    filter_upwards [heq] with wt h
-    simp only [Pi.zero_apply, sub_mul, Finset.sum_sub_distrib]
-    rw [show ∀ x y z w : ℂ, x - y + (z - w) = (x + z) - (y + w) from fun _ _ _ _ => by ring]
-    rw [sub_eq_zero]
-    exact h
-  obtain ⟨hq0, hρ0⟩ := weierstrass_division_unique m a ha_an ha0
-    (fun zt => q zt - q' zt) (fun i => fun w => ρ i w - ρ' i w)
-    (hq.sub hq') (fun i => (hρ i).sub (hρ' i)) hzero
-  refine ⟨?_, fun i => ?_⟩
-  · filter_upwards [hq0] with zt h; simpa [sub_eq_zero] using h
-  · filter_upwards [hρ0 i] with w h; simpa [sub_eq_zero] using h
 
 /-! ## Discharging the divByMonic-analyticity obligations (Step 1) -/
 
@@ -191,8 +165,6 @@ def AnalyticAtSubring (s e : ℕ) : Subring (CParam s e → ℂ) where
   zero_mem' := analyticAt_const
   neg_mem' hf := hf.neg
 
-@[simp] lemma mem_AnalyticAtSubring {f : CParam s e → ℂ} :
-    f ∈ AnalyticAtSubring s e ↔ AnalyticAt ℂ f 0 := Iff.rfl
 
 /-- **divByMonic preserves analytic coefficients.** Dividing by a monic polynomial whose coefficients
 are analytic keeps the quotient/remainder coefficients analytic — because division by a monic uses

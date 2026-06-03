@@ -66,18 +66,6 @@ theorem norm_stepB_le {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℂ E']
         mul_le_mul_of_nonneg_left hI (by positivity)
     _ = Mf / rz ^ k := by rw [pow_succ]; field_simp
 
-/-- **Base case `n = 0`.** The domain `Fin 0 → ℂ` is a single point, so `f` is constant and its
-multi-index series is the single term `c_∅ = f(z₀)`. -/
-theorem multiIndexCauchy_zero (f : (Fin 0 → ℂ) → ℂ) (z₀ : Fin 0 → ℂ) {R M : ℝ} (hR : 0 < R)
-    (hbound : ∀ z ∈ closedBall z₀ R, ‖f z‖ ≤ M) :
-    ∃ c : (Fin 0 → ℕ) → ℂ, (∀ α, ‖c α‖ ≤ M / R ^ (∑ j, α j)) ∧
-      ∀ y : Fin 0 → ℂ, (0 : ℝ) * ‖y‖ < R →
-        HasSum (fun α : Fin 0 → ℕ => c α * ∏ j : Fin 0, y j ^ α j) (f (z₀ + y)) := by
-  refine ⟨fun _ => f z₀, fun α => ?_, fun y _ => ?_⟩
-  · rw [show (∑ j : Fin 0, α j) = 0 from by simp, pow_zero, div_one]
-    exact hbound z₀ (mem_closedBall_self hR.le)
-  · rw [Subsingleton.elim (z₀ + y) z₀]
-    simpa using hasSum_unique (fun α : Fin 0 → ℕ => f z₀ * ∏ j : Fin 0, y j ^ α j)
 
 /-- **Monomial `Fin.cons` split:** the multi-index monomial factors cleanly along the first
 coordinate — `∏ⱼ yⱼ^{(cons k β)ⱼ} = y₀ᵏ · ∏ᵢ y_{i+1}^{βᵢ}`. (No multinomial factor: this is why the
