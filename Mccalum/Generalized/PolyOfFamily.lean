@@ -29,7 +29,7 @@ lemma polyOfFamily_coeff (N : ℕ) (gℂ : CParam s e → Polynomial ℂ) (j : �
   rw [polyOfFamily, Polynomial.finset_sum_coeff]
   simp only [Polynomial.coeff_monomial]
   rw [Finset.sum_ite_eq' (Finset.range (N + 1)) j (fun i => (fun z => (gℂ z).coeff i))]
-  simp [Finset.mem_range, Nat.lt_succ_iff]
+  simp [Finset.mem_range]
 
 lemma polyOfFamily_natDegree_le (N : ℕ) (gℂ : CParam s e → Polynomial ℂ) :
     (polyOfFamily N gℂ).natDegree ≤ N := by

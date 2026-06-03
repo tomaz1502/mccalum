@@ -126,6 +126,4 @@ theorem mccallum_3_2_3
     exact order_invariant_full_factor_of_prod A (SectionGraph θ S) hT_preconn hA_ne_zero
       hA_spec hprod_oi F hF
 
-#print axioms mccallum_3_2_3
-
 end

@@ -51,9 +51,6 @@ theorem lifting_theorem_generalized
     (f : PolyR n)
     (hS_submfld : IsAnalyticSubmanifold S)
     (hS_conn : IsConnected S)
-    (hpos : 0 < f.natDegree)
-    (hsf : Squarefree f)
-    (hnonzero : NotIdenticallyZeroOn f S)
     (hdeg : DegreeInvariant f S)
     (hspec_ne : ∀ a ∈ S, specialize f a ≠ 0)
     (P : MvPolyR n)
@@ -63,8 +60,12 @@ theorem lifting_theorem_generalized
     (hP_oi : OrderInvariantMv P S) :
     AnalyticDelineable f S ∧
     (∀ (θ : (Fin n → ℝ) → ℝ), ContinuousOn θ S → IsRootFunction f θ S →
-      OrderInvariantFull f (SectionGraph θ S)) :=
-  lifting_theorem_generalized' S f hS_submfld hS_conn hpos hsf hnonzero hdeg hspec_ne P hP_ne hP_mem hP_oi
+      OrderInvariantFull f (SectionGraph θ S)) := by
+  by_cases hopen : IsOpen S
+  · exact lifting_generalized_open_case S f hopen hS_conn hdeg P hP_ne hP_mem hP_oi
+  · exact lifting_generalized_codim_case S f hS_submfld hS_conn hopen hdeg hspec_ne P hP_ne hP_mem hP_oi
+
+#print axioms lifting_theorem_generalized
 
 /-! ### Elimination product -/
 
@@ -137,8 +138,6 @@ lemma prod_eq_mul_cofactorProd (A : Finset (PolyR n)) (F : PolyR n) (hF : F ∈ 
   (Finset.mul_prod_erase A id hF).symm
 
 /-! ### Algebraic helper lemmas for elimination ideal membership -/
-
-
 
 /-! ### Nullstellensatz for elimination ideals -/
 
@@ -296,7 +295,7 @@ theorem mccallum_3_2_3_generalized
   have hP_oi : OrderInvariantMv P S := order_invariant_pow_mv S _ N hR_oi
   -- Apply the generalized lifting theorem to f with witness P
   obtain ⟨hf_delin, hf_oi_sections⟩ := lifting_theorem_generalized S f hS_submfld hS_conn
-    hf_pos hf_sf hf_nz hf_deg hf_spec_ne P hP_ne hPN_mem hP_oi
+    hf_deg hf_spec_ne P hP_ne hPN_mem hP_oi
   -- Factor the conclusions back to individual polynomials
   refine ⟨h_deg, ?_, h_disjoint, ?_⟩
   · exact delineable_factor_of_delineable_prod S hS_conn.isPreconnected A

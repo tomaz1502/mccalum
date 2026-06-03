@@ -147,14 +147,12 @@ theorem simple_roots_delineable
     (f : PolyR n)
     (hS_open : IsOpen S)
     (hS_conn : IsConnected S)
-    (hpos : 0 < f.natDegree)
     (hdeg : DegreeInvariant f S)
-    (hnonzero : NotIdenticallyZeroOn f S)
     (hsep : ∀ a ∈ S, IsCoprime (specialize f a) (Polynomial.derivative (specialize f a))) :
     AnalyticDelineable f S ∧
     (∀ (θ : (Fin n → ℝ) → ℝ), ContinuousOn θ S → IsRootFunction f θ S →
       OrderInvariantFull f (SectionGraph θ S)) :=
-  simple_roots_delineable' S f hS_open hS_conn hpos hdeg hnonzero hsep
+  simple_roots_delineable' S f hS_open hS_conn hdeg hsep
 
 /-- Case s = r - 1 of the generalized lifting theorem.
 When `S` is an open connected subset of `ℝ^{r-1}`, the theorem holds. -/
@@ -163,9 +161,6 @@ theorem lifting_generalized_open_case
     (f : PolyR n)
     (hS_open : IsOpen S)
     (hS_conn : IsConnected S)
-    (hpos : 0 < f.natDegree)
-    (_hsf : Squarefree f)
-    (hnonzero : NotIdenticallyZeroOn f S)
     (hdeg : DegreeInvariant f S)
     (P : MvPolyR n)
     (hP_ne : P ≠ 0)
@@ -178,7 +173,7 @@ theorem lifting_generalized_open_case
   have hP_nv := order_invariant_nowhere_vanishing_on_open S P hS_open hS_conn hP_ne hP_oi
   have hsep : ∀ a ∈ S, IsCoprime (specialize f a) (Polynomial.derivative (specialize f a)) :=
     fun a ha => separable_of_elim_nonvanishing f P hP_mem a (hP_nv a ha)
-  exact simple_roots_delineable S f hS_open hS_conn hpos hdeg hnonzero hsep
+  exact simple_roots_delineable S f hS_open hS_conn hdeg hsep
 
 /-! ### Order additivity lemma (Thesis Lemma 4.1) -/
 
@@ -186,8 +181,6 @@ section OrderAdditivity
 
 open scoped Topology
 open Filter
-
-
 
 /-- **Order additivity lemma** (Thesis Lemma 4.1).
 
@@ -212,9 +205,9 @@ theorem order_additivity_holomorphic
     (∀ z₁ ∈ U, ∀ z₂ ∈ U, order ℂ g z₁ = order ℂ g z₂) := by
   -- Step 1: Finite order everywhere (identity theorem)
   have hf_fin : ∀ z ∈ U, order ℂ f z ≠ ⊤ :=
-    order_ne_top_of_ne_zero U hU_open hU_conn f hf_an hf_ne
+    order_ne_top_of_ne_zero U hU_conn f hf_an hf_ne
   have hg_fin : ∀ z ∈ U, order ℂ g z ≠ ⊤ :=
-    order_ne_top_of_ne_zero U hU_open hU_conn g hg_an hg_ne
+    order_ne_top_of_ne_zero U hU_conn g hg_an hg_ne
   -- Step 2: order(f)(z) + order(g)(z) = c for all z ∈ U (order additivity for products)
   obtain ⟨z₀, hz₀⟩ := hU_conn.nonempty
   set c := order ℂ (fun w => f w * g w) z₀
@@ -335,7 +328,8 @@ private lemma norm_mk_mul_X_sub_C {K : Type*} [Field K] (a : K) (h' g : Polynomi
   -- The projection π : AdjoinRoot h →ₐ[K] AdjoinRoot h'
   have heval : Polynomial.aeval (AdjoinRoot.root h') h = 0 := by
     rw [AdjoinRoot.aeval_eq, h_def, map_mul, AdjoinRoot.mk_self, mul_zero]
-  let π : AdjoinRoot h →ₐ[K] AdjoinRoot h' := AdjoinRoot.liftHom h (AdjoinRoot.root h') heval
+  let π : AdjoinRoot h →ₐ[K] AdjoinRoot h' :=
+    AdjoinRoot.liftAlgHom h (AdjoinRoot.ofAlgHom K h') (AdjoinRoot.root h') (by finiteness)
   have hπ_mk (p : Polynomial K) : π (AdjoinRoot.mk h p) = AdjoinRoot.mk h' p := by
     show AdjoinRoot.liftHom h (AdjoinRoot.root h') heval (AdjoinRoot.mk h p) = _
     exact AdjoinRoot.aeval_eq p
@@ -517,8 +511,6 @@ theorem norm_eq_resultant_monic
       ← norm_adjoinRoot_map φ h' g' hh'm, hndh, hndg]
     exact congrArg φ (IH h' g' hh'm)
 
-#print axioms norm_eq_resultant_monic
-
 /-- **Norm identity for elimination ideals** (Thesis Corollary 5.2).
 
 For `h` monic of degree `m`, if a constant `P ∈ R` belongs to the ideal `⟨h, g⟩`
@@ -690,7 +682,7 @@ private lemma complexifyMultilinear_apply {n s : ℕ}
   simp only [ContinuousMultilinearMap.sum_apply, ContinuousMultilinearMap.smul_apply,
     ContinuousMultilinearMap.compContinuousLinearMap_apply,
     ContinuousMultilinearMap.mkPiRing_apply, ContinuousLinearMap.proj_apply,
-    smul_eq_mul, mul_one, Algebra.id.smul_eq_mul]
+    smul_eq_mul, mul_one]
 
 private lemma complexifyMultilinear_real {n s : ℕ}
     (T : ContinuousMultilinearMap ℝ (fun _ : Fin n => Fin s → ℝ) ℝ)
@@ -924,7 +916,6 @@ upper semi-continuity of order (`isOpen_order_le_inter`) and connectivity to get
 theorem complexify_order_invariant {s : ℕ}
     (f_ℂ : (Fin s → ℂ) → ℂ) (μ : ℕ)
     (hf_an : AnalyticOnNhd ℂ f_ℂ (Set.univ : Set (Fin s → ℂ)))
-    (hf_ne : f_ℂ ≠ 0)
     (hf_real_oi : ∀ᶠ x in 𝓝 (0 : Fin s → ℝ),
       order ℝ (fun y => f_ℂ (Complex.ofReal ∘ y)) x = ↑μ)
     (hf_order_zero : order ℂ f_ℂ (0 : Fin s → ℂ) = ↑μ) :
@@ -1087,7 +1078,7 @@ theorem complexify_pseudopoly {m : ℕ} (N : ℕ)
     rw [Polynomial.finset_sum_coeff]
     simp only [Polynomial.coeff_monomial]
     rw [Finset.sum_ite_eq' (Finset.range (N + 1)) j (fun i => cℂ i z)]
-    simp [Finset.mem_range, Nat.lt_succ_iff]
+    simp [Finset.mem_range]
   refine ⟨fun z => ∑ i ∈ Finset.range (N + 1), Polynomial.monomial i (cℂ i z), ?_, ?_⟩
   · intro j
     refine (?_ : AnalyticAt ℂ (fun z => if j ≤ N then cℂ j z else 0)
@@ -1156,8 +1147,7 @@ private theorem orderFull_eq_rootMultiplicity_at_delineable_root
     {n : ℕ} (f : PolyR n) (S : Set (Fin n → ℝ))
     (a : Fin n → ℝ) (ha : a ∈ S)
     (hne : specialize f a ≠ 0)
-    (θ : (Fin n → ℝ) → ℝ) (hθ_an : AnalyticOn ℝ θ S)
-    (hθ_root : ∀ b ∈ S, (specialize f b).IsRoot (θ b))
+    (θ : (Fin n → ℝ) → ℝ)
     (m_val : ℕ) (hm : ∀ b ∈ S, (specialize f b).rootMultiplicity (θ b) = m_val) :
     orderFull f a (θ a) = ↑m_val := by
   simp only [orderFull, if_neg hne, hm a ha]
@@ -1213,10 +1203,8 @@ theorem order_invariant_of_delineable
     simp only [SectionGraph, mem_setOf_eq] at hp hq
     rw [hp.2, hi₀ p.1 hp.1, hq.2, hi₀ q.1 hq.1]
     exact (orderFull_eq_rootMultiplicity_at_delineable_root f S p.1 hp.1 (hne p.1 hp.1)
-      (θ_del i₀) (hθ_an i₀) (fun b hb => (hθ_roots b hb (θ_del i₀ b)).mpr ⟨i₀, rfl⟩)
-      (m i₀) (fun b hb => hm_const b hb i₀)).trans
-      (orderFull_eq_rootMultiplicity_at_delineable_root f S q.1 hq.1 (hne q.1 hq.1)
-      (θ_del i₀) (hθ_an i₀) (fun b hb => (hθ_roots b hb (θ_del i₀ b)).mpr ⟨i₀, rfl⟩)
+      (θ_del i₀) (m i₀) (fun b hb => hm_const b hb i₀)).trans
+      (orderFull_eq_rootMultiplicity_at_delineable_root f S q.1 hq.1 (hne q.1 hq.1) (θ_del i₀)
       (m i₀) (fun b hb => hm_const b hb i₀)).symm
   -- Define the index function: for a ∈ S, j(a) is the unique i with θ(a) = θ_del(i)(a)
   have hj_exists : ∀ a ∈ S, ∃ i : Fin k, θ a = θ_del i a :=

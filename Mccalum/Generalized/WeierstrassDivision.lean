@@ -123,7 +123,7 @@ lemma analytic_mul_weierstrass_eq_poly {m : ℕ} (hm : 0 < m) (a : Fin m → (CP
     · have hd : R0.degree < (m : WithBot ℕ) := by
         have hlt := degree_modByMonic_lt P0 hmonic
         rw [← hR0_def] at hlt
-        rwa [show h.degree = (m : WithBot ℕ) from weierstrassPolyFun_degree m a hm] at hlt
+        rwa [show h.degree = (m : WithBot ℕ) from weierstrassPolyFun_degree m a] at hlt
       exact (Polynomial.natDegree_lt_iff_degree_lt h0).mpr hd
   -- The combination `(k − polyToFun Q₀)·h + ∑ (−R₀.coeffᵢ) tⁱ =ᶠ 0` is a division of zero.
   have key : (fun wt => (fun zt => k zt - polyToFun s e Q0 zt) wt

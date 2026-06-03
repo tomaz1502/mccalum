@@ -66,7 +66,6 @@ theorem norm_stepB_le {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℂ E']
         mul_le_mul_of_nonneg_left hI (by positivity)
     _ = Mf / rz ^ k := by rw [pow_succ]; field_simp
 
-
 /-- **Monomial `Fin.cons` split:** the multi-index monomial factors cleanly along the first
 coordinate — `∏ⱼ yⱼ^{(cons k β)ⱼ} = y₀ᵏ · ∏ᵢ y_{i+1}^{βᵢ}`. (No multinomial factor: this is why the
 multi-index formulation gives a clean induction.) -/
@@ -119,7 +118,7 @@ theorem multiIndexCauchy : ∀ (n : ℕ) (f : (Fin n → ℂ) → ℂ) (z₀ : F
     · rw [show (∑ j : Fin 0, α j) = 0 from by simp, pow_zero, div_one]
       exact hb z₀ (mem_closedBall_self (by linarith))
     · rw [Subsingleton.elim (z₀ + y) z₀]
-      simpa using hasSum_unique (fun α : Fin 0 → ℕ => f z₀ * ∏ j : Fin 0, y j ^ α j)
+      simp
   | succ n IH =>
     intro f z₀ R M hd hb r hr0 hrR
     have hR0 : (0 : ℝ) < R := lt_trans hr0 hrR

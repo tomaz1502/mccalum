@@ -54,9 +54,6 @@ theorem lifting_generalized_codim_local
     (f : PolyR n)
     (hS_submfld : IsAnalyticSubmanifold S)
     (p : Fin n → ℝ) (hp : p ∈ S)
-    (hpos : 0 < f.natDegree)
-    (hsf : Squarefree f)
-    (hnonzero : NotIdenticallyZeroOn f S)
     (hdeg : DegreeInvariant f S)
     (hspec_ne : ∀ a ∈ S, specialize f a ≠ 0)
     (P : MvPolyR n)
@@ -294,9 +291,6 @@ theorem locally_delineable_to_global'
     (S : Set (Fin n → ℝ))
     (f : PolyR n)
     (hS_conn : IsConnected S)
-    (hpos : 0 < f.natDegree)
-    (hdeg : DegreeInvariant f S)
-    (_hnonzero : NotIdenticallyZeroOn f S)
     (hlocal : ∀ a ∈ S, ∃ (U : Set (Fin n → ℝ)),
       IsOpen U ∧ a ∈ U ∧ AnalyticDelineable f (S ∩ U)) :
     AnalyticDelineable f S := by
@@ -519,9 +513,6 @@ theorem lifting_generalized_codim_case
     (hS_submfld : IsAnalyticSubmanifold S)
     (hS_conn : IsConnected S)
     (_hS_not_open : ¬ IsOpen S)
-    (hpos : 0 < f.natDegree)
-    (hsf : Squarefree f)
-    (hnonzero : NotIdenticallyZeroOn f S)
     (hdeg : DegreeInvariant f S)
     (hspec_ne : ∀ a ∈ S, specialize f a ≠ 0)
     (P : MvPolyR n)
@@ -538,9 +529,9 @@ theorem lifting_generalized_codim_case
       (∀ θ, ContinuousOn θ (S ∩ U) → IsRootFunction f θ (S ∩ U) →
         OrderInvariantFull f (SectionGraph θ (S ∩ U))) :=
     fun p hp => lifting_generalized_codim_local S f hS_submfld p hp
-      hpos hsf hnonzero hdeg hspec_ne P hP_ne hP_mem hP_oi
+      hdeg hspec_ne P hP_ne hP_mem hP_oi
   -- Step 2: Globalize analytic delineability
-  refine ⟨locally_delineable_to_global' S f hS_conn hpos hdeg hnonzero
+  refine ⟨locally_delineable_to_global' S f hS_conn
     (fun a ha => ?_), fun θ hθ_cont hθ_root => ?_⟩
   · obtain ⟨U, hU_open, haU, hU_del, _⟩ := hlocal a ha
     exact ⟨U, hU_open, haU, hU_del⟩
@@ -550,34 +541,5 @@ theorem lifting_generalized_codim_case
     obtain ⟨U, hU_open, hpU, _, hU_oi⟩ := hlocal p hp
     exact ⟨U, hU_open, hpU, hU_oi θ (hθ_cont.mono inter_subset_left)
       (fun a ha => hθ_root a ha.1)⟩
-
-/-! ### Main theorem -/
-
-/-- **Theorem 3.2.1'** (Generalized Lifting Theorem).
-
-This generalizes `lifting_theorem` by replacing the discriminant hypothesis with an
-arbitrary nonzero element `P ∈ ⟨f, ∂f/∂xᵣ⟩ ∩ R[x]` that is order-invariant on `S`.
-The discriminant is one such element, so the original theorem is a special case. -/
-theorem lifting_theorem_generalized'
-    (S : Set (Fin n → ℝ))
-    (f : PolyR n)
-    (hS_submfld : IsAnalyticSubmanifold S)
-    (hS_conn : IsConnected S)
-    (hpos : 0 < f.natDegree)
-    (hsf : Squarefree f)
-    (hnonzero : NotIdenticallyZeroOn f S)
-    (hdeg : DegreeInvariant f S)
-    (hspec_ne : ∀ a ∈ S, specialize f a ≠ 0)
-    (P : MvPolyR n)
-    (hP_ne : P ≠ 0)
-    (hP_mem : Polynomial.C P ∈
-      Ideal.span ({f, Polynomial.derivative f} : Set (PolyR n)))
-    (hP_oi : OrderInvariantMv P S) :
-    AnalyticDelineable f S ∧
-    (∀ (θ : (Fin n → ℝ) → ℝ), ContinuousOn θ S → IsRootFunction f θ S →
-      OrderInvariantFull f (SectionGraph θ S)) := by
-  by_cases hopen : IsOpen S
-  · exact lifting_generalized_open_case S f hopen hS_conn hpos hsf hnonzero hdeg P hP_ne hP_mem hP_oi
-  · exact lifting_generalized_codim_case S f hS_submfld hS_conn hopen hpos hsf hnonzero hdeg hspec_ne P hP_ne hP_mem hP_oi
 
 end

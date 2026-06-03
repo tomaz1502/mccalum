@@ -55,7 +55,7 @@ theorem miSeries_apply_diag {n : ℕ} [NeZero n] (c : (Fin n → ℕ) → ℂ) (
 /-- **Norm bound on `miSeries`:** `‖(miSeries c) N‖ ≤ ∑_{|α|=N} ‖c_α‖`. -/
 theorem norm_miSeries_le {n : ℕ} [NeZero n] (c : (Fin n → ℕ) → ℂ) (N : ℕ) :
     ‖miSeries c N‖ ≤ ∑ α ∈ Finset.Nat.antidiagonalTuple n N, ‖c α‖ :=
-  (norm_sum_le _ _).trans (Finset.sum_le_sum fun α _ => norm_mtTerm_le _ _)
+  (norm_sum_le _ _).trans (Finset.sum_le_sum fun _ _ => norm_mtTerm_le _ _)
 
 /-- **From the multi-index value to `AnalyticAt`.** If `f(z₀+y) = ∑_α c_α ∏ⱼ yⱼ^{αⱼ}` for `‖y‖ < r`
 with the Cauchy bound `‖c_α‖ ≤ M/r^{|α|}`, then `f` is analytic at `z₀`. -/

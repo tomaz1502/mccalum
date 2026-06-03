@@ -1,12 +1,6 @@
-import Mathlib.Analysis.Analytic.Basic
-import Mathlib.Analysis.Calculus.FDeriv.Defs
-import Mathlib.Analysis.InnerProductSpace.Basic
-import Mathlib.Analysis.Calculus.InverseFunctionTheorem.FDeriv
 import Mathlib.Analysis.Calculus.FDeriv.Analytic
-import Mathlib.Analysis.Calculus.FDeriv.Prod
-import Mathlib.Analysis.Analytic.Constructions
-import Mathlib.LinearAlgebra.Projection
-import Mathlib.LinearAlgebra.Basis.VectorSpace
+import Mathlib.Analysis.Calculus.InverseFunctionTheorem.FDeriv
+import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Topology.Algebra.Module.FiniteDimension
 import Mathlib.Topology.OpenPartialHomeomorph.IsImage
 
@@ -145,7 +139,7 @@ theorem IsAnalyticSubmanifold.straightening_chart
         (ContinuousLinearMap.id ℝ (Fin n → ℝ)) p := by
       have := (hasFDerivAt_id (𝕜 := ℝ) p).sub
         (hasFDerivAt_const (𝕜 := ℝ) (x := p) p)
-      simp [ContinuousLinearMap.id_apply] at this ⊢
+      simp at this ⊢
       exact this
     have h2 := P.hasFDerivAt.comp p h1
     rwa [ContinuousLinearMap.comp_id] at h2
@@ -193,5 +187,3 @@ theorem IsAnalyticSubmanifold.straightening_chart
   exact ⟨R, hR_source, hΦ_val, hΦ_an_all, hR_an_symm, hR_straight⟩
 
 end
-
-#min_imports

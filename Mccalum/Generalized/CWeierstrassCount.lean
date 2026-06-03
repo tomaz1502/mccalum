@@ -69,7 +69,7 @@ theorem zero_count_eventually (G : CParam s e × ℂ → ℂ) (hG : AnalyticAt �
           (MeromorphicOn.divisor (fun t => G (z, t)) (closedBall (0 : ℂ) R₁) a).toNat) = m := by
   classical
   obtain ⟨R, R₁, hR, hRR₁, hGan_sph, hG0_sph, hiso0, hev⟩ :=
-    slice_hyps_eventually G hG m hm_pos hreg
+    slice_hyps_eventually G hG m hreg
   refine ⟨R, R₁, hR, hRR₁, hGan_sph, hG0_sph, hiso0, ?_⟩
   -- the `k = 0` power sum is analytic, hence continuous
   have hp0_an : AnalyticAt ℂ

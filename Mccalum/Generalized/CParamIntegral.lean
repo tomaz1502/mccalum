@@ -76,8 +76,7 @@ theorem circleIntegral_hasDerivAt
 /-- **Differentiability on a neighborhood** (apply the pointwise derivative at each interior point). -/
 theorem circleIntegral_differentiableOn
     {Φ Φ' : ℂ → ℂ → ℂ} {c : ℂ} {R : ℝ} {z₀ : ℂ} {δ : ℝ}
-    (hδ : 0 < δ) (hR : 0 ≤ R)
-    (hΦ : ContinuousOn (fun p : ℂ × ℂ => Φ p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
+    (hR : 0 ≤ R) (hΦ : ContinuousOn (fun p : ℂ × ℂ => Φ p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
     (hΦ' : ContinuousOn (fun p : ℂ × ℂ => Φ' p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
     (hderiv : ∀ z ∈ ball z₀ δ, ∀ ζ ∈ sphere c R, HasDerivAt (fun w => Φ w ζ) (Φ' z ζ) z) :
     DifferentiableOn ℂ (fun z => ∮ ζ in C(c, R), Φ z ζ) (ball z₀ δ) := by
@@ -167,8 +166,7 @@ between this and the multi-parameter keystone (`AnalyticAt`) is the several-vari
 holomorphy⇒analyticity bridge `DifferentiableOn ℂ ⇒ AnalyticOnNhd ℂ` (`CBridge.osgood`). -/
 theorem circleIntegral_differentiableOn_multi
     {Φ : H → ℂ → ℂ} {Φ' : H → ℂ → (H →L[ℂ] ℂ)} {c : ℂ} {R : ℝ} {z₀ : H} {δ : ℝ}
-    (hδ : 0 < δ) (hR : 0 ≤ R)
-    (hΦ : ContinuousOn (fun p : H × ℂ => Φ p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
+    (hR : 0 ≤ R) (hΦ : ContinuousOn (fun p : H × ℂ => Φ p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
     (hΦ' : ContinuousOn (fun p : H × ℂ => Φ' p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
     (hderiv : ∀ z ∈ ball z₀ δ, ∀ ζ ∈ sphere c R, HasFDerivAt (fun w => Φ w ζ) (Φ' z ζ) z) :
     DifferentiableOn ℂ (fun z => ∮ ζ in C(c, R), Φ z ζ) (ball z₀ δ) := by
@@ -204,5 +202,5 @@ theorem circleIntegral_analyticAt_multi
     (hΦ' : ContinuousOn (fun p : H × ℂ => Φ' p.1 p.2) (closedBall z₀ δ ×ˢ sphere c R))
     (hderiv : ∀ z ∈ ball z₀ δ, ∀ ζ ∈ sphere c R, HasFDerivAt (fun w => Φ w ζ) (Φ' z ζ) z) :
     AnalyticAt ℂ (fun z => ∮ ζ in C(c, R), Φ z ζ) z₀ :=
-  hbridge _ _ isOpen_ball (circleIntegral_differentiableOn_multi hδ hR hΦ hΦ' hderiv)
+  hbridge _ _ isOpen_ball (circleIntegral_differentiableOn_multi hR hΦ hΦ' hderiv)
     z₀ (mem_ball_self hδ)

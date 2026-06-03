@@ -95,7 +95,7 @@ theorem cluster_from_real (m : ℕ) (hm_pos : 0 < m)
   have hord : analyticOrderAt (fun t : ℂ => polyToFun s e g_poly ((0 : CParam s e), t)) 0 = (m : ℕ∞) := by
     rw [hG0]; exact hm_ord
   obtain ⟨u, a, hu_an, hu0, ha_an, ha0, hfac_raw⟩ :=
-    weierstrass_preparation_analytic (polyToFun s e g_poly) hGℂ_an m hm_pos hord
+    weierstrass_preparation_analytic (polyToFun s e g_poly) hGℂ_an m hord
   have hfac : polyToFun s e g_poly =ᶠ[𝓝 0]
       fun zt => u zt * polyToFun s e (weierstrassPolyFun m a) zt := by
     filter_upwards [hfac_raw] with zt hzt
@@ -152,7 +152,7 @@ theorem cluster_from_real (m : ℕ) (hm_pos : 0 < m)
       Function.Injective (fun _i : Fin 1 => ψ y) → ∀ _i : Fin 1,
         (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m := by
     filter_upwards [hmults] with y hy _ _i; exact hy
-  have hmult_match := multmatch_of_weierstrass m hm_pos a g_poly u hu0 hu_an hfac
+  have hmult_match := multmatch_of_weierstrass m a g_poly u hu0 hu_an hfac
     (fun _ : Fin 1 => ψ) (fun _ => m) (fun _ => hψ_an) (fun _ => hψ0) hmults1
     (fun y => (g (y, 0)).map (algebraMap ℝ ℂ)) hfam_ne hfam_map
   obtain ⟨δ₀, hδ₀, hcover⟩ := cover_of_weierstrass m a g_poly u hu0 hu_an hfac

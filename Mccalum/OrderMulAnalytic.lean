@@ -50,8 +50,7 @@ lemma eventuallyEq_zero_of_order_eq_top
   · exact mem_nhds_iff.mpr ⟨_, le_refl _, Metric.isOpen_eball.preimage
       (continuous_id.sub continuous_const), by simp [Metric.mem_eball, hp.r_pos]⟩
   · have hsum := hp.hasSum_iteratedFDeriv hz
-    simp only [hderiv_zero, ContinuousMultilinearMap.zero_apply, smul_zero,
-      Pi.zero_apply] at hsum
+    simp only [hderiv_zero, ContinuousMultilinearMap.zero_apply, smul_zero] at hsum
     rw [show x₀ + (z - x₀) = z from by abel] at hsum
     exact hsum.unique hasSum_zero
 
@@ -113,7 +112,7 @@ lemma iteratedDeriv_line_eq_iteratedFDeriv_diag
         rwa [show L_w (0 : ℂ) = (0 : E) from map_zero L_w]
       exact hp0'.compContinuousLinearMap
     convert h1 using 1
-    ext t; simp [Function.comp_def, L_w, add_comm]
+    ext t; simp [L_w, add_comm]
   have h1D := hp_line.iteratedFDeriv_eq_sum_of_completeSpace (n := k) (fun _ => (1 : ℂ))
   rw [show iteratedDeriv k (fun t : ℂ => f (x₀ + t • w)) 0 =
     (iteratedFDeriv ℂ k (fun t : ℂ => f (x₀ + t • w)) 0) (fun _ => (1 : ℂ)) from by
@@ -317,7 +316,7 @@ power series is identically zero, so `f = 0` on a ball, hence all derivatives va
 throughout that ball. -/
 lemma order_ne_top_of_ne_zero
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (U : Set E) (hU_open : IsOpen U) (hU_conn : IsConnected U)
+    (U : Set E) (hU_conn : IsConnected U)
     (f : E → ℂ) (hf : AnalyticOnNhd ℂ f U)
     (hne : ∃ z ∈ U, f z ≠ 0) :
     ∀ z ∈ U, order ℂ f z ≠ ⊤ := by
@@ -340,8 +339,7 @@ lemma order_ne_top_of_ne_zero
       · exact Metric.isOpen_eball.preimage (continuous_id.sub continuous_const)
       · simp [Metric.mem_eball, hp.r_pos]
     · have hsum := hp.hasSum_iteratedFDeriv hz
-      simp only [hderiv_zero, ContinuousMultilinearMap.zero_apply, smul_zero,
-        Pi.zero_apply] at hsum
+      simp only [hderiv_zero, ContinuousMultilinearMap.zero_apply, smul_zero,] at hsum
       rw [show z₀ + (z - z₀) = z from by abel] at hsum
       exact hsum.unique hasSum_zero
   -- By identity principle: f = 0 on all of U
@@ -362,7 +360,7 @@ lemma isOpen_order_le_inter
     IsOpen {z ∈ U | order ℂ f z ≤ n} := by
   -- Handle n = ⊤: {order ≤ ⊤} = U, which is open
   rcases eq_or_ne n ⊤ with rfl | hn_ne
-  · convert hU_open using 1; ext z; simp [Set.mem_sep_iff]
+  · convert hU_open using 1; ext z; simp
   apply isOpen_iff_forall_mem_open.mpr
   intro z₀ ⟨hz₀U, hz₀_le⟩
   -- order ℂ f z₀ ≤ n < ⊤ means order is finite
@@ -474,9 +472,9 @@ theorem order_factor_const_of_mul_analytic
     (∀ z ∈ S, order ℂ f z = order ℂ f z₀) ∧
     (∀ z ∈ S, order ℂ g z = order ℂ g z₀) := by
   have hf_fin : ∀ z ∈ U, order ℂ f z ≠ ⊤ :=
-    order_ne_top_of_ne_zero U hU_open hU_conn f hf_an hf_ne
+    order_ne_top_of_ne_zero U hU_conn f hf_an hf_ne
   have hg_fin : ∀ z ∈ U, order ℂ g z ≠ ⊤ :=
-    order_ne_top_of_ne_zero U hU_open hU_conn g hg_an hg_ne
+    order_ne_top_of_ne_zero U hU_conn g hg_an hg_ne
   set c := order ℂ (fun w => f w * g w) z₀ with hc
   have hsum_eq : ∀ z ∈ S, order ℂ f z + order ℂ g z = c := by
     intro z hz

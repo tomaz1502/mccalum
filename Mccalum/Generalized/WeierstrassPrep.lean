@@ -19,8 +19,7 @@ open scoped Topology
 /-- **Convergent Weierstrass preparation (Phase C).** Derived from `weierstrass_division`. -/
 theorem weierstrass_preparation_analytic {s e : ℕ}
     (G : CParam s e × ℂ → ℂ) (hG : AnalyticAt ℂ G 0)
-    (m : ℕ) (hm_pos : 0 < m)
-    (hm : analyticOrderAt (fun t : ℂ => G (0, t)) 0 = (m : ℕ∞)) :
+    (m : ℕ) (hm : analyticOrderAt (fun t : ℂ => G (0, t)) 0 = (m : ℕ∞)) :
     ∃ (u : CParam s e × ℂ → ℂ) (a : Fin m → (CParam s e → ℂ)),
       AnalyticAt ℂ u 0 ∧ u 0 ≠ 0 ∧
       (∀ i, AnalyticAt ℂ (a i) 0) ∧ (∀ i, a i 0 = 0) ∧
@@ -60,7 +59,7 @@ theorem weierstrass_preparation_analytic {s e : ℕ}
     rw [hEp_coeff, if_neg (ne_of_lt i.isLt), zero_add,
       Finset.sum_eq_single i (fun k _ hk => by rw [if_neg (fun h => hk (Fin.ext h.symm)), mul_zero])
         (fun h => absurd (Finset.mem_univ i) h), if_pos rfl, mul_one]
-  have hEp_ne : Ep ≠ 0 := fun h => by simpa [h] using hcoeff_m
+  have hEp_ne : Ep ≠ 0 := fun h => by simp [h] at hcoeff_m
   have hndeg : Ep.natDegree = m := by
     refine le_antisymm (Polynomial.natDegree_le_iff_coeff_eq_zero.mpr fun j hj => ?_)
       (Polynomial.le_natDegree_of_ne_zero (by rw [hcoeff_m]; exact one_ne_zero))

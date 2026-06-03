@@ -59,14 +59,14 @@ lemma weierstrassPolyFun_monic : (weierstrassPolyFun m a).Monic :=
   monic_X_pow_add (weierstrassPolyFun_lower_degree_lt m a)
 
 /-- The function-coefficient Weierstrass polynomial has degree exactly `m`. -/
-lemma weierstrassPolyFun_degree (hm : 0 < m) : (weierstrassPolyFun m a).degree = (m : WithBot ℕ) := by
+lemma weierstrassPolyFun_degree : (weierstrassPolyFun m a).degree = (m : WithBot ℕ) := by
   rw [weierstrassPolyFun,
     degree_add_eq_left_of_degree_lt (by rw [degree_X_pow]; exact weierstrassPolyFun_lower_degree_lt m a),
     degree_X_pow]
 
 /-- The function-coefficient Weierstrass polynomial has natDegree `m`. -/
-lemma weierstrassPolyFun_natDegree (hm : 0 < m) : (weierstrassPolyFun m a).natDegree = m :=
-  natDegree_eq_of_degree_eq_some (weierstrassPolyFun_degree m a hm)
+lemma weierstrassPolyFun_natDegree : (weierstrassPolyFun m a).natDegree = m :=
+  natDegree_eq_of_degree_eq_some (weierstrassPolyFun_degree m a)
 
 /-- The resultant of the function-coefficient Weierstrass polynomial against its derivative — a
 single function `CParam s e → ℂ`. (Discriminant of the family, up to a sign unit.) -/

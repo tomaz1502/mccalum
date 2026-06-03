@@ -89,7 +89,7 @@ lemma cover_of_weierstrass (m : ℕ) (a : Fin m → (CParam s e → ℂ))
 `ψ_i (realEmbedding y)` in the complexified family `fam y` equals its multiplicity `mult i` in the
 Weierstrass polynomial — via `analyticOrderAt = rootMultiplicity` and order-invariance under the
 unit factor. -/
-lemma multmatch_of_weierstrass (m : ℕ) (hm_pos : 0 < m) (a : Fin m → (CParam s e → ℂ))
+lemma multmatch_of_weierstrass (m : ℕ) (a : Fin m → (CParam s e → ℂ))
     (g_poly : (CParam s e → ℂ)[X])
     (u : CParam s e × ℂ → ℂ) (hu0 : u 0 ≠ 0) (hu_an : AnalyticAt ℂ u 0)
     (hfac : polyToFun s e g_poly =ᶠ[𝓝 0]

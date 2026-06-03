@@ -311,6 +311,4 @@ theorem discr_prod_order_invariant
           (order_invariant_sq_mv S _ hres_pq))
         ih_oi
 
-#print axioms discr_prod_order_invariant
-
 end

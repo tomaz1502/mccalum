@@ -106,7 +106,7 @@ theorem descent_norm_identity {m : ℕ} (hm : 0 < m) (a : Fin m → (CParam s e 
     hinj.monic_map_iff.mpr (by rw [hmapS_h]; exact hmonic.map γ)
   have hSnd : hS.natDegree = m := by
     rw [← Polynomial.natDegree_map_eq_of_injective hinj hS, hmapS_h,
-      hmonic.natDegree_map, hh, weierstrassPolyFun_natDegree m a hm]
+      hmonic.natDegree_map, hh, weierstrassPolyFun_natDegree m a]
   haveI : CharZero (↥𝒪) := ⟨fun a b hab => by
     have := congrArg 𝒪.subtype hab; rwa [map_natCast, map_natCast, Nat.cast_inj] at this⟩
   -- `(derivative hS).natDegree = m − 1`: `≤` is `natDegree_derivative_le`; `≥` since the

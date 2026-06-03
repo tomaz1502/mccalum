@@ -44,7 +44,7 @@ lemma divisor_eq_zero_of_ne {f : ℂ → ℂ} {U : Set ℂ} (hf : AnalyticOnNhd 
 /-- **Isolated zero of the regular slice.** If `G(0,·)` has order exactly `m > 0` at `t = 0`, there
 is a punctured radius `δ > 0` on which it never vanishes: `0 < |t| < δ ⟹ G(0,t) ≠ 0`. -/
 private lemma exists_punctured_radius (G : CParam s e × ℂ → ℂ) (hG : AnalyticAt ℂ G 0)
-    (m : ℕ) (hm_pos : 0 < m) (hreg : analyticOrderAt (fun t : ℂ => G (0, t)) 0 = (m : ℕ∞)) :
+    (m : ℕ) (hreg : analyticOrderAt (fun t : ℂ => G (0, t)) 0 = (m : ℕ∞)) :
     ∃ δ > 0, ∀ t : ℂ, t ≠ 0 → ‖t‖ < δ → G (0, t) ≠ 0 := by
   have hG0 : AnalyticAt ℂ (fun t : ℂ => G (0, t)) 0 :=
     hG.comp_of_eq (analyticAt_const.prod analyticAt_id) rfl
@@ -70,7 +70,7 @@ slice `G(z,·)`:
 These are exactly the hypotheses of `slice_powerSum_eq_rootSum` / `powerSum_analyticAt`, now verified
 simultaneously for a whole neighbourhood of `0` in the parameter. -/
 theorem slice_hyps_eventually (G : CParam s e × ℂ → ℂ) (hG : AnalyticAt ℂ G 0)
-    (m : ℕ) (hm_pos : 0 < m) (hreg : analyticOrderAt (fun t : ℂ => G (0, t)) 0 = (m : ℕ∞)) :
+    (m : ℕ) (hreg : analyticOrderAt (fun t : ℂ => G (0, t)) 0 = (m : ℕ∞)) :
     ∃ R R₁ : ℝ, 0 < R ∧ R < R₁ ∧
       (∀ ζ ∈ sphere (0 : ℂ) R, AnalyticAt ℂ G (0, ζ)) ∧
       (∀ ζ ∈ sphere (0 : ℂ) R, G (0, ζ) ≠ 0) ∧
@@ -84,7 +84,7 @@ theorem slice_hyps_eventually (G : CParam s e × ℂ → ℂ) (hG : AnalyticAt �
   -- 1. analyticity ball for `G`
   obtain ⟨ρ, hρ, hGball⟩ := hG.exists_ball_analyticOnNhd
   -- 2. punctured radius for the isolated zero of the regular slice
-  obtain ⟨δ, hδ, hpunct⟩ := exists_punctured_radius G hG m hm_pos hreg
+  obtain ⟨δ, hδ, hpunct⟩ := exists_punctured_radius G hG m hreg
   -- 3. choose radii  R = q/4 < R₁ = q/2 < q = min ρ δ
   set q : ℝ := min ρ δ with hq_def
   have hq : 0 < q := lt_min hρ hδ

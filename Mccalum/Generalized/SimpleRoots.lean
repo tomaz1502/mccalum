@@ -708,11 +708,8 @@ theorem separable_locally_delineable
     (f : PolyR n)
     (a₀ : Fin n → ℝ)
     (S : Set (Fin n → ℝ))
-    (hS_open : IsOpen S)
     (ha₀ : a₀ ∈ S)
-    (hpos : 0 < f.natDegree)
     (hdeg : DegreeInvariant f S)
-    (hnonzero : NotIdenticallyZeroOn f S)
     (hsep : IsCoprime (specialize f a₀) (Polynomial.derivative (specialize f a₀))) :
     ∃ (U : Set (Fin n → ℝ)), IsOpen U ∧ a₀ ∈ U ∧ AnalyticDelineable f (S ∩ U) := by
   -- Step 1: f(a₀, ·) is separable with sorted simple roots
@@ -1029,9 +1026,6 @@ theorem locally_delineable_to_global
     (f : PolyR n)
     (hS_open : IsOpen S)
     (hS_conn : IsConnected S)
-    (hpos : 0 < f.natDegree)
-    (hdeg : DegreeInvariant f S)
-    (hnonzero : NotIdenticallyZeroOn f S)
     (hlocal : ∀ a ∈ S, ∃ (U : Set (Fin n → ℝ)),
       IsOpen U ∧ a ∈ U ∧ AnalyticDelineable f (S ∩ U)) :
     AnalyticDelineable f S := by
@@ -1210,13 +1204,11 @@ theorem root_continuity_delineable
     (f : PolyR n)
     (hS_open : IsOpen S)
     (hS_conn : IsConnected S)
-    (hpos : 0 < f.natDegree)
     (hdeg : DegreeInvariant f S)
-    (hnonzero : NotIdenticallyZeroOn f S)
     (hsep : ∀ a ∈ S, IsCoprime (specialize f a) (Polynomial.derivative (specialize f a))) :
     AnalyticDelineable f S :=
-  locally_delineable_to_global S f hS_open hS_conn hpos hdeg hnonzero
-    fun a ha => separable_locally_delineable f a S hS_open ha hpos hdeg hnonzero (hsep a ha)
+  locally_delineable_to_global S f hS_open hS_conn
+    fun a ha => separable_locally_delineable f a S ha hdeg (hsep a ha)
 
 /-! ### Partial derivative of `toMvPoly` with respect to the main variable -/
 
@@ -1254,8 +1246,6 @@ private theorem finSuccEquiv_pderiv_zero (p : MvPolynomial (Fin (n + 1)) ℝ) :
         MvPolynomial.finSuccEquiv_X_succ, Polynomial.derivative_mul,
         Polynomial.derivative_C, mul_zero, add_zero, ih]
 
-
-
 /-! ### orderFull = 1 at simple roots -/
 
 /-- At a simple root `(a, y)` of `f`, the full vanishing order is 1.
@@ -1269,7 +1259,6 @@ theorem orderFull_eq_one_of_simple_root
     (f : PolyR n)
     (a : Fin n → ℝ)
     (y : ℝ)
-    (hroot : (specialize f a).IsRoot y)
     (hsimple : (specialize f a).rootMultiplicity y = 1) :
     orderFull f a y = 1 := by
   have hne : specialize f a ≠ 0 := by intro h; rw [h] at hsimple; simp at hsimple
@@ -1283,7 +1272,6 @@ theorem order_invariant_section_of_mult_one
     (S : Set (Fin n → ℝ))
     (f : PolyR n)
     (θ : (Fin n → ℝ) → ℝ)
-    (hθ_root : IsRootFunction f θ S)
     (hmult : ∀ a ∈ S, (specialize f a).rootMultiplicity (θ a) = 1) :
     OrderInvariantFull f (SectionGraph θ S) := by
   intro p hp q hq
@@ -1291,10 +1279,10 @@ theorem order_invariant_section_of_mult_one
   obtain ⟨hqS, hqy⟩ := hq
   have h1 : orderFull f p.1 p.2 = 1 := by
     rw [hpy]
-    exact orderFull_eq_one_of_simple_root f p.1 (θ p.1) (hθ_root p.1 hpS) (hmult p.1 hpS)
+    exact orderFull_eq_one_of_simple_root f p.1 (θ p.1) (hmult p.1 hpS)
   have h2 : orderFull f q.1 q.2 = 1 := by
     rw [hqy]
-    exact orderFull_eq_one_of_simple_root f q.1 (θ q.1) (hθ_root q.1 hqS) (hmult q.1 hqS)
+    exact orderFull_eq_one_of_simple_root f q.1 (θ q.1) (hmult q.1 hqS)
   rw [h1, h2]
 
 /-! ### Main theorem -/
@@ -1311,16 +1299,14 @@ theorem simple_roots_delineable'
     (f : PolyR n)
     (hS_open : IsOpen S)
     (hS_conn : IsConnected S)
-    (hpos : 0 < f.natDegree)
     (hdeg : DegreeInvariant f S)
-    (hnonzero : NotIdenticallyZeroOn f S)
     (hsep : ∀ a ∈ S, IsCoprime (specialize f a) (Polynomial.derivative (specialize f a))) :
     AnalyticDelineable f S ∧
     (∀ (θ : (Fin n → ℝ) → ℝ), ContinuousOn θ S → IsRootFunction f θ S →
       OrderInvariantFull f (SectionGraph θ S)) := by
   constructor
   · -- Delineability: from root_continuity_delineable
-    exact root_continuity_delineable S f hS_open hS_conn hpos hdeg hnonzero hsep
+    exact root_continuity_delineable S f hS_open hS_conn hdeg hsep
   · -- Order invariance on each section
     intro θ _hθ_cont hθ_root
     -- Separability at each point means each root has multiplicity 1
@@ -1335,6 +1321,6 @@ theorem simple_roots_delineable'
       have hpos : 0 < (specialize f a).rootMultiplicity (θ a) :=
         (Polynomial.rootMultiplicity_pos hne).mpr hroot
       omega
-    exact order_invariant_section_of_mult_one S f θ hθ_root hmult
+    exact order_invariant_section_of_mult_one S f θ hmult
 
 end

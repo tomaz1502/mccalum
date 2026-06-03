@@ -84,7 +84,7 @@ theorem single_cluster_complex {s e : ℕ} (m : ℕ) (hm : 0 < m)
   -- `disc(h) ≢ 0` (from `res ≢ 0`, since `P^m = res·Q` and `P ≢ 0`), then Zariski 4.1.1.
   have hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤ := by
     rw [← order_weierstrassResFun_eq m a hm (0 : CParam s e) hDan]
-    exact order_ne_top_of_ne_zero U hU_open hU_conn _ (fun z hz => (hball hz).2.2.1) hres_ne 0 hU0
+    exact order_ne_top_of_ne_zero U hU_conn _ (fun z hz => (hball hz).2.2.1) hres_ne 0 hU0
   refine cluster_root_structure m hm a ha_an ha0 hdisc_ne ?_
   filter_upwards [Metric.ball_mem_nhds (0 : Fin s → ℂ) hδ] with y hy
   exact hdiscV y hy
