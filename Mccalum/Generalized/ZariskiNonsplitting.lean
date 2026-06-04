@@ -32,13 +32,41 @@ noncomputable section
 open Polynomial Filter
 open scoped Topology
 
-/-- **(A4) Each irreducible factor is nonsplitting over the section — AXIOM.**
+/-- **(A4-core) Single irreducible Weierstrass family is nonsplitting over the section — TEMPORARY
+AXIOM.**
 
-The per-factor monodromy kernel: every irreducible Weierstrass factor `facⱼ` of the factorization has,
-for `y` near `0`, a *single* distinct root `αⱼ(y)` over the section. (Branched covering of the roots
-over `{disc ≠ 0}` + transitive monodromy on the roots of an irreducible factor + a homotopy-deformation
-contradiction.) The roots of *different* factors are not yet asserted to agree — that is A5. -/
-axiom irreducible_factor_section_single_root {s e : ℕ}
+The genuine per-factor monodromy kernel, stated for *one* irreducible Weierstrass family `H` of degree
+`d ≥ 1`, taking `H`'s **own** discriminant hypotheses (nonvanishing order + order-invariance along the
+section): then `H` has, for `y` near `0`, a *single* distinct root `α(y)` over the section. (Branched
+covering of the roots over `{disc(H) ≠ 0}` + transitive monodromy on the roots of an irreducible
+family + a homotopy-deformation contradiction — Theorem 4.2.2.)
+
+This is the *only* remaining axiom of the nonsplitting half, scoped as the M2–M5 sub-project
+(complex `analytic_root_section`, the covering map `π`, transitive monodromy Lemma 4.2.5, and the
+homotopy-deformation contradiction). The full multi-factor statement
+`irreducible_factor_section_single_root` is *derived* from this by the discriminant-descent
+`factor_disc_order_inv` (each factor inherits a constant-order discriminant from `disc(h)`), so no
+discriminant reasoning is left in the axiom. -/
+axiom irreducible_section_single_root {s e : ℕ}
+    (H : CParam s e → Polynomial ℂ) (d : ℕ) (hd : 1 ≤ d)
+    (hH_fam : IsWeierstrassFamily H d) (hH_irr : WeierstrassIrreducible H d)
+    (hHdisc_ne : order ℂ (fun w => (H w).discr) (0 : CParam s e) ≠ ⊤)
+    (hHdisc_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (fun w => (H w).discr) ((y, 0) : CParam s e)
+        = order ℂ (fun w => (H w).discr) ((0, 0) : CParam s e)) :
+    ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      ∃ α : ℂ, ∀ β : ℂ, (H ((y, 0) : CParam s e)).IsRoot β ↔ β = α
+
+/-- **(A4) Each irreducible factor is nonsplitting over the section — THEOREM.**
+
+Every irreducible Weierstrass factor `facⱼ` of the factorization `h = ∏ⱼ facⱼ` has, for `y` near `0`,
+a *single* distinct root over the section. Derived from the single-family core
+`irreducible_section_single_root`: the per-factor discriminant hypotheses are supplied by the
+discriminant-descent `factor_disc_order_inv` (for `k ≥ 2`, `disc(facⱼ)` divides `disc(h)` up to a
+nonvanishing analytic factor `res²·disc(∏)`, so its order is constant along the section), and for the
+trivial factorization `k = 1` the single factor is `h` itself (germ-equal), inheriting `hdisc_ne`,
+`hdisc` directly. The roots of *different* factors are reconciled separately by A5. -/
+theorem irreducible_factor_section_single_root {s e : ℕ}
     (m : ℕ) (a : Fin m → (CParam s e → ℂ))
     (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
     (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
@@ -50,7 +78,51 @@ axiom irreducible_factor_section_single_root {s e : ℕ}
     (hfac_irr : ∀ j, WeierstrassIrreducible (fac j) (deg j))
     (hfac_eq : ∀ᶠ w in 𝓝 (0 : CParam s e), weierstrassPoly m a w = ∏ j : Fin k, fac j w) :
     ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-      ∀ j : Fin k, ∃ α : ℂ, ∀ β : ℂ, (fac j ((y, 0) : CParam s e)).IsRoot β ↔ β = α
+      ∀ j : Fin k, ∃ α : ℂ, ∀ β : ℂ, (fac j ((y, 0) : CParam s e)).IsRoot β ↔ β = α := by
+  rw [Filter.eventually_all]
+  intro j
+  -- Per-factor discriminant hypotheses: order-nonvanishing and order-invariance along the section.
+  have hDj : order ℂ (fun w => (fac j w).discr) (0 : CParam s e) ≠ ⊤ ∧
+      ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+        order ℂ (fun w => (fac j w).discr) ((y, 0) : CParam s e)
+          = order ℂ (fun w => (fac j w).discr) ((0, 0) : CParam s e) := by
+    rcases Nat.lt_or_ge k 2 with hk1 | hk2
+    · -- `k = 1`: the single factor is `h` itself (germ-equal), so disc germs coincide.
+      have hk1' : k = 1 := by omega
+      subst hk1'
+      have hj0 : j = 0 := Subsingleton.elim j 0
+      have hfe : ∀ᶠ w in 𝓝 (0 : CParam s e), weierstrassPoly m a w = fac j w := by
+        filter_upwards [hfac_eq] with w hw
+        rw [hw, hj0, Fin.prod_univ_one]
+      -- base-point order equality `disc(facⱼ) ~ disc(h)` at `(0,0)`
+      have hgerm_base : order ℂ (fun w => (fac j w).discr) ((0, 0) : CParam s e)
+          = order ℂ (weierstrassDiscFn m a) ((0, 0) : CParam s e) :=
+        order_congr_of_eventuallyEq' (by
+          filter_upwards [hfe] with w hw
+          show (fac j w).discr = (weierstrassPoly m a w).discr
+          rw [hw])
+      refine ⟨?_, ?_⟩
+      · rw [show ((0 : CParam s e)) = ((0, 0) : CParam s e) from rfl, hgerm_base]; exact hdisc_ne
+      · -- section invariance, transported through the germ equality at each `(y,0)`
+        have hfe_nhds := hfe.eventually_nhds
+        have hι : Filter.Tendsto (fun y : Fin s → ℂ => ((y, 0) : CParam s e)) (𝓝 0) (𝓝 0) := by
+          have hc : Continuous (fun y : Fin s → ℂ => ((y, 0) : CParam s e)) := by fun_prop
+          simpa using hc.tendsto' 0 0 (by simp)
+        have hsec_germ : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+            ∀ᶠ w' in 𝓝 ((y, 0) : CParam s e), weierstrassPoly m a w' = fac j w' :=
+          hι.eventually hfe_nhds
+        filter_upwards [hdisc, hsec_germ] with y hy_disc hy_germ
+        have e1 : order ℂ (fun w => (fac j w).discr) ((y, 0) : CParam s e)
+            = order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e) :=
+          order_congr_of_eventuallyEq' (by
+            filter_upwards [hy_germ] with w' hw'
+            show (fac j w').discr = (weierstrassPoly m a w').discr
+            rw [hw'])
+        rw [e1, hy_disc]; exact hgerm_base.symm
+    · exact factor_disc_order_inv m a hdisc_ne hdisc k deg fac hfac_fam
+        (fun l => (hfac_irr l).1) hfac_eq j hk2
+  exact irreducible_section_single_root (fac j) (deg j) (hfac_irr j).1 (hfac_fam j) (hfac_irr j)
+    hDj.1 hDj.2
 
 /-- **(A5) Distinct factors coincide over the section — THEOREM (resultant coincidence).**
 

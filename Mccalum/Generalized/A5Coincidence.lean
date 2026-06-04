@@ -70,6 +70,25 @@ theorem discr_prod_eq_resultant_sq_mul {k : ℕ} (fac : Fin k → R[X])
   rw [hstep1, hres]
   ring
 
+/-- **Discriminant factorization (the A4 engine).** For a product of monic, positive-degree
+polynomials with `k ≥ 2`, the discriminant of the product carries `disc(facⱼ)` as a factor. -/
+theorem discr_prod_eq_disc_mul {k : ℕ} (fac : Fin k → R[X])
+    (hmonic : ∀ l, (fac l).Monic) (hpos : ∀ l, 0 < (fac l).natDegree)
+    (j : Fin k) (hk2 : 2 ≤ k) :
+    (∏ l, fac l).discr
+      = (fac j).discr *
+          (resultant (fac j) (∏ l ∈ univ.erase j, fac l) ^ 2 * (∏ l ∈ univ.erase j, fac l).discr) := by
+  set P := ∏ l ∈ univ.erase j, fac l with hP
+  have hP_monic : P.Monic := monic_prod_fin fac _ hmonic
+  have hP_pos : 0 < P.natDegree := by
+    obtain ⟨l, hl⟩ : (univ.erase j).Nonempty := by
+      rw [← Finset.card_pos, Finset.card_erase_of_mem (mem_univ j), Finset.card_univ,
+        Fintype.card_fin]; omega
+    rw [hP, Polynomial.natDegree_prod _ _ fun l _ => (hmonic l).ne_zero]
+    exact Finset.sum_pos' (fun l _ => Nat.zero_le _) ⟨l, hl, hpos l⟩
+  have hsplit : (∏ l, fac l) = fac j * P := (Finset.mul_prod_erase univ fac (mem_univ j)).symm
+  rw [hsplit, discr_mul_eq (fac j) P (hpos j) hP_pos]; ring
+
 /-- At the base point the factors are `X^{dᵢ}`, `X^{dⱼ}` (positive degree), which share the root `0`,
 so their resultant vanishes. -/
 lemma resultant_X_pow_eq_zero {a b : ℕ} (ha : 0 < a) (hb : 0 < b) :
@@ -254,6 +273,36 @@ private lemma resultant_deg_eq {f g : Polynomial ℂ} {df dg : ℕ}
     (hf : f.natDegree = df) (hg : g.natDegree = dg) :
     resultant f g df dg = resultant f g := by rw [← hf, ← hg]
 
+/-- **Order-invariance descent (A4 wiring).** If `D = f · g` on a connected open `U` with `f, g`
+analytic and not identically zero, and `D` has constant order along the section `{(y,0) : y ∈ V}`
+(`V` preconnected), then so does `f`. (Direct application of `order_factor_const_of_mul_analytic`.) -/
+theorem factor_order_inv_on_section (f g D : CParam s e → ℂ)
+    {U : Set (CParam s e)} (hU_open : IsOpen U) (hU_conn : IsConnected U)
+    {V : Set (Fin s → ℂ)} (hV_conn : IsPreconnected V) (hV0 : (0 : Fin s → ℂ) ∈ V)
+    (hVU : ∀ y ∈ V, ((y, 0) : CParam s e) ∈ U)
+    (hf_an : AnalyticOnNhd ℂ f U) (hg_an : AnalyticOnNhd ℂ g U)
+    (hf_ne : ∃ z ∈ U, f z ≠ 0) (hg_ne : ∃ z ∈ U, g z ≠ 0)
+    (hD : ∀ z ∈ U, D z = f z * g z)
+    (hD_oi : ∀ y ∈ V, order ℂ D ((y, 0) : CParam s e) = order ℂ D ((0, 0) : CParam s e)) :
+    ∀ y ∈ V, order ℂ f ((y, 0) : CParam s e) = order ℂ f ((0, 0) : CParam s e) := by
+  set ι : (Fin s → ℂ) → CParam s e := fun y => (y, 0) with hι
+  have hι_cont : Continuous ι := by fun_prop
+  set S : Set (CParam s e) := ι '' V with hS
+  have hS_conn : IsPreconnected S := hV_conn.image ι hι_cont.continuousOn
+  have hSU : S ⊆ U := by rintro _ ⟨y, hy, rfl⟩; exact hVU y hy
+  have hz₀S : ((0, 0) : CParam s e) ∈ S := ⟨0, hV0, rfl⟩
+  have hfg_const : ∀ z ∈ S, order ℂ (fun w => f w * g w) z
+      = order ℂ (fun w => f w * g w) ((0, 0) : CParam s e) := by
+    have heq : ∀ z ∈ U, order ℂ (fun w => f w * g w) z = order ℂ D z := fun z hz =>
+      order_congr_of_eventuallyEq' (by
+        filter_upwards [hU_open.mem_nhds hz] with w hw using (hD w hw).symm)
+    rintro _ ⟨y, hy, rfl⟩
+    rw [heq _ (hVU y hy), heq _ (hVU 0 hV0), hD_oi y hy]
+  have hbridge := (order_factor_const_of_mul_analytic hU_open hU_conn hS_conn hSU
+    f g hf_an hg_an hf_ne hg_ne ((0, 0) : CParam s e) hz₀S hfg_const).1
+  intro y hy
+  exact hbridge (ι y) ⟨y, hy, rfl⟩
+
 /-- **A5, per pair.** For two factors `facᵢ, facⱼ` of the discriminant-order-invariant factorization,
 the section polynomials share a root for `y` near `0`. (`i=j`: any root; `i≠j`: the resultant vanishes
 on the section by the discriminant order-invariance descent.) -/
@@ -378,5 +427,110 @@ theorem pair_share_root
     · push_neg at hRne
       filter_upwards [hV_mem] with y hy
       exact hRne ((y, 0) : CParam s e) (hVU y hy)
+
+/-- **A4 disc descent.** For a factorization with `k ≥ 2`, the discriminant of one factor `facⱼ` is
+itself order-invariant along the section (and not identically zero near `0`), inheriting these from
+`disc(weierstrassPoly)` via the factorization `disc(h) = disc(facⱼ) · (res(facⱼ,∏)²·disc(∏))`. -/
+theorem factor_disc_order_inv
+    (m : ℕ) (a : Fin m → (CParam s e → ℂ))
+    (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
+    (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
+        = order ℂ (weierstrassDiscFn m a) (0 : CParam s e))
+    (k : ℕ) (deg : Fin k → ℕ) (fac : Fin k → (CParam s e → Polynomial ℂ))
+    (hfac_fam : ∀ l, IsWeierstrassFamily (fac l) (deg l)) (hdeg1 : ∀ l, 1 ≤ deg l)
+    (hfac_eq : ∀ᶠ w in 𝓝 (0 : CParam s e), weierstrassPoly m a w = ∏ l : Fin k, fac l w)
+    (j : Fin k) (hk2 : 2 ≤ k) :
+    order ℂ (fun w => (fac j w).discr) (0 : CParam s e) ≠ ⊤ ∧
+    ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (fun w => (fac j w).discr) ((y, 0) : CParam s e)
+        = order ℂ (fun w => (fac j w).discr) ((0, 0) : CParam s e) := by
+  set P : CParam s e → Polynomial ℂ := fun w => ∏ l ∈ univ.erase j, fac l w with hP
+  set dP : ℕ := ∑ l ∈ univ.erase j, deg l with hdP
+  set Df : CParam s e → ℂ := fun w => (fac j w).discr with hDfd
+  set Qf : CParam s e → ℂ := fun w => resultant (fac j w) (P w) ^ 2 * (P w).discr with hQfd
+  have hP_ca : ∀ idx, AnalyticAt ℂ (fun w => (P w).coeff idx) 0 :=
+    analyticCoeffs_prodFamily _ fac fun l idx => (hfac_fam l).coeff_analyticAt idx
+  have hP_deg : ∀ w, (P w).natDegree = dP := fun w => by
+    rw [hP, Polynomial.natDegree_prod _ _ fun l _ => ((hfac_fam l).monic w).ne_zero]
+    exact Finset.sum_congr rfl fun l _ => (hfac_fam l).degree_eq w
+  have hP_monic : ∀ w, (P w).Monic := fun w => monic_prod_of_monic _ _ fun l _ => (hfac_fam l).monic w
+  have hdP_pos : 0 < dP := by
+    obtain ⟨l, hl⟩ : (univ.erase j).Nonempty := by
+      rw [← Finset.card_pos, Finset.card_erase_of_mem (mem_univ j), Finset.card_univ,
+        Fintype.card_fin]; omega
+    rw [hdP]; exact Finset.sum_pos' (fun l _ => Nat.zero_le _) ⟨l, hl, hdeg1 l⟩
+  -- analyticity of `Df`, `Qf`
+  have hDf_an : AnalyticAt ℂ Df 0 := familyDiscr_analyticAt (fac j) (deg j) (by have := hdeg1 j; omega)
+    (fun w => (hfac_fam j).monic w) (fun w => (hfac_fam j).degree_eq w) (hfac_fam j).coeff_analyticAt
+  have hQf_expl : Qf = fun w => resultant (fac j w) (P w) (deg j) dP ^ 2 * (P w).discr := by
+    funext w
+    show resultant (fac j w) (P w) ^ 2 * (P w).discr = _
+    rw [resultant_deg_eq ((hfac_fam j).degree_eq w) (hP_deg w)]
+  have hQf_an : AnalyticAt ℂ Qf 0 := by
+    rw [hQf_expl]
+    exact (familyResultant_analyticAt (fac j) P (deg j) dP (hfac_fam j).coeff_analyticAt hP_ca
+      (fun w => ((hfac_fam j).degree_eq w).le) (fun w => (hP_deg w).le)).pow 2
+      |>.mul (familyDiscr_analyticAt P dP hdP_pos hP_monic hP_deg hP_ca)
+  -- `disc(h) = Df · Qf` wherever the factorization holds
+  have hDrel : ∀ᶠ w in 𝓝 (0 : CParam s e), weierstrassDiscFn m a w = Df w * Qf w := by
+    filter_upwards [hfac_eq] with w hw
+    show (weierstrassPoly m a w).discr = Df w * Qf w
+    rw [hw, discr_prod_eq_disc_mul (fun l => fac l w) (fun l => (hfac_fam l).monic w)
+      (fun l => by rw [(hfac_fam l).degree_eq w]; exact hdeg1 l) j hk2]
+  -- ball `U` where everything is analytic and the relation holds
+  obtain ⟨ε, hε, hball⟩ := Metric.mem_nhds_iff.mp
+    (Filter.inter_mem (hDf_an.eventually_analyticAt.and hQf_an.eventually_analyticAt) hDrel)
+  set U : Set (CParam s e) := Metric.ball 0 ε with hU
+  have hU_open : IsOpen U := Metric.isOpen_ball
+  have hU_conn : IsConnected U :=
+    ⟨⟨0, Metric.mem_ball_self hε⟩, (convex_ball (0 : CParam s e) ε).isPreconnected⟩
+  have hU_mem : U ∈ 𝓝 (0 : CParam s e) := hU_open.mem_nhds (Metric.mem_ball_self hε)
+  have hDf_an_U : AnalyticOnNhd ℂ Df U := fun z hz => (hball hz).1.1
+  have hQf_an_U : AnalyticOnNhd ℂ Qf U := fun z hz => (hball hz).1.2
+  have hD_U : ∀ z ∈ U, weierstrassDiscFn m a z = Df z * Qf z := fun z hz => (hball hz).2
+  -- `Df ≢ 0`, `Qf ≢ 0` on `U` (else `disc ≡ 0`, contradicting `hdisc_ne`)
+  have hDf_ne : ∃ z ∈ U, Df z ≠ 0 := by
+    by_contra h; push_neg at h
+    apply hdisc_ne
+    apply order_eq_top_of_eventuallyEq_zero
+    filter_upwards [hU_mem] with w hw
+    show weierstrassDiscFn m a w = 0
+    rw [hD_U w hw, h w hw, zero_mul]
+  have hQf_ne : ∃ z ∈ U, Qf z ≠ 0 := by
+    by_contra h; push_neg at h
+    apply hdisc_ne
+    apply order_eq_top_of_eventuallyEq_zero
+    filter_upwards [hU_mem] with w hw
+    show weierstrassDiscFn m a w = 0
+    rw [hD_U w hw, h w hw, mul_zero]
+  -- `order Df 0 ≠ ⊤`
+  have hDf_ne_top : order ℂ Df (0 : CParam s e) ≠ ⊤ := by
+    intro htop
+    apply hdisc_ne
+    apply order_eq_top_of_eventuallyEq_zero
+    have hDf0 := eventuallyEq_zero_of_order_eq_top Df 0 hDf_an htop
+    filter_upwards [hDf0, hDrel] with w hwDf hwrel
+    show weierstrassDiscFn m a w = 0
+    rw [hwrel]
+    simp only [Pi.zero_apply] at hwDf
+    rw [hwDf, zero_mul]
+  refine ⟨hDf_ne_top, ?_⟩
+  -- section ball `V` and the order-invariance descent
+  have hsec_pre : (fun y : Fin s → ℂ => ((y, 0) : CParam s e)) ⁻¹' U ∈ 𝓝 (0 : Fin s → ℂ) := by
+    apply (continuous_id.prodMk continuous_const).continuousAt.preimage_mem_nhds
+    simpa using hU_mem
+  obtain ⟨δ, hδ, hδball⟩ := Metric.mem_nhds_iff.mp (Filter.inter_mem hsec_pre hdisc)
+  set V : Set (Fin s → ℂ) := Metric.ball 0 δ with hV
+  have hV_conn : IsPreconnected V := (convex_ball (0 : Fin s → ℂ) δ).isPreconnected
+  have hV0 : (0 : Fin s → ℂ) ∈ V := Metric.mem_ball_self hδ
+  have hV_mem : V ∈ 𝓝 (0 : Fin s → ℂ) := Metric.isOpen_ball.mem_nhds hV0
+  have hVU : ∀ y ∈ V, ((y, 0) : CParam s e) ∈ U := fun y hy => (hδball hy).1
+  have hD_oi : ∀ y ∈ V, order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
+      = order ℂ (weierstrassDiscFn m a) ((0, 0) : CParam s e) := fun y hy => (hδball hy).2
+  have hdescent := factor_order_inv_on_section Df Qf (weierstrassDiscFn m a) hU_open hU_conn
+    hV_conn hV0 hVU hDf_an_U hQf_an_U hDf_ne hQf_ne hD_U hD_oi
+  filter_upwards [hV_mem] with y hy
+  exact hdescent y hy
 
 end Analytic
