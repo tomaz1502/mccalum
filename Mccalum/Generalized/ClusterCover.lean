@@ -1,6 +1,7 @@
 import Mccalum.Generalized.WeierstrassDivision
 import Mccalum.Generalized.Lifting
 import Mccalum.Generalized.AnalyticOrderPoly
+import Mccalum.Generalized.AnalyticGerm
 
 /-!
 # Cluster covering / multiplicity transfer bridges
@@ -171,5 +172,54 @@ lemma multmatch_of_weierstrass (m : ℕ) (a : Fin m → (CParam s e → ℂ))
   have hrm : (fam y).rootMultiplicity α = (weierstrassPoly m a z).rootMultiplicity α := by
     exact_mod_cast hord
   rw [hrm]; exact hmult_y hinj i
+
+/-- **Order-invariance transfer (multivariate).** Under the unit Weierstrass factorization
+`polyToFun g_poly =ᶠ u · polyToFun (weierstrassPolyFun)` (`u 0 ≠ 0`), the *multivariate* complex
+vanishing order of `polyToFun g_poly` along the branch graph `((y,0), ψ y)` equals that of the
+Weierstrass-polynomial evaluation — hence inherits its order-invariance (Zariski conclusion (2),
+`horderinv`). The unit `u` is analytic and non-vanishing at each graph point (it is at `0`, and the
+graph point tends to `0`), so multiplying by it preserves order (`order_unit_mul_analytic`); the germ
+transfer uses `order_congr_of_eventuallyEq'`. -/
+lemma orderinv_of_weierstrass (m : ℕ) (a : Fin m → (CParam s e → ℂ))
+    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0)
+    (g_poly : (CParam s e → ℂ)[X])
+    (u : CParam s e × ℂ → ℂ) (hu0 : u 0 ≠ 0) (hu_an : AnalyticAt ℂ u 0)
+    (hfac : polyToFun s e g_poly =ᶠ[𝓝 0]
+      fun zt => u zt * polyToFun s e (weierstrassPolyFun m a) zt)
+    (ψ : (Fin s → ℂ) → ℂ) (hψ_an : AnalyticAt ℂ ψ 0) (hψ0 : ψ 0 = 0)
+    (horderinv : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2) ((y, 0), ψ y)
+        = order ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2)
+            ((0, 0), ψ 0)) :
+    ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (polyToFun s e g_poly) ((y, 0), ψ y)
+        = order ℂ (polyToFun s e g_poly) ((0, 0), ψ 0) := by
+  set Weval : CParam s e × ℂ → ℂ := fun wt => (weierstrassPoly m a wt.1).eval wt.2 with hWeval
+  have hgood : ∀ᶠ zt in 𝓝 (0 : CParam s e × ℂ),
+      polyToFun s e g_poly zt = u zt * polyToFun s e (weierstrassPolyFun m a) zt
+      ∧ u zt ≠ 0 ∧ AnalyticAt ℂ u zt ∧ AnalyticAt ℂ Weval zt := by
+    filter_upwards [hfac, hu_an.continuousAt.eventually_ne hu0, hu_an.eventually_analyticAt,
+      (weierstrassPolyEval_analyticAt m a ha_an).eventually_analyticAt] with zt h1 h2 h3 h4
+    exact ⟨h1, h2, h3, h4⟩
+  obtain ⟨W, hWsub, hWopen, hW0⟩ := eventually_nhds_iff.mp hgood
+  have key : ∀ y : Fin s → ℂ, (((y, 0) : CParam s e), ψ y) ∈ W →
+      order ℂ (polyToFun s e g_poly) ((y, 0), ψ y) = order ℂ Weval ((y, 0), ψ y) := by
+    intro y hyW
+    have hfac_y : polyToFun s e g_poly =ᶠ[𝓝 (((y, 0) : CParam s e), ψ y)]
+        fun zt => u zt * Weval zt := by
+      filter_upwards [hWopen.mem_nhds hyW] with zt hzt
+      rw [(hWsub zt hzt).1, polyToFun_weierstrassPolyFun]
+    rw [order_congr_of_eventuallyEq' hfac_y]
+    exact order_unit_mul_analytic u Weval _ (hWsub _ hyW).2.2.1 (hWsub _ hyW).2.1
+      (hWsub _ hyW).2.2.2
+  have h0eq : (((0, 0) : CParam s e), ψ 0) = (0 : CParam s e × ℂ) := by simp [hψ0]
+  have hPy_W : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ), (((y, 0) : CParam s e), ψ y) ∈ W := by
+    have hca : ContinuousAt (fun y : Fin s → ℂ => (((y, 0) : CParam s e), ψ y)) 0 := by
+      have h1 : ContinuousAt (fun y : Fin s → ℂ => ((y, 0) : CParam s e)) 0 := by fun_prop
+      exact h1.prodMk hψ_an.continuousAt
+    exact hca.preimage_mem_nhds (by rw [h0eq]; exact hWopen.mem_nhds hW0)
+  have hP0_W : (((0, 0) : CParam s e), ψ 0) ∈ W := by rw [h0eq]; exact hW0
+  filter_upwards [horderinv, hPy_W] with y hoi hyW
+  rw [key y hyW, hoi, ← key 0 hP0_W]
 
 end

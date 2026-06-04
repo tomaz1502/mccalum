@@ -47,7 +47,11 @@ theorem single_cluster_from_weierstrass (m : ℕ) (hm : 0 < m)
       (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
         (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ α = ψ y) ∧
       (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-        (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m) := by
+        (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m) ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+        order ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2) ((y, 0), ψ y)
+          = order ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2)
+              ((0, 0), ψ 0)) := by
   -- the t-derivative factorization, with `uder = ptderiv u`
   have huder : AnalyticAt ℂ (ptderiv u) 0 := analyticAt_ptderiv u hu
   have hfac' := factor_deriv m a g_poly u hu hfac

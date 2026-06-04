@@ -27,6 +27,47 @@ open scoped Topology
 
 variable {s e : ℕ}
 
+/-- **R1 — real section-family order-invariance from a complexification.** Given a real section-family
+evaluation `G` on `((Fin s→ℝ)×(Fin e→ℝ))×ℝ` and its holomorphic complexification `F_ℂ` on
+`CParam s e × ℂ` (agreeing on the real slice near each branch graph point), if `F_ℂ` is order-invariant
+along the **complex** branch `ξ` (`hcoi`, the output of `orderinv_of_weierstrass`/Zariski (2)), and the
+real branch `η` is the real restriction of `ξ` (`hreal`, branch reality), then `G` is order-invariant
+along the real branch graph `((y,0), η y)`. Pure chaining of `order_real_eq_order_complex_prod` (R1b)
+with the complex order-invariance, pulled back along the real embedding. -/
+lemma section_orderinv_of_complex
+    (G : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ → ℝ)
+    (F_ℂ : CParam s e × ℂ → ℂ)
+    (ξ : (Fin s → ℂ) → ℂ) (hξ0 : ξ 0 = 0)
+    (η : (Fin s → ℝ) → ℝ) (hη0 : η 0 = 0)
+    (hcoi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ F_ℂ ((y, 0), ξ y) = order ℂ F_ℂ ((0, 0), ξ 0))
+    (hreal : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), (↑(η y) : ℂ) = ξ (Complex.ofReal ∘ y))
+    (hG_an : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), AnalyticAt ℝ G ((y, 0), η y))
+    (hFℂ_an : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+      AnalyticAt ℂ F_ℂ ((Complex.ofReal ∘ y, (0 : Fin e → ℂ)), (↑(η y) : ℂ)))
+    (hagree : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+      ∀ᶠ x in 𝓝 (((y, 0) : (Fin s → ℝ) × (Fin e → ℝ)), η y),
+        F_ℂ ((Complex.ofReal ∘ x.1.1, Complex.ofReal ∘ x.1.2), (x.2 : ℂ)) = ↑(G x)) :
+    ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+      order ℝ G ((y, 0), η y) = order ℝ G ((0, 0), η 0) := by
+  -- base point value, through the complexification
+  have hbase : order ℝ G ((0, 0), η 0) = order ℂ F_ℂ ((0, 0), ξ 0) := by
+    have hR1b0 := order_real_eq_order_complex_prod G F_ℂ ((0, 0), η 0)
+      hG_an.self_of_nhds hFℂ_an.self_of_nhds hagree.self_of_nhds
+    rw [← hR1b0]
+    simp only [ofReal_comp_zero, hη0, Complex.ofReal_zero, hξ0]
+  -- pull the complex order-invariance back along the real embedding
+  have htend : Filter.Tendsto (fun y : Fin s → ℝ => (Complex.ofReal ∘ y : Fin s → ℂ))
+      (𝓝 0) (𝓝 0) := by
+    have h := (realEmbedding s).continuous.tendsto (0 : Fin s → ℝ)
+    rw [map_zero] at h; simpa [realEmbedding_apply] using h
+  filter_upwards [hreal, hG_an, hFℂ_an, hagree, htend.eventually hcoi]
+    with y hr hGa hFa hag hco
+  have hR1b := order_real_eq_order_complex_prod G F_ℂ ((y, 0), η y) hGa hFa hag
+  rw [← hR1b]
+  simp only [ofReal_comp_zero]
+  rw [hr, hco, hbase]
+
 /-- **A3 closed.** Real data + per-cluster localization datum ⟹ complex single-cluster root
 structure. -/
 theorem cluster_from_real (m : ℕ) (hm_pos : 0 < m)
@@ -53,7 +94,16 @@ theorem cluster_from_real (m : ℕ) (hm_pos : 0 < m)
       (∀ᶠ y in 𝓝 (0 : Fin s → ℝ), ∀ α : ℂ, ‖α‖ < δ₀ →
         (((g (y, 0)).map (algebraMap ℝ ℂ)).IsRoot α ↔ α = ξ (realEmbedding s y))) ∧
       (∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
-        ((g (y, 0)).map (algebraMap ℝ ℂ)).rootMultiplicity (ξ (realEmbedding s y)) = m) := by
+        ((g (y, 0)).map (algebraMap ℝ ℂ)).rootMultiplicity (ξ (realEmbedding s y)) = m) ∧
+      -- order-invariance data: the holomorphic complexification `F_ℂ` of the section-family
+      -- evaluation, agreeing on the real slice, order-invariant along the complex branch `ξ`
+      ∃ F_ℂ : CParam s e × ℂ → ℂ,
+        AnalyticAt ℂ F_ℂ 0 ∧
+        (∀ᶠ x in 𝓝 (0 : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ),
+          F_ℂ ((Complex.ofReal ∘ x.1.1, Complex.ofReal ∘ x.1.2), (x.2 : ℂ))
+            = Complex.ofReal ((g x.1).eval x.2)) ∧
+        (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+          order ℂ F_ℂ ((y, 0), ξ y) = order ℂ F_ℂ ((0, 0), ξ 0)) := by
   -- complexify `g`, `A`, `B`, `P`
   obtain ⟨gℂ, hgℂ_coeff, hgℂ_agree⟩ := complexify_pseudopoly_prod Ng g hg_deg hg_coeff
   obtain ⟨Aℂ_fam, hAℂ_coeff, hAℂ_agree⟩ := complexify_pseudopoly_prod NA A hA_deg hA_coeff
@@ -116,7 +166,7 @@ theorem cluster_from_real (m : ℕ) (hm_pos : 0 < m)
     filter_upwards [hsec] with y hy
     rw [hy, show ((0, 0) : CParam s e) = 0 from rfl, hμ0]
   -- assemble the single cluster (Theorem 4.1.1: a single holomorphic branch `ψ`)
-  obtain ⟨ψ, hψ_an, hψ0, hroots, hmults⟩ :=
+  obtain ⟨ψ, hψ_an, hψ0, hroots, hmults, horderinv⟩ :=
     single_cluster_from_weierstrass m hm_pos a ha_an ha0 g_poly u hu_an hfac
       Pℂ hPℂ_an hP_ne_C Aℂ Bℂ hAℂ_an hBℂ_an hmem_poly hP_oi
   -- section-level map agreement (specialise `hg_map` to `w = (y, 0)`)
@@ -159,7 +209,22 @@ theorem cluster_from_real (m : ℕ) (hm_pos : 0 < m)
     (fun _ : Fin 1 => ψ) hroots1 (fun y => (g (y, 0)).map (algebraMap ℝ ℂ)) hfam_map
   have hinj1 : ∀ y : Fin s → ℝ, Function.Injective (fun _i : Fin 1 => ψ (realEmbedding s y)) :=
     fun y a b _ => Subsingleton.elim a b
-  refine ⟨ψ, δ₀, hψ_an, hψ0, hδ₀, ?_, ?_⟩
+  -- order-invariance data: `F_ℂ = polyToFun g_poly` (complexification of the section evaluation),
+  -- order-invariant along `ψ` via `orderinv_of_weierstrass` + the Zariski (2) conjunct `horderinv`.
+  have hcoi := orderinv_of_weierstrass m a ha_an g_poly u hu0 hu_an hfac ψ hψ_an hψ0 horderinv
+  have hagree_F : ∀ᶠ x in 𝓝 (0 : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ),
+      polyToFun s e g_poly ((Complex.ofReal ∘ x.1.1, Complex.ofReal ∘ x.1.2), (x.2 : ℂ))
+        = Complex.ofReal ((g x.1).eval x.2) := by
+    have htend : Filter.Tendsto
+        (Prod.fst : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ → (Fin s → ℝ) × (Fin e → ℝ)) (𝓝 0) (𝓝 0) := by
+      simpa using (continuous_fst.tendsto (0 : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ))
+    filter_upwards [htend.eventually hg_map] with x hx
+    have hz1 : ((Complex.ofReal ∘ x.1.1, Complex.ofReal ∘ x.1.2) : CParam s e) = prodEmbedCLM s e x.1 := by
+      rw [prodEmbedCLM_apply]
+    rw [polyToFun_apply, hz1, hx, show (↑x.2 : ℂ) = algebraMap ℝ ℂ x.2 from rfl,
+      Polynomial.eval_map, Polynomial.eval₂_at_apply]
+    rfl
+  refine ⟨ψ, δ₀, hψ_an, hψ0, hδ₀, ?_, ?_, polyToFun s e g_poly, hGℂ_an, hagree_F, hcoi⟩
   · filter_upwards [hcover] with y hy α hα
     rw [hy α hα]; exact ⟨fun ⟨_, h⟩ => h, fun h => ⟨0, h⟩⟩
   · filter_upwards [hmult_match] with y hy

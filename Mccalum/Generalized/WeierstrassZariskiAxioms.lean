@@ -83,4 +83,30 @@ axiom zariski_single_branch {s e : ℕ}
       (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
         (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m)
 
+/-- **Zariski's theorem 4.1.1 — order-invariance in the graph (conclusion (2), AXIOM).**
+
+The *second* conclusion of Zariski 4.1.1: under the same hypotheses, with `ψ` the single holomorphic
+root section (conclusion (1), `zariski_single_branch`), the Weierstrass polynomial `h` is
+**order-invariant in its graph** `G* = {((y,0), ψ y)}` — the multivariate analytic order
+`ord_{((y,0), ψ y)} h` is constant along the section. This is the equisingularity content proved in
+the thesis (Chapter 4) by Lemmas 4.2.6–4.2.8 (Puiseux parametrization, `ord = min(m, m₁)`). It is the
+clean residual of the codim order-invariance: everything wrapping it (chart, complexification,
+Weierstrass `f = u·h`, real recovery) is proved transport. To be discharged with
+`zariski_single_branch`. -/
+axiom zariski_order_invariant_in_graph {s e : ℕ}
+    (m : ℕ) (hm_pos : 0 < m)
+    (a : Fin m → (CParam s e → ℂ))
+    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0)
+    (ha0 : ∀ i, a i 0 = 0)
+    (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
+    (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
+        = order ℂ (weierstrassDiscFn m a) (0 : CParam s e))
+    (ψ : (Fin s → ℂ) → ℂ) (hψ_an : AnalyticAt ℂ ψ 0) (hψ0 : ψ 0 = 0)
+    (hψ_root : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
+      (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ α = ψ y) :
+    ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2) ((y, 0), ψ y)
+        = order ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2) ((0, 0), ψ 0)
+
 end

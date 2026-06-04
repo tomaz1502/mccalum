@@ -7,6 +7,7 @@ import Mathlib.Analysis.Analytic.Uniqueness
 import Mathlib.Analysis.Analytic.IteratedFDeriv
 import Mathlib.Analysis.Analytic.Order
 import Mathlib.Analysis.Analytic.Composition
+import Mathlib.Analysis.Analytic.Constructions
 
 /-!
 # Multiplicativity of the vanishing `order` for analytic functions over `ℂ`
@@ -444,6 +445,51 @@ theorem order_const_mul_analytic
     order ℂ (fun z => c * f z) x = order ℂ f x := by
   rw [order_mul_analytic (fun _ => c) f x analyticAt_const hf,
     order_const_analytic_ne c hc x, zero_add]
+
+/-- A function not vanishing at `x` has vanishing order `0` there (no analyticity needed). -/
+theorem order_eq_zero_of_ne
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (f : E → ℂ) (x : E) (hf : f x ≠ 0) :
+    order ℂ f x = 0 := by
+  rw [show (0 : ℕ∞) = ((0 : ℕ) : ℕ∞) from rfl, order_eq_natCast_iff]
+  refine ⟨fun m hm => absurd hm (Nat.not_lt_zero m), fun h => ?_⟩
+  have h1 : (iteratedFDeriv ℂ 0 f x) (fun _ => 0) = f x := by
+    simp [iteratedFDeriv_zero_apply]
+  rw [h] at h1; simp only [ContinuousMultilinearMap.zero_apply] at h1
+  exact hf h1.symm
+
+/-- **L2 (order under an analytic unit).** Multiplying by an analytic factor `u` that does not
+vanish at `x` does not change the vanishing order: `order(u·f) = order f`. This is the order-transport
+step `order(g) = order(h)` from the Weierstrass factorization `g = u·h` with `u(graph point) ≠ 0`.
+Generalizes `order_const_mul_analytic` from a constant to an analytic unit. -/
+theorem order_unit_mul_analytic
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (u f : E → ℂ) (x : E) (hu : AnalyticAt ℂ u x) (hu0 : u x ≠ 0) (hf : AnalyticAt ℂ f x) :
+    order ℂ (fun z => u z * f z) x = order ℂ f x := by
+  rw [order_mul_analytic u f x hu hf, order_eq_zero_of_ne u x hu0, zero_add]
+
+/-- **L2.5 (multi-cluster order additivity).** If `F = ∏ i, h i` near `x` and every factor except
+`i₀` is non-vanishing at `x` (all analytic), then the order of the product equals the order of the
+single (possibly) vanishing factor: `order(∏ h i) = order(h i₀)`. This is the additivity step that
+collapses the multi-cluster Weierstrass product onto one branch: at branch `i₀`'s graph point only
+`h i₀` vanishes (distinct clusters have disjoint roots, so the other factors are units there), so the
+per-cluster order-invariance transports to the whole family. Proof: split off the unit
+`∏_{i ≠ i₀} h i` (analytic, non-vanishing at `x`) and apply `order_unit_mul_analytic`. -/
+theorem order_finprod_of_single_vanishing
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (h : ι → E → ℂ) (x : E) (i₀ : ι)
+    (h_an : ∀ i, AnalyticAt ℂ (h i) x)
+    (h_ne : ∀ i, i ≠ i₀ → h i x ≠ 0) :
+    order ℂ (fun z => ∏ i, h i z) x = order ℂ (h i₀) x := by
+  have hfac : (fun z => ∏ i, h i z)
+      = fun z => (∏ i ∈ Finset.univ.erase i₀, h i z) * h i₀ z := by
+    funext z
+    rw [Finset.prod_erase_mul Finset.univ (fun i => h i z) (Finset.mem_univ i₀)]
+  rw [hfac]
+  refine order_unit_mul_analytic _ (h i₀) x
+    (Finset.analyticAt_fun_prod _ fun i _ => h_an i) ?_ (h_an i₀)
+  exact Finset.prod_ne_zero_iff.mpr fun i hi => h_ne i (Finset.ne_of_mem_erase hi)
 
 /-! ## Reverse factor bridge for the analytic order along a preconnected set (Phase D3 core) -/
 

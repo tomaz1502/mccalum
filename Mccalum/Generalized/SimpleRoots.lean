@@ -1248,13 +1248,30 @@ private theorem finSuccEquiv_pderiv_zero (p : MvPolynomial (Fin (n + 1)) ℝ) :
 
 /-! ### orderFull = 1 at simple roots -/
 
-/-- At a simple root `(a, y)` of `f`, the full vanishing order is 1.
+/-- The `x₀`-partial of `toMvPoly f` is `toMvPoly` of the `t`-derivative. -/
+theorem pderiv_zero_toMvPoly (f : PolyR n) :
+    MvPolynomial.pderiv 0 (toMvPoly f) = toMvPoly (Polynomial.derivative f) := by
+  have hinj := (MvPolynomial.finSuccEquiv ℝ n).injective
+  apply hinj
+  unfold toMvPoly
+  rw [finSuccEquiv_pderiv_zero,
+    (MvPolynomial.finSuccEquiv ℝ n).apply_symm_apply,
+    (MvPolynomial.finSuccEquiv ℝ n).apply_symm_apply]
 
-**Proof sketch**: `orderFull f a y = polyOrder (n+1) (toMvPoly f) (Fin.cons y a)`.
-The 0th derivative of `toMvPoly f` at `(y, a)` is `f(a, y) = 0`, so order ≥ 1.
-The partial derivative with respect to `x₀` (the `y`-variable) gives `f'(a, y) ≠ 0`
-(since `y` is a simple root), so the 1st iterated Fréchet derivative is nonzero,
-giving order = 1. -/
+/-- Evaluation of `pderiv 0 (toMvPoly f)` at `(y, a)` equals `(derivative (specialize f a)).eval y`. -/
+theorem eval_pderiv_zero_toMvPoly
+    (f : PolyR n) (a : Fin n → ℝ) (y : ℝ) :
+    MvPolynomial.eval (Fin.cons y a) (MvPolynomial.pderiv 0 (toMvPoly f)) =
+    Polynomial.eval y (Polynomial.derivative (specialize f a)) := by
+  rw [pderiv_zero_toMvPoly]
+  unfold toMvPoly specialize
+  rw [MvPolynomial.eval_eq_eval_mv_eval',
+    (MvPolynomial.finSuccEquiv ℝ n).apply_symm_apply,
+    Polynomial.derivative_map]
+
+/-- At a simple root `(a, y)` of `f`, McCallum's multivariate order `ord_{(a,y)} f = 1`:
+the value `f(a,y) = 0` (order ≥ 1), and the `t`-partial `f'(a,y) ≠ 0` (simple root) gives a
+nonvanishing first-order derivative (order = 1). -/
 theorem orderFull_eq_one_of_simple_root
     (f : PolyR n)
     (a : Fin n → ℝ)
@@ -1262,7 +1279,33 @@ theorem orderFull_eq_one_of_simple_root
     (hsimple : (specialize f a).rootMultiplicity y = 1) :
     orderFull f a y = 1 := by
   have hne : specialize f a ≠ 0 := by intro h; rw [h] at hsimple; simp at hsimple
-  simp only [orderFull, if_neg hne, hsimple, Nat.cast_one]
+  have hroot : (specialize f a).IsRoot y :=
+    (Polynomial.rootMultiplicity_pos hne).mp (by omega)
+  unfold orderFull polyOrder
+  rw [show (1 : ℕ∞) = ↑(1 : ℕ) from rfl]
+  rw [order_eq_natCast_iff (𝕜 := ℝ)]
+  constructor
+  · intro m hm
+    interval_cases m
+    ext v
+    simp only [iteratedFDeriv_zero_apply, ContinuousMultilinearMap.zero_apply]
+    have heval : MvPolynomial.eval (Fin.cons y a) (toMvPoly f) =
+        (specialize f a).eval y := by
+      unfold toMvPoly specialize
+      rw [MvPolynomial.eval_eq_eval_mv_eval',
+        (MvPolynomial.finSuccEquiv ℝ n).apply_symm_apply]
+    rw [Polynomial.IsRoot] at hroot
+    exact heval ▸ hroot
+  · rw [iteratedFDeriv_ne_zero_iff_exists_iteratedPDeriv]
+    refine ⟨[0], rfl, ?_⟩
+    simp only [iteratedPDeriv, List.foldr_cons, List.foldr_nil]
+    rw [eval_pderiv_zero_toMvPoly]
+    have hnotder : ¬ (Polynomial.derivative (specialize f a)).IsRoot y := by
+      intro hder
+      have h1lt := (Polynomial.one_lt_rootMultiplicity_iff_isRoot hne).mpr ⟨hroot, hder⟩
+      omega
+    rw [Polynomial.IsRoot] at hnotder
+    exact fun h => hnotder h
 
 /-! ### Order invariance on simple-root sections -/
 

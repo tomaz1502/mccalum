@@ -65,7 +65,8 @@ theorem real_delineation_of_single_branch
         AnalyticOn ℝ η V ∧ η 0 = 0 ∧
         (∀ y ∈ V, |η y| < δ) ∧
         (∀ y ∈ V, ∀ α : ℝ, (|α| < δ ∧ (fam y).IsRoot α) ↔ α = η y) ∧
-        (∀ y ∈ V, (fam y).rootMultiplicity (η y) = m) := by
+        (∀ y ∈ V, (fam y).rootMultiplicity (η y) = m) ∧
+        (∀ y ∈ V, (↑(η y) : ℂ) = ψ (realEmbedding s y)) := by
   have hemb0 : realEmbedding s (0 : Fin s → ℝ) = 0 := map_zero _
   -- `y ↦ ψ (realEmbedding s y)` is continuous at `0` with value `0`
   have hψr0 : ψ (realEmbedding s (0 : Fin s → ℝ)) = 0 := by rw [hemb0, hψ0]
@@ -120,7 +121,7 @@ theorem real_delineation_of_single_branch
       with y h1 h2 h3 h4 h5 h6
     exact ⟨h1, h2, h3, h4, h5, h6⟩
   obtain ⟨V, hVsub, hVopen, hV0⟩ := eventually_nhds_iff.mp hcomb
-  refine ⟨V, δ₀, hVopen, hV0, hδ₀, fun x => (ψ (realEmbedding s x)).re, ?_, hη0, ?_, ?_, ?_⟩
+  refine ⟨V, δ₀, hVopen, hV0, hδ₀, fun x => (ψ (realEmbedding s x)).re, ?_, hη0, ?_, ?_, ?_, ?_⟩
   · -- AnalyticOn ℝ η V
     exact fun y hy => ((hVsub y hy).1).analyticWithinAt
   · -- |η y| < δ
@@ -146,5 +147,8 @@ theorem real_delineation_of_single_branch
     rw [eq_rootMultiplicity_map (f := algebraMap ℝ ℂ) (algebraMap ℝ ℂ).injective,
         Complex.coe_algebraMap, hrec]
     exact hmlt
+  · -- branch reality: `↑(η y) = ψ (realEmbedding s y)`
+    intro y hy
+    exact (hVsub y hy).2.2.2.1
 
 end

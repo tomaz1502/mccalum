@@ -37,7 +37,11 @@ theorem single_cluster_complex {s e : ℕ} (m : ℕ) (hm : 0 < m)
       (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
         (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ α = ψ y) ∧
       (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-        (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m) := by
+        (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m) ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+        order ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2) ((y, 0), ψ y)
+          = order ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2)
+              ((0, 0), ψ 0)) := by
   have hRan : AnalyticAt ℂ (weierstrassResFun m a) 0 := weierstrassResFun_analyticAt a ha_an
   have hDan : AnalyticAt ℂ (weierstrassDiscFn m a) 0 := weierstrassDiscFn_analyticAt hm a ha_an
   -- A neighbourhood where all four functions are analytic and the norm identity holds.

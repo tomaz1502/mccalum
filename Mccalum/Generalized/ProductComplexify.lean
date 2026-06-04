@@ -85,6 +85,59 @@ theorem analyticAt_complexify_prod {s e : ℕ}
     rw [order_comp_continuousLinearEquiv Cℂ.symm f_ℂ 0, map_zero, hf_ℂ_order, hf,
       order_comp_continuousLinearEquiv R F 0, hR0]
 
+/-- **Product-domain L1 (real restriction of the order).** For a holomorphic `F_ℂ` on
+`CParam s e × ℂ` whose restriction to the real slice is a given real-analytic `F` on
+`((Fin s → ℝ) × (Fin e → ℝ)) × ℝ` (agreeing near `x₀`), the multivariate complex vanishing order at
+the embedded real point equals the real order at `x₀` — at a **general** real `x₀`. This is the
+product-domain analogue of `order_real_eq_order_complex` (single `Fin`-index), obtained by reindexing
+both sides through `Pℝ, Pℂ : Fin (s+e+1) → · ≃L ((Fin s→·)×(Fin e→·))×·` (which commute with the real
+embedding) and applying the single-index L1. -/
+theorem order_real_eq_order_complex_prod {s e : ℕ}
+    (F : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ → ℝ)
+    (F_ℂ : CParam s e × ℂ → ℂ)
+    (x₀ : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ)
+    (hF : AnalyticAt ℝ F x₀)
+    (hF_ℂ : AnalyticAt ℂ F_ℂ
+      ((Complex.ofReal ∘ x₀.1.1, Complex.ofReal ∘ x₀.1.2), (x₀.2 : ℂ)))
+    (hagree : ∀ᶠ x in 𝓝 x₀,
+      F_ℂ ((Complex.ofReal ∘ x.1.1, Complex.ofReal ∘ x.1.2), (x.2 : ℂ)) = Complex.ofReal (F x)) :
+    order ℂ F_ℂ ((Complex.ofReal ∘ x₀.1.1, Complex.ofReal ∘ x₀.1.2), (x₀.2 : ℂ))
+      = order ℝ F x₀ := by
+  classical
+  set Pℝ : (Fin (s + e + 1) → ℝ) ≃L[ℝ] ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ :=
+    (reindexCLE ℝ (s + e) 1).trans
+      ((reindexCLE ℝ s e).prodCongr (ContinuousLinearEquiv.funUnique (Fin 1) ℝ ℝ)) with hPℝ
+  set Pℂ : (Fin (s + e + 1) → ℂ) ≃L[ℂ] CParam s e × ℂ :=
+    (reindexCLE ℂ (s + e) 1).trans
+      ((reindexCLE ℂ s e).prodCongr (ContinuousLinearEquiv.funUnique (Fin 1) ℂ ℂ)) with hPℂ
+  set emb : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ → CParam s e × ℂ :=
+    fun x => ((Complex.ofReal ∘ x.1.1, Complex.ofReal ∘ x.1.2), (x.2 : ℂ)) with hemb
+  have hcomm : ∀ u : Fin (s + e + 1) → ℝ, Pℂ (Complex.ofReal ∘ u) = emb (Pℝ u) := by
+    intro u
+    simp only [hPℝ, hPℂ, hemb, ContinuousLinearEquiv.trans_apply,
+      ContinuousLinearEquiv.prodCongr_apply, reindexCLE_ofReal,
+      ContinuousLinearEquiv.coe_funUnique, Function.eval]
+    rfl
+  set u₀ : Fin (s + e + 1) → ℝ := Pℝ.symm x₀ with hu₀
+  have hPℝu₀ : Pℝ u₀ = x₀ := Pℝ.apply_symm_apply x₀
+  have hf_an : AnalyticAt ℝ (F ∘ Pℝ) u₀ :=
+    hF.comp_of_eq (Pℝ.toContinuousLinearMap.analyticAt u₀) hPℝu₀
+  have hf_ℂ_an : AnalyticAt ℂ (F_ℂ ∘ Pℂ) (Complex.ofReal ∘ u₀) :=
+    hF_ℂ.comp_of_eq (Pℂ.toContinuousLinearMap.analyticAt _) (by rw [hcomm u₀, hPℝu₀])
+  have hagree' : ∀ᶠ x in 𝓝 u₀,
+      (F_ℂ ∘ Pℂ) (Complex.ofReal ∘ x) = Complex.ofReal ((F ∘ Pℝ) x) := by
+    have htend : Filter.Tendsto Pℝ (𝓝 u₀) (𝓝 x₀) := by
+      have := Pℝ.continuous.tendsto u₀; rwa [hPℝu₀] at this
+    filter_upwards [htend.eventually hagree] with x hx
+    show F_ℂ (Pℂ (Complex.ofReal ∘ x)) = Complex.ofReal (F (Pℝ x))
+    rw [hcomm x]; exact hx
+  have hLHS : order ℂ F_ℂ (emb x₀) = order ℂ (F_ℂ ∘ Pℂ) (Complex.ofReal ∘ u₀) := by
+    rw [order_comp_continuousLinearEquiv Pℂ F_ℂ (Complex.ofReal ∘ u₀), hcomm u₀, hPℝu₀]
+  have hRHS : order ℝ F x₀ = order ℝ (F ∘ Pℝ) u₀ := by
+    rw [order_comp_continuousLinearEquiv Pℝ F u₀, hPℝu₀]
+  rw [hLHS, hRHS]
+  exact order_real_eq_order_complex (F ∘ Pℝ) (F_ℂ ∘ Pℂ) u₀ hf_an hf_ℂ_an hagree'
+
 /-- **Product-form complexification of a pseudopolynomial family.** A real polynomial family on the
 product base, with analytic coefficients and degree `≤ N`, complexifies to a family on `CParam s e`
 with analytic coefficients agreeing on the real slice. -/

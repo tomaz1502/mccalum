@@ -30,22 +30,22 @@ private lemma specialize_one (a : Fin n → ℝ) :
     specialize (1 : PolyR n) a = 1 :=
   Polynomial.map_one (MvPolynomial.eval a)
 
+private lemma toMvPoly_mul (f g : PolyR n) :
+    toMvPoly (f * g) = toMvPoly f * toMvPoly g :=
+  map_mul (MvPolynomial.finSuccEquiv ℝ n).symm f g
+
 theorem orderFull_add (f g : PolyR n) (a : Fin n → ℝ) (y : ℝ) :
     orderFull (f * g) a y = orderFull f a y + orderFull g a y := by
-  simp only [orderFull, specialize_mul]
-  by_cases hf : specialize f a = 0
-  · simp [hf]
-  by_cases hg : specialize g a = 0
-  · simp [hg]
-  · simp [hf, hg, mul_ne_zero hf hg,
-      Polynomial.rootMultiplicity_mul (mul_ne_zero hf hg), Nat.cast_add]
+  simp only [orderFull, toMvPoly_mul]
+  exact polyOrder_mul_add (n + 1) (toMvPoly f) (toMvPoly g) (Fin.cons y a)
+
+private lemma toMvPoly_one : toMvPoly (1 : PolyR n) = 1 :=
+  map_one (MvPolynomial.finSuccEquiv ℝ n).symm
 
 private lemma orderFull_one (a : Fin n → ℝ) (y : ℝ) :
     orderFull (1 : PolyR n) a y = 0 := by
-  simp only [orderFull, specialize_one, if_neg one_ne_zero]
-  have : (1 : Polynomial ℝ).rootMultiplicity y = 0 :=
-    Polynomial.rootMultiplicity_eq_zero (by simp [Polynomial.IsRoot])
-  simp [this]
+  simp only [orderFull, toMvPoly_one]
+  exact (polyOrder_zero_iff (n + 1) 1 (Fin.cons y a)).mpr (by simp)
 
 theorem orderFull_prod_sum (A : Finset (PolyR n)) (a : Fin n → ℝ) (y : ℝ) :
     orderFull (∏ f ∈ A, f) a y = ∑ f ∈ A, orderFull f a y := by
@@ -54,11 +54,40 @@ theorem orderFull_prod_sum (A : Finset (PolyR n)) (a : Fin n → ℝ) (y : ℝ) 
   | @insert g S hgS ih =>
     rw [Finset.prod_insert hgS, Finset.sum_insert hgS, orderFull_add, ih]
 
-/-! ### Finiteness of order -/
+/-! ### Finiteness of order for nonzero polynomials -/
+
+private lemma toMvPoly_ne_zero {f : PolyR n} (hf : f ≠ 0) : toMvPoly f ≠ 0 :=
+  fun h => hf ((MvPolynomial.finSuccEquiv ℝ n).symm.injective (h.trans (map_zero _).symm))
+
+private lemma taylorShift_ne_zero {m : ℕ} {g : MvPolynomial (Fin m) ℝ}
+    (hg : g ≠ 0) (a : Fin m → ℝ) : taylorShift m g a ≠ 0 := by
+  intro h; apply hg
+  exact MvPolynomial.funext fun b => by
+    have := eval_taylorShift g a (fun i => b i - a i)
+    simp only [h, map_zero, sub_add_cancel] at this
+    exact this.symm
+
+private lemma mvPolynomial_coe_ne_zero {m : ℕ} {g : MvPolynomial (Fin m) ℝ}
+    (hg : g ≠ 0) : (↑g : MvPowerSeries (Fin m) ℝ) ≠ 0 := by
+  intro h; apply hg; ext d
+  have := congr_arg (MvPowerSeries.coeff d) h
+  simp [MvPolynomial.coeff_coe] at this; exact this
+
+theorem polyOrder_lt_top_of_ne_zero {m : ℕ} (g : MvPolynomial (Fin m) ℝ)
+    (hg : g ≠ 0) (a : Fin m → ℝ) : polyOrder m g a < ⊤ := by
+  rw [polyOrder_taylorShift g a, polyOrder_zero_eq_mvPowerSeries_order]
+  rw [lt_top_iff_ne_top]
+  intro h
+  exact mvPolynomial_coe_ne_zero (taylorShift_ne_zero hg a)
+    (MvPowerSeries.order_eq_top_iff.mp h)
+
+theorem orderFull_lt_top {f : PolyR n} (hf : f ≠ 0) (a : Fin n → ℝ) (y : ℝ) :
+    orderFull f a y < ⊤ :=
+  polyOrder_lt_top_of_ne_zero (toMvPoly f) (toMvPoly_ne_zero hf) (Fin.cons y a)
 
 theorem orderFull_lt_top_of_spec_ne {f : PolyR n} {a : Fin n → ℝ}
-    (hne : specialize f a ≠ 0) (y : ℝ) : orderFull f a y < ⊤ := by
-  simp only [orderFull, if_neg hne]; exact ENat.coe_lt_top _
+    (hne : specialize f a ≠ 0) (y : ℝ) : orderFull f a y < ⊤ :=
+  orderFull_lt_top (fun hf => hne (by rw [hf]; exact Polynomial.map_zero _)) a y
 
 /-! ### Superlevel sets of orderFull are closed -/
 
@@ -97,36 +126,22 @@ theorem isClosed_orderFull_ge (f : PolyR n) (k : ℕ) :
     IsClosed {p : (Fin n → ℝ) × ℝ | ↑k ≤ orderFull f p.1 p.2} := by
   have heq : {p : (Fin n → ℝ) × ℝ | ↑k ≤ orderFull f p.1 p.2} =
       ⋂ (j : ℕ) (_ : j < k),
-        {p : (Fin n → ℝ) × ℝ |
-          MvPolynomial.eval (Fin.cons p.2 p.1) (toMvPoly (Polynomial.derivative^[j] f)) = 0} := by
+        {p : (Fin n → ℝ) × ℝ | iteratedFDeriv ℝ j
+          (fun x : Fin (n + 1) → ℝ => MvPolynomial.eval x (toMvPoly f))
+          (Fin.cons p.2 p.1) = 0} := by
     ext p; simp only [mem_setOf_eq, mem_iInter]
     constructor
-    · intro h j hj
-      rw [← eval_specialize_eq_eval_toMvPoly, ← iterate_derivative_specialize]
-      simp only [orderFull] at h
-      split_ifs at h with hspec
-      · rw [hspec, Polynomial.iterate_derivative_zero, Polynomial.eval_zero]
-      · have hk : k ≤ (specialize f p.1).rootMultiplicity p.2 := by exact_mod_cast h
-        exact (Polynomial.isRoot_iterate_derivative_of_lt_rootMultiplicity
-          (Nat.lt_of_lt_of_le hj hk))
+    · exact fun h j hj => iteratedFDeriv_eq_zero_of_lt_order
+        (lt_of_lt_of_le (by exact_mod_cast hj) h)
     · intro h
-      simp only [orderFull]
-      split_ifs with hspec
+      unfold orderFull polyOrder order
+      split_ifs with hex
+      · exact_mod_cast (Nat.le_find_iff hex k).mpr fun m hm => not_not.mpr (h m hm)
       · exact le_top
-      · rcases k.eq_zero_or_pos with rfl | hk
-        · exact zero_le _
-        · have hroot : ∀ m ≤ k - 1,
-              (Polynomial.derivative^[m] (specialize f p.1)).IsRoot p.2 := by
-            intro m hm
-            show (Polynomial.derivative^[m] (specialize f p.1)).eval p.2 = 0
-            rw [iterate_derivative_specialize, eval_specialize_eq_eval_toMvPoly]
-            exact h m (by omega)
-          have := Polynomial.lt_rootMultiplicity_of_isRoot_iterate_derivative hspec hroot
-          exact_mod_cast (show k ≤ (specialize f p.1).rootMultiplicity p.2 by omega)
   rw [heq]
   apply isClosed_iInter; intro j; apply isClosed_iInter; intro _
   exact isClosed_eq
-    ((contDiff_mvPoly_eval (n + 1) (toMvPoly (Polynomial.derivative^[j] f))).continuous.comp
+    (((contDiff_mvPoly_eval (n + 1) (toMvPoly f)).continuous_iteratedFDeriv le_top).comp
       continuous_finCons)
     continuous_const
 

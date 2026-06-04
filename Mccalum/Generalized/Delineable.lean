@@ -1,13 +1,23 @@
 import Mccalum.Generalized.MultiCluster
+import Mccalum.Generalized.OrderFullBridge
 
 /-!
-# Analytic pseudopolynomial delineability — proved from `{C, E, A2}`
+# Analytic pseudopolynomial delineability + codim order-invariance — proved from the Zariski axioms
 
-`analytic_pseudopoly_delineable'` is the delineation result, now a **theorem** (no longer the
+`analytic_pseudopoly_delineable'` is the delineation result, a **theorem** (no longer the
 `analytic_pseudopoly_delineable_nonsep` axiom): the separable case via the analytic IFT
 (`separable_family_locally_delineable`), the non-separable case via `multi_cluster_real_delineation`
-(Weierstrass + Zariski + A2). This is the file that collapses the main theorem's dependency to
-`{C, E, A2}`; it lives above the whole stack so it can use `multi_cluster_real_delineation`.
+(Weierstrass + Zariski). It additionally carries the **per-branch section order-invariance**
+conjunct (separable case: order `≡ 1` at simple roots via `order_section_eq_one_of_simple`;
+non-separable: threaded from `multi_cluster_real_delineation`).
+
+`lifting_generalized_codim_local` then **proves** the section-graph order-invariance that was
+formerly the temporary axiom `codim_section_order_invariant`: an arbitrary continuous root function
+`θ` tracks a single delineation branch `η i₀` across the preconnected `S ∩ U` (a connectivity
+argument on the locally-constant branch index), and `orderFull_eq_order_section_chart` (L_bridge)
+transports the threaded order-invariance to `orderFull f a (θ a)`. With this, the whole
+Weierstrass–Zariski transport is complete and the main theorem depends only on the two genuine
+Zariski-equisingularity axioms (`zariski_single_branch`, `zariski_order_invariant_in_graph`).
 -/
 
 noncomputable section
@@ -37,13 +47,80 @@ theorem analytic_pseudopoly_delineable'
         (∀ y ∈ V, ∀ i j : Fin k, i < j → η i y < η j y) ∧
         (∀ y ∈ V, ∀ α : ℝ, (g (y, 0)).IsRoot α ↔ ∃ i : Fin k, α = η i y) ∧
         (∀ i, 0 < mult i) ∧
-        (∀ y ∈ V, ∀ i, (g (y, 0)).rootMultiplicity (η i y) = mult i) := by
+        (∀ y ∈ V, ∀ i, (g (y, 0)).rootMultiplicity (η i y) = mult i) ∧
+        (∀ i : Fin k, ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+          order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2) ((y, 0), η i y)
+            = order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2)
+                ((0, 0), η i 0)) := by
   by_cases hsep : (g 0).Separable
-  · have hcoeff' : ∀ i, AnalyticAt ℝ (fun y => (g (y, 0)).coeff i) 0 := fun i =>
+  · -- Separable case: every branch is a *simple* root, so the section order is `≡ 1` (constant).
+    have hcoeff' : ∀ i, AnalyticAt ℝ (fun y => (g (y, 0)).coeff i) 0 := fun i =>
       (hg_coeff_an i).comp_of_eq (analyticAt_id.prod analyticAt_const) rfl
-    exact separable_family_locally_delineable (fun y => g (y, 0)) 0 hg_deg hg_pos hcoeff' hsep
-  · exact multi_cluster_real_delineation Ng g hg_deg_bound hg_coeff_an hg_pos P hP_an hP_ne
-      NA NB A B hA_deg hB_deg hA_coeff hB_coeff hmem hP_oi hg_deg
+    obtain ⟨V, hVopen, hV0, k, η, mult, hη_an, hη_ord, hη_roots, hmult_pos, hmult_const⟩ :=
+      separable_family_locally_delineable (fun y => g (y, 0)) 0 hg_deg hg_pos hcoeff' hsep
+    refine ⟨V, hVopen, hV0, k, η, mult, hη_an, hη_ord, hη_roots, hmult_pos, hmult_const, ?_⟩
+    have hg0_ne : g 0 ≠ 0 := hsep.ne_zero
+    have hV_mem : V ∈ 𝓝 (0 : Fin s → ℝ) := hVopen.mem_nhds hV0
+    -- separability ⟹ every branch multiplicity is `1`
+    have hmult_one : ∀ i, mult i = 1 := by
+      intro i
+      have hroot0 : (g 0).IsRoot (η i 0) := (hη_roots 0 hV0 (η i 0)).mpr ⟨i, rfl⟩
+      have h1 : (g 0).rootMultiplicity (η i 0) = mult i := hmult_const 0 hV0 i
+      have hle := Polynomial.rootMultiplicity_le_one_of_separable hsep (η i 0)
+      have hpos := (Polynomial.rootMultiplicity_pos hg0_ne).mpr hroot0
+      omega
+    -- coefficients of `g` are analytic at `(y, 0)` for `y` near `0`
+    have hι : Filter.Tendsto (fun y : Fin s → ℝ => ((y, 0) : (Fin s → ℝ) × (Fin e → ℝ)))
+        (𝓝 0) (𝓝 0) := by
+      have hcont : Continuous (fun y : Fin s → ℝ => ((y, 0) : (Fin s → ℝ) × (Fin e → ℝ))) := by
+        fun_prop
+      simpa using hcont.tendsto 0
+    have hcoeff_ev : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+        ∀ j, AnalyticAt ℝ (fun w => (g w).coeff j) (y, 0) := by
+      have hfin : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), ∀ j ∈ Finset.range (Ng + 1),
+          AnalyticAt ℝ (fun w => (g w).coeff j) (y, 0) := by
+        rw [Finset.eventually_all]
+        intro j _
+        exact hι.eventually (hg_coeff_an j).eventually_analyticAt
+      filter_upwards [hfin] with y hy j
+      by_cases hj : j ≤ Ng
+      · exact hy j (Finset.mem_range.mpr (Nat.lt_succ_of_le hj))
+      · push_neg at hj
+        have hzero : (fun w : (Fin s → ℝ) × (Fin e → ℝ) => (g w).coeff j) = fun _ => 0 := by
+          funext w
+          exact Polynomial.coeff_eq_zero_of_natDegree_lt (lt_of_le_of_lt (hg_deg_bound w) hj)
+        rw [hzero]; exact analyticAt_const
+    -- per branch: section order is `1` at both endpoints, hence constant
+    intro i
+    have hval0 : order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2)
+        ((0, 0), η i 0) = 1 := by
+      apply order_section_eq_one_of_simple g Ng hg_deg_bound (0, 0) (η i 0) hg_coeff_an
+      · exact (hη_roots 0 hV0 (η i 0)).mpr ⟨i, rfl⟩
+      · intro hd
+        have hroot0 : (g 0).IsRoot (η i 0) := (hη_roots 0 hV0 (η i 0)).mpr ⟨i, rfl⟩
+        have h1lt : 1 < (g 0).rootMultiplicity (η i 0) :=
+          (Polynomial.one_lt_rootMultiplicity_iff_isRoot hg0_ne).mpr ⟨hroot0, hd⟩
+        have h1 : (g 0).rootMultiplicity (η i 0) = mult i := hmult_const 0 hV0 i
+        rw [h1, hmult_one i] at h1lt
+        exact absurd h1lt (lt_irrefl 1)
+    filter_upwards [hV_mem, hg_deg, hcoeff_ev] with y hyV hdeg_y hcoeff_y
+    rw [hval0]
+    apply order_section_eq_one_of_simple g Ng hg_deg_bound (y, 0) (η i y) hcoeff_y
+    · exact (hη_roots y hyV (η i y)).mpr ⟨i, rfl⟩
+    · intro hd
+      have hgy_ne : g (y, 0) ≠ 0 := by
+        intro h
+        rw [h, Polynomial.natDegree_zero] at hdeg_y
+        omega
+      have hroot_y : (g (y, 0)).IsRoot (η i y) := (hη_roots y hyV (η i y)).mpr ⟨i, rfl⟩
+      have h1lt : 1 < (g (y, 0)).rootMultiplicity (η i y) :=
+        (Polynomial.one_lt_rootMultiplicity_iff_isRoot hgy_ne).mpr ⟨hroot_y, hd⟩
+      rw [hmult_const y hyV i, hmult_one i] at h1lt
+      exact absurd h1lt (lt_irrefl 1)
+  · obtain ⟨V, hVopen, hV0, k, η, mult, h1, h2, h3, h4, h5, hoi⟩ :=
+      multi_cluster_real_delineation Ng g hg_deg_bound hg_coeff_an hg_pos P hP_an hP_ne
+        NA NB A B hA_deg hB_deg hA_coeff hB_coeff hmem hP_oi hg_deg
+    exact ⟨V, hVopen, hV0, k, η, mult, h1, h2, h3, h4, h5, hoi⟩
 
 open MvPolynomial Set Classical
 
@@ -208,24 +285,45 @@ theorem lifting_generalized_codim_local
       rw [hgw, Polynomial.map_add, Polynomial.map_mul, Polynomial.map_mul,
           ← Polynomial.derivative_map]
     rw [h1, hab, Polynomial.map_C]
-  obtain ⟨V, hV_open, hV_zero, k, η, mult, hη_an, hη_ord, hη_roots, hmult_pos, hmult_const⟩ :=
+  obtain ⟨V, hV_open, hV_zero, k, η, mult, hη_an, hη_ord, hη_roots, hmult_pos, hmult_const,
+      hsec_oi⟩ :=
     analytic_pseudopoly_delineable' f.natDegree gfull (fun _ => Polynomial.natDegree_map_le)
       hgfull_coeff_an hgfull_pos hgfull_deg Pfull hPfull_an hPfull_ne
       a.natDegree b.natDegree (fun w => a.map (MvPolynomial.eval (Φ.symm w)))
       (fun w => b.map (MvPolynomial.eval (Φ.symm w)))
       (fun _ => Polynomial.natDegree_map_le) (fun _ => Polynomial.natDegree_map_le)
       hA_cof hB_cof hmem_cof hPfull_oi
-  -- Step 10: Shrink V to a connected neighborhood for preconnectedness.
-  -- Intersect V with chart target projection, take connected component of 0.
-  let Vt : Set (Fin s → ℝ) := V ∩ {y | (y, (0 : Fin (n - s) → ℝ)) ∈ Φ.target}
+  -- Step 10: Shrink `V` to a connected neighborhood of `0` on which (i) the chart inverse `Φ.symm`
+  -- is analytic and (ii) every branch's section order is constant (the threaded order-invariance
+  -- `hsec_oi`), then take the connected component of `0` for preconnectedness.
+  obtain ⟨W_symm, hW_symm_sub, hW_symm_open, hW_symm_mem⟩ :=
+    eventually_nhds_iff.mp hΦsymm_an0.eventually_analyticAt
+  have hoi_all : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), ∀ i : Fin k,
+      order ℝ (fun q : ((Fin s → ℝ) × (Fin (n - s) → ℝ)) × ℝ => (gfull q.1).eval q.2) ((y, 0), η i y)
+        = order ℝ (fun q : ((Fin s → ℝ) × (Fin (n - s) → ℝ)) × ℝ => (gfull q.1).eval q.2)
+            ((0, 0), η i 0) :=
+    Filter.eventually_all.mpr hsec_oi
+  obtain ⟨W_oi, hW_oi_sub, hW_oi_open, hW_oi_mem⟩ := eventually_nhds_iff.mp hoi_all
+  let Vt : Set (Fin s → ℝ) :=
+    V ∩ {y | (y, (0 : Fin (n - s) → ℝ)) ∈ Φ.target}
+      ∩ {y | (y, (0 : Fin (n - s) → ℝ)) ∈ W_symm} ∩ W_oi
   have hVt_open : IsOpen Vt :=
-    hV_open.inter (Φ.open_target.preimage (continuous_id.prodMk continuous_const))
-  have hVt_zero : (0 : Fin s → ℝ) ∈ Vt := ⟨hV_zero, hΦ_target_zero⟩
+    ((hV_open.inter (Φ.open_target.preimage (continuous_id.prodMk continuous_const))).inter
+      (hW_symm_open.preimage (continuous_id.prodMk continuous_const))).inter hW_oi_open
+  have hVt_zero : (0 : Fin s → ℝ) ∈ Vt :=
+    ⟨⟨⟨hV_zero, hΦ_target_zero⟩, hW_symm_mem⟩, hW_oi_mem⟩
   let V' : Set (Fin s → ℝ) := connectedComponentIn Vt 0
   have hV'_sub_Vt : V' ⊆ Vt := connectedComponentIn_subset Vt 0
-  have hV'_sub_V : V' ⊆ V := fun y hy => (hV'_sub_Vt hy).1
+  have hV'_sub_V : V' ⊆ V := fun y hy => (hV'_sub_Vt hy).1.1.1
   have hV'_target : ∀ y ∈ V', (y, (0 : Fin (n - s) → ℝ)) ∈ Φ.target :=
-    fun y hy => (hV'_sub_Vt hy).2
+    fun y hy => (hV'_sub_Vt hy).1.1.2
+  have hV'_symm : ∀ y ∈ V', (y, (0 : Fin (n - s) → ℝ)) ∈ W_symm :=
+    fun y hy => (hV'_sub_Vt hy).1.2
+  have hV'_oi : ∀ y ∈ V', ∀ i : Fin k,
+      order ℝ (fun q : ((Fin s → ℝ) × (Fin (n - s) → ℝ)) × ℝ => (gfull q.1).eval q.2) ((y, 0), η i y)
+        = order ℝ (fun q : ((Fin s → ℝ) × (Fin (n - s) → ℝ)) × ℝ => (gfull q.1).eval q.2)
+            ((0, 0), η i 0) :=
+    fun y hy => hW_oi_sub y (hV'_sub_Vt hy).2
   have hV'_open : IsOpen V' := hVt_open.connectedComponentIn
   have hV'_zero : (0 : Fin s → ℝ) ∈ V' := mem_connectedComponentIn hVt_zero
   have hV'_preconn : IsPreconnected V' := isPreconnected_connectedComponentIn
@@ -277,9 +375,104 @@ theorem lifting_generalized_codim_local
       rw [hg_spec a ha.1 ha.2.1]
       exact hmult_const ((Φ a).1) (hV'_in_V a ha) i
   refine ⟨U, hU_open, hU_p, hdel, ?_⟩
-  -- Goal 2: Order-invariance on section graphs
+  -- Goal 2: Order-invariance on section graphs. An arbitrary continuous root function `θ` tracks ONE
+  -- delineation branch `η i₀` across the (preconnected) `S ∩ U` (a clopen/connectivity argument), and
+  -- that branch's section order is constant on `V'` (the threaded `hsec_oi`); the straightening-chart
+  -- bridge `orderFull_eq_order_section_chart` then transports this to `orderFull f a (θ a)`.
   intro θ hθ_cont hθ_root
-  exact order_invariant_of_delineable f (S ∩ U) hSU_preconn hdel θ hθ_cont hθ_root
+  classical
+  have hp_SU : p ∈ S ∩ U := ⟨hp, hU_p⟩
+  -- branch values are strictly separated, hence the branch index is injective
+  have hη_inj : ∀ y ∈ V, Function.Injective (fun l : Fin k => η l y) := by
+    intro y hy l₁ l₂ hl
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with h | h
+    · exact absurd hl (ne_of_lt (hη_ord y hy l₁ l₂ h))
+    · exact absurd hl.symm (ne_of_lt (hη_ord y hy l₂ l₁ h))
+  -- each value `θ a` is some branch (it is a root of the section family `gfull (·, 0)`)
+  have hθ_branch : ∀ a ∈ S ∩ U, ∃ i : Fin k, θ a = η i ((Φ a).1) := by
+    intro a ha
+    have hroot : (g ((Φ a).1)).IsRoot (θ a) := by
+      rw [← hg_spec a ha.1 ha.2.1]; exact hθ_root a ha
+    exact (hη_roots ((Φ a).1) (hV'_in_V a ha) (θ a)).mp hroot
+  obtain ⟨i₀, hi₀⟩ := hθ_branch p hp_SU
+  -- the branch-index function, well-defined on `S ∩ U`
+  let idxf : (Fin n → ℝ) → Fin k := fun a =>
+    if h : ∃ i : Fin k, θ a = η i ((Φ a).1) then Classical.choose h else i₀
+  have hidxf_spec : ∀ a ∈ S ∩ U, θ a = η (idxf a) ((Φ a).1) := by
+    intro a ha
+    have h := hθ_branch a ha
+    simp only [idxf, dif_pos h]
+    exact Classical.choose_spec h
+  -- `idxf` is locally constant on `S ∩ U` (continuity of `θ`, `η` + branch separation)
+  have hidxf_loc : ∀ a₀ ∈ S ∩ U, ∀ᶠ a in 𝓝[S ∩ U] a₀, idxf a = idxf a₀ := by
+    intro a₀ ha₀
+    set j := idxf a₀ with hj
+    have hsub_source : S ∩ U ⊆ Φ.source := fun x hx => hx.2.1
+    have hθ_cwa : ContinuousWithinAt θ (S ∩ U) a₀ := hθ_cont a₀ ha₀
+    have hηc_cwa : ∀ l : Fin k, ContinuousWithinAt (fun a => η l ((Φ a).1)) (S ∩ U) a₀ := by
+      intro l
+      have hfst_on : ContinuousWithinAt (fun a => (Φ a).1) (S ∩ U) a₀ :=
+        ((Φ.continuousOn.mono hsub_source).continuousWithinAt ha₀).fst
+      have hη_on : ContinuousWithinAt (η l) V ((Φ a₀).1) :=
+        ((hη_an l).continuousOn).continuousWithinAt (hV'_in_V a₀ ha₀)
+      exact ContinuousWithinAt.comp (g := η l) (f := fun a => (Φ a).1) hη_on hfst_on
+        (fun a ha => hV'_in_V a ha)
+    have hne_ev : ∀ᶠ a in 𝓝[S ∩ U] a₀, ∀ l : Fin k, l ≠ j → θ a ≠ η l ((Φ a).1) := by
+      rw [eventually_all]
+      intro l
+      by_cases hlj : l = j
+      · exact Filter.Eventually.of_forall (fun a hcon => absurd hlj hcon)
+      · have hd0 : θ a₀ ≠ η l ((Φ a₀).1) := by
+          rw [hidxf_spec a₀ ha₀]
+          intro h
+          exact hlj (hη_inj ((Φ a₀).1) (hV'_in_V a₀ ha₀) h).symm
+        have htend : Filter.Tendsto (fun a => θ a - η l ((Φ a).1)) (𝓝[S ∩ U] a₀)
+            (𝓝 (θ a₀ - η l ((Φ a₀).1))) := hθ_cwa.sub (hηc_cwa l)
+        have hev : ∀ᶠ a in 𝓝[S ∩ U] a₀, θ a - η l ((Φ a).1) ≠ 0 :=
+          htend.eventually (isOpen_ne.mem_nhds (sub_ne_zero.mpr hd0))
+        filter_upwards [hev] with a ha _
+        exact sub_ne_zero.mp ha
+    filter_upwards [hne_ev, self_mem_nhdsWithin] with a ha_ne ha_SU
+    by_contra hcon
+    exact ha_ne (idxf a) hcon (hidxf_spec a ha_SU)
+  -- locally constant + preconnected ⟹ constant
+  have hcont_idx : ContinuousOn (fun a => (idxf a : ℕ)) (S ∩ U) := by
+    intro a₀ ha₀
+    rw [ContinuousWithinAt, nhds_discrete ℕ, Filter.tendsto_pure]
+    filter_upwards [hidxf_loc a₀ ha₀] with a ha
+    show (idxf a : ℕ) = (idxf a₀ : ℕ)
+    rw [ha]
+  have hidxf_const : ∀ a ∈ S ∩ U, idxf a = idxf p := fun a ha =>
+    Fin.val_injective (hSU_preconn.constant hcont_idx ha hp_SU)
+  have hidxf_p : idxf p = i₀ :=
+    hη_inj ((Φ p).1) (hV'_in_V p hp_SU) ((hidxf_spec p hp_SU).symm.trans hi₀)
+  have hsingle : ∀ a ∈ S ∩ U, θ a = η i₀ ((Φ a).1) := by
+    intro a ha
+    rw [hidxf_spec a ha, hidxf_const a ha, hidxf_p]
+  -- transport to `orderFull` through the chart bridge; branch `i₀`'s section order is constant on `V'`
+  have hconst : ∀ a ∈ S ∩ U, orderFull f a (θ a)
+      = order ℝ (fun q : ((Fin s → ℝ) × (Fin (n - s) → ℝ)) × ℝ => (gfull q.1).eval q.2)
+          ((0, 0), η i₀ 0) := by
+    intro a ha
+    have hya : (Φ a).1 ∈ V' := ha.2.2
+    have ha_eq : Φ.symm ((Φ a).1, 0) = a := hΨ_roundtrip a ha.1 ha.2.1
+    calc orderFull f a (θ a)
+        = orderFull f (Φ.symm ((Φ a).1, 0)) (θ a) := by rw [ha_eq]
+      _ = order ℝ (fun q : ((Fin s → ℝ) × (Fin (n - s) → ℝ)) × ℝ => (gfull q.1).eval q.2)
+            (((Φ a).1, 0), θ a) :=
+          orderFull_eq_order_section_chart f Φ ((Φ a).1, 0) (θ a) (hV'_target _ hya)
+            hΦ_an_all (hW_symm_sub _ (hV'_symm _ hya))
+      _ = order ℝ (fun q : ((Fin s → ℝ) × (Fin (n - s) → ℝ)) × ℝ => (gfull q.1).eval q.2)
+            (((Φ a).1, 0), η i₀ ((Φ a).1)) := by rw [hsingle a ha]
+      _ = order ℝ (fun q : ((Fin s → ℝ) × (Fin (n - s) → ℝ)) × ℝ => (gfull q.1).eval q.2)
+            ((0, 0), η i₀ 0) := hV'_oi ((Φ a).1) hya i₀
+  intro pt hpt qt hqt
+  obtain ⟨hpt1, hpt2⟩ := hpt
+  obtain ⟨hqt1, hqt2⟩ := hqt
+  show orderFull f pt.1 pt.2 = orderFull f qt.1 qt.2
+  rw [hpt2, hqt2]
+  exact (hconst pt.1 hpt1).trans (hconst qt.1 hqt1).symm
 
 /-! ### Globalization: local delineation on connected set → global -/
 

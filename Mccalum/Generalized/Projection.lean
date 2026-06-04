@@ -66,6 +66,7 @@ theorem lifting_theorem_generalized
   · exact lifting_generalized_codim_case S f hS_submfld hS_conn hopen hdeg hspec_ne P hP_ne hP_mem hP_oi
 
 #print axioms lifting_theorem_generalized
+#check zariski_single_branch
 
 /-! ### Elimination product -/
 

@@ -45,13 +45,68 @@ theorem single_cluster_real_delineation (m : ℕ) (hm_pos : 0 < m)
         AnalyticOn ℝ η V ∧ η 0 = 0 ∧
         (∀ y ∈ V, |η y| < δ) ∧
         (∀ y ∈ V, ∀ α : ℝ, (|α| < δ ∧ (g (y, 0)).IsRoot α) ↔ α = η y) ∧
-        (∀ y ∈ V, (g (y, 0)).rootMultiplicity (η y) = m) := by
+        (∀ y ∈ V, (g (y, 0)).rootMultiplicity (η y) = m) ∧
+        (∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+          order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2) ((y, 0), η y)
+            = order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2)
+                ((0, 0), η 0)) := by
   -- `cluster_from_real` (C + Zariski 4.1.1) gives the single holomorphic branch `ξ` of the cluster,
   -- real-valued on the slice; the proved recovery core turns it into the real-analytic delineation.
-  obtain ⟨ξ, δ₀, hξ_an, hξ0, hδ₀, hξ_cover, hξ_mult⟩ :=
+  obtain ⟨ξ, δ₀, hξ_an, hξ0, hδ₀, hξ_cover, hξ_mult, F_ℂ, hFℂ_an0, hagree_F, hcoi⟩ :=
     cluster_from_real m hm_pos Ng g hg_deg hg_coeff P hP_an hP_ne NA NB A B hA_deg hB_deg
       hA_coeff hB_coeff hmem hP_oi_real hm_root hg_deg_const
-  exact real_delineation_of_single_branch (fun y => g (y, 0)) m ξ hξ_an hξ0 δ₀ hδ₀
-    hξ_cover hξ_mult
+  obtain ⟨V, δ, hVopen, hV0, hδ, η, hη_an, hη0, hη_ball, hη_cover, hη_mult, hη_real⟩ :=
+    real_delineation_of_single_branch (fun y => g (y, 0)) m ξ hξ_an hξ0 δ₀ hδ₀
+      hξ_cover hξ_mult
+  refine ⟨V, δ, hVopen, hV0, hδ, η, hη_an, hη0, hη_ball, hη_cover, hη_mult, ?_⟩
+  -- order-invariance via `section_orderinv_of_complex`, using `cluster_from_real`'s complexification
+  set G : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ → ℝ := fun q => (g q.1).eval q.2 with hG
+  have hη_cont : ContinuousAt η 0 := (hη_an.analyticAt (hVopen.mem_nhds hV0)).continuousAt
+  -- `G` analytic at `0` (polynomial family with analytic coefficients, degree `≤ Ng`)
+  have hG_an0 : AnalyticAt ℝ G 0 := by
+    have hsum : AnalyticAt ℝ
+        (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ =>
+          ∑ i ∈ Finset.range (Ng + 1), (g q.1).coeff i * q.2 ^ i) 0 := by
+      apply Finset.analyticAt_fun_sum; intro i _
+      exact ((hg_coeff i).comp_of_eq analyticAt_fst rfl).mul (analyticAt_snd.pow i)
+    refine hsum.congr (Filter.Eventually.of_forall fun q => ?_)
+    exact (Polynomial.eval_eq_sum_range' (Nat.lt_succ_of_le (hg_deg q.1)) q.2).symm
+  -- branch-point maps tending to `0`
+  have hofReal_cont : Continuous (fun y : Fin s → ℝ => (Complex.ofReal ∘ y : Fin s → ℂ)) :=
+    continuous_pi (fun i => Complex.continuous_ofReal.comp (continuous_apply i))
+  have hbp : Filter.Tendsto (fun y : Fin s → ℝ => (((y, 0) : (Fin s → ℝ) × (Fin e → ℝ)), η y))
+      (𝓝 0) (𝓝 0) := by
+    have h0 : (((0, 0) : (Fin s → ℝ) × (Fin e → ℝ)), η 0) = 0 := by simp [hη0]
+    have hc : ContinuousAt (fun y : Fin s → ℝ => (((y, 0) : (Fin s → ℝ) × (Fin e → ℝ)), η y)) 0 :=
+      ((by fun_prop : ContinuousAt
+        (fun y : Fin s → ℝ => ((y, 0) : (Fin s → ℝ) × (Fin e → ℝ))) 0)).prodMk hη_cont
+    have := hc.tendsto; rwa [h0] at this
+  have hbpℂ : Filter.Tendsto
+      (fun y : Fin s → ℝ => ((Complex.ofReal ∘ y, (0 : Fin e → ℂ)), (↑(η y) : ℂ)))
+      (𝓝 0) (𝓝 0) := by
+    have h0 : ((Complex.ofReal ∘ (0 : Fin s → ℝ), (0 : Fin e → ℂ)), (↑(η 0) : ℂ)) = 0 := by
+      simp [hη0, ofReal_comp_zero]
+    have hc : ContinuousAt
+        (fun y : Fin s → ℝ => ((Complex.ofReal ∘ y, (0 : Fin e → ℂ)), (↑(η y) : ℂ))) 0 :=
+      ((hofReal_cont.continuousAt).prodMk continuousAt_const).prodMk
+        (Complex.continuous_ofReal.continuousAt.comp hη_cont)
+    have := hc.tendsto; rwa [h0] at this
+  -- the three hypotheses of `section_orderinv_of_complex`
+  have hreal : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), (↑(η y) : ℂ) = ξ (Complex.ofReal ∘ y) := by
+    filter_upwards [hVopen.mem_nhds hV0] with y hy
+    rw [hη_real y hy, realEmbedding_apply]
+  have hG_an : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ), AnalyticAt ℝ G ((y, 0), η y) :=
+    hbp.eventually hG_an0.eventually_analyticAt
+  have hFℂ_an : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+      AnalyticAt ℂ F_ℂ ((Complex.ofReal ∘ y, (0 : Fin e → ℂ)), (↑(η y) : ℂ)) :=
+    hbpℂ.eventually hFℂ_an0.eventually_analyticAt
+  have hagree : ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+      ∀ᶠ x in 𝓝 (((y, 0) : (Fin s → ℝ) × (Fin e → ℝ)), η y),
+        F_ℂ ((Complex.ofReal ∘ x.1.1, Complex.ofReal ∘ x.1.2), (x.2 : ℂ)) = ↑(G x) := by
+    obtain ⟨U, hUsub, hUopen, hU0⟩ := eventually_nhds_iff.mp hagree_F
+    filter_upwards [hbp.eventually (hUopen.mem_nhds hU0)] with y hyU
+    filter_upwards [hUopen.mem_nhds hyU] with x hx
+    exact hUsub x hx
+  exact section_orderinv_of_complex G F_ℂ ξ hξ0 η hη0 hcoi hreal hG_an hFℂ_an hagree
 
 end

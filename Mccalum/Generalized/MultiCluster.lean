@@ -17,6 +17,24 @@ open scoped Topology
 
 variable {s e : ℕ}
 
+/-- **Order is invariant under translation.** `order (fun y => f (y + c)) x = order f (x + c)`
+(unconditional: `iteratedFDeriv` of a translation-composite is the shifted `iteratedFDeriv`). Used to
+transport order-invariance through the Taylor shift `t ↦ t - t_j` of the cluster localization. -/
+theorem order_comp_add_right {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (f : E → ℝ) (c x : E) :
+    order ℝ (fun y => f (y + c)) x = order ℝ f (x + c) := by
+  have hne : ∀ n, iteratedFDeriv ℝ n (fun y => f (y + c)) x ≠ 0
+      ↔ iteratedFDeriv ℝ n f (x + c) ≠ 0 := fun n => by rw [iteratedFDeriv_comp_add_right]
+  classical
+  unfold order
+  split_ifs with h1 h2 h2
+  · exact congrArg _ (le_antisymm
+      (Nat.find_le ((hne _).mpr (Nat.find_spec h2)))
+      (Nat.find_le ((hne _).mp (Nat.find_spec h1))))
+  · exact absurd (h1.imp fun n hn => (hne n).mp hn) h2
+  · exact absurd (h2.imp fun n hn => (hne n).mpr hn) h1
+  · rfl
+
 /-- **Single cluster at a general root `t_j`.** -/
 theorem single_cluster_real_delineation_at (m : ℕ) (hm_pos : 0 < m) (t_j : ℝ)
     (Ng : ℕ) (g : (Fin s → ℝ) × (Fin e → ℝ) → Polynomial ℝ) (hg_deg : ∀ w, (g w).natDegree ≤ Ng)
@@ -36,7 +54,11 @@ theorem single_cluster_real_delineation_at (m : ℕ) (hm_pos : 0 < m) (t_j : ℝ
         AnalyticOn ℝ η V ∧ η 0 = t_j ∧
         (∀ y ∈ V, |η y - t_j| < δ) ∧
         (∀ y ∈ V, ∀ α : ℝ, (|α - t_j| < δ ∧ (g (y, 0)).IsRoot α) ↔ α = η y) ∧
-        (∀ y ∈ V, (g (y, 0)).rootMultiplicity (η y) = m) := by
+        (∀ y ∈ V, (g (y, 0)).rootMultiplicity (η y) = m) ∧
+        (∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+          order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2) ((y, 0), η y)
+            = order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2)
+                ((0, 0), η 0)) := by
   -- shifted family and cofactors
   set gj : (Fin s → ℝ) × (Fin e → ℝ) → Polynomial ℝ := fun w => taylor t_j (g w) with hgj
   set Aj : (Fin s → ℝ) × (Fin e → ℝ) → Polynomial ℝ := fun w => taylor t_j (A w) with hAj
@@ -66,11 +88,11 @@ theorem single_cluster_real_delineation_at (m : ℕ) (hm_pos : 0 < m) (t_j : ℝ
     filter_upwards [hg_deg_const] with y hy
     rw [hgj, natDegree_taylor, natDegree_taylor]; exact hy
   -- apply the `t=0` single-cluster result to `gj`
-  obtain ⟨V, δ, hVopen, hV0, hδ, η', hη'_an, hη'0, hη'_ball, hη'_cover, hη'_mult⟩ :=
+  obtain ⟨V, δ, hVopen, hV0, hδ, η', hη'_an, hη'0, hη'_ball, hη'_cover, hη'_mult, hη'_oi⟩ :=
     single_cluster_real_delineation m hm_pos Ng gj hgj_deg hgj_coeff P hP_an hP_ne NA NB Aj Bj
       hAj_deg hBj_deg hAj_coeff hBj_coeff hmem_j hP_oi_real hm_root_j hgj_deg_const
   -- shift the conclusion back by `t_j`
-  refine ⟨V, δ, hVopen, hV0, hδ, fun y => η' y + t_j, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨V, δ, hVopen, hV0, hδ, fun y => η' y + t_j, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact hη'_an.add analyticOn_const
   · show η' 0 + t_j = t_j; rw [hη'0, zero_add]
   · intro y hy; rw [add_sub_cancel_right]; exact hη'_ball y hy
@@ -85,6 +107,32 @@ theorem single_cluster_real_delineation_at (m : ℕ) (hm_pos : 0 < m) (t_j : ℝ
     simp only [hgj] at hmm
     rw [rootMultiplicity_taylor] at hmm
     exact hmm
+  · -- order-invariance, transported from `gj` via the `t`-translation by `t_j`
+    have hc : (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (gj q.1).eval q.2)
+        = fun q => (fun q' : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q'.1).eval q'.2)
+            (q + ((0 : (Fin s → ℝ) × (Fin e → ℝ)), t_j)) := by
+      funext q
+      simp only [hgj, Prod.fst_add, Prod.snd_add, add_zero]
+      rw [eval_taylor]
+    have htr : ∀ p : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ,
+        order ℝ (fun q => (gj q.1).eval q.2) p
+          = order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2)
+              (p + ((0 : (Fin s → ℝ) × (Fin e → ℝ)), t_j)) := by
+      intro p; rw [hc]
+      exact order_comp_add_right
+        (fun q' : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q'.1).eval q'.2)
+        ((0 : (Fin s → ℝ) × (Fin e → ℝ)), t_j) p
+    filter_upwards [hη'_oi] with y hy
+    have e1 : (((y, 0) : (Fin s → ℝ) × (Fin e → ℝ)), η' y + t_j)
+        = (((y, 0) : (Fin s → ℝ) × (Fin e → ℝ)), η' y) + ((0 : (Fin s → ℝ) × (Fin e → ℝ)), t_j) := by
+      rw [Prod.mk_add_mk, add_zero]
+    have e2 : (((0, 0) : (Fin s → ℝ) × (Fin e → ℝ)), η' 0 + t_j)
+        = (((0, 0) : (Fin s → ℝ) × (Fin e → ℝ)), η' 0) + ((0 : (Fin s → ℝ) × (Fin e → ℝ)), t_j) := by
+      rw [Prod.mk_add_mk, add_zero]
+    show order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2)
+        (((y, 0) : (Fin s → ℝ) × (Fin e → ℝ)), η' y + t_j) = _
+    rw [e1, e2, ← htr ((y, 0), η' y), ← htr ((0, 0), η' 0)]
+    exact hy
 
 /-- **Multi-cluster real delineation (steps 2–3).** The real roots of the section family `g(·,0)`
 near `0` form finitely many ordered real-analytic functions (one per distinct real root of `g(0,0)`)
@@ -108,7 +156,11 @@ theorem multi_cluster_real_delineation
         (∀ y ∈ V, ∀ i j : Fin k, i < j → η i y < η j y) ∧
         (∀ y ∈ V, ∀ α : ℝ, (g (y, 0)).IsRoot α ↔ ∃ i : Fin k, α = η i y) ∧
         (∀ i, 0 < mult i) ∧
-        (∀ y ∈ V, ∀ i, (g (y, 0)).rootMultiplicity (η i y) = mult i) := by
+        (∀ y ∈ V, ∀ i, (g (y, 0)).rootMultiplicity (η i y) = mult i) ∧
+        (∀ i : Fin k, ∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+          order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2) ((y, 0), η i y)
+            = order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2)
+                ((0, 0), η i 0)) := by
   set fam : (Fin s → ℝ) → Polynomial ℝ := fun y => g (y, 0) with hfam
   set d := (g 0).natDegree with hd
   set p := g 0 with hp
@@ -141,10 +193,14 @@ theorem multi_cluster_real_delineation
       ∃ (φ : (Fin s → ℝ) → ℝ), AnalyticOn ℝ φ U ∧ φ 0 = yr i ∧
       (∀ y ∈ U, |φ y - yr i| < δ) ∧
       (∀ y ∈ U, ∀ α : ℝ, (|α - yr i| < δ ∧ (g (y, 0)).IsRoot α) ↔ α = φ y) ∧
-      (∀ y ∈ U, (g (y, 0)).rootMultiplicity (φ y) = mlt i) := fun i =>
+      (∀ y ∈ U, (g (y, 0)).rootMultiplicity (φ y) = mlt i) ∧
+      (∀ᶠ y in 𝓝 (0 : Fin s → ℝ),
+        order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2) ((y, 0), φ y)
+          = order ℝ (fun q : ((Fin s → ℝ) × (Fin e → ℝ)) × ℝ => (g q.1).eval q.2)
+              ((0, 0), φ 0)) := fun i =>
     single_cluster_real_delineation_at (mlt i) (hmlt_pos i) (yr i) Ng g hg_deg hg_coeff P hP_an
       hP_ne NA NB A B hA_deg hB_deg hA_coeff hB_coeff hmem hP_oi_real rfl hg_deg_const
-  choose Ui δ hUi_open ha₀_Ui hδ_pos φ hφ_an hφ_val hφ_ball hφ_cover hφ_mult using hcl
+  choose Ui δ hUi_open ha₀_Ui hδ_pos φ hφ_an hφ_val hφ_ball hφ_cover hφ_mult hφ_oi using hcl
   -- root / uniqueness in each ball
   have hφ_root : ∀ i, ∀ y ∈ Ui i, (fam y).IsRoot (φ i y) := fun i y hy =>
     ((hφ_cover i y hy (φ i y)).mpr rfl).2
@@ -285,7 +341,7 @@ theorem multi_cluster_real_delineation
   -- assemble
   obtain ⟨V, hV_sub, hV_open, ha₀_V⟩ :=
     mem_nhds_iff.mp (h_ift.and (h_ord.and h_roots))
-  refine ⟨V, hV_open, ha₀_V, k, φ, mlt, ?_, ?_, ?_, hmlt_pos, ?_⟩
+  refine ⟨V, hV_open, ha₀_V, k, φ, mlt, ?_, ?_, ?_, hmlt_pos, ?_, fun i => hφ_oi i⟩
   · intro i; exact (hφ_an i).mono fun a ha => Set.mem_iInter.mp (hV_sub ha).1 i
   · intro a haV i j hij; exact (hV_sub haV).2.1 i j hij
   · intro a haV z
