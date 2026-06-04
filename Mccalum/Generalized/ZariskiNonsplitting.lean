@@ -32,23 +32,20 @@ noncomputable section
 open Polynomial Filter
 open scoped Topology
 
-/-- **(A4-core) Single irreducible Weierstrass family is nonsplitting over the section — TEMPORARY
-AXIOM.**
+/-- **(A4-core, degenerate case `d ≥ 2`) Irreducible Weierstrass family is nonsplitting over the
+section — TEMPORARY AXIOM (Lemma 4.2.5 + homotopy contradiction).**
 
-The genuine per-factor monodromy kernel, stated for *one* irreducible Weierstrass family `H` of degree
-`d ≥ 1`, taking `H`'s **own** discriminant hypotheses (nonvanishing order + order-invariance along the
-section): then `H` has, for `y` near `0`, a *single* distinct root `α(y)` over the section. (Branched
-covering of the roots over `{disc(H) ≠ 0}` + transitive monodromy on the roots of an irreducible
-family + a homotopy-deformation contradiction — Theorem 4.2.2.)
-
-This is the *only* remaining axiom of the nonsplitting half, scoped as the M2–M5 sub-project
-(complex `analytic_root_section`, the covering map `π`, transitive monodromy Lemma 4.2.5, and the
-homotopy-deformation contradiction). The full multi-factor statement
-`irreducible_factor_section_single_root` is *derived* from this by the discriminant-descent
-`factor_disc_order_inv` (each factor inherits a constant-order discriminant from `disc(h)`), so no
-discriminant reasoning is left in the axiom. -/
-axiom irreducible_section_single_root {s e : ℕ}
-    (H : CParam s e → Polynomial ℂ) (d : ℕ) (hd : 1 ≤ d)
+The genuine monodromy kernel of Zariski's Theorem 4.2.2, for an irreducible Weierstrass family `H` of
+degree `d ≥ 2` with `disc(H)` of finite, section-constant order: `H` has, for `y` near `0`, a *single*
+distinct root over the section. This is the nontrivial case of the thesis proof: with the branched
+root-covering (built, `ComplexCovering.lean`), it requires **Lemma 4.2.5** — transitive monodromy on
+the roots of an irreducible family, which the thesis itself *cites* from Bochner–Martin [BMA48, Ch. 9
+§3] rather than proving — together with the homotopy-deformation contradiction (deform the
+root-exchanging loop to a small circle around the section; the lift stays in one disc, contradicting
+the exchange). The `d = 1` case is now **proved** (`irreducible_section_single_root` below): a monic
+degree-one family has a single root identically, so this axiom is restricted to `d ≥ 2`. -/
+axiom irreducible_section_single_root_deg {s e : ℕ}
+    (H : CParam s e → Polynomial ℂ) (d : ℕ) (hd : 2 ≤ d)
     (hH_fam : IsWeierstrassFamily H d) (hH_irr : WeierstrassIrreducible H d)
     (hHdisc_ne : order ℂ (fun w => (H w).discr) (0 : CParam s e) ≠ ⊤)
     (hHdisc_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
@@ -56,6 +53,38 @@ axiom irreducible_section_single_root {s e : ℕ}
         = order ℂ (fun w => (H w).discr) ((0, 0) : CParam s e)) :
     ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       ∃ α : ℂ, ∀ β : ℂ, (H ((y, 0) : CParam s e)).IsRoot β ↔ β = α
+
+/-- **(A4-core) Single irreducible Weierstrass family is nonsplitting over the section.**
+
+For *one* irreducible Weierstrass family `H` of degree `d ≥ 1` with `disc(H)` of finite,
+section-constant order, `H` has, for `y` near `0`, a single distinct root over the section. The
+trivial case `d = 1` (a monic degree-one family `X + C(a₀ w)` has the single root `-a₀(y,0)`
+identically) is **proved here**; the genuine monodromy case `d ≥ 2` is `irreducible_section_single_root_deg`
+(the Lemma 4.2.5 / Bochner–Martin kernel). -/
+theorem irreducible_section_single_root {s e : ℕ}
+    (H : CParam s e → Polynomial ℂ) (d : ℕ) (hd : 1 ≤ d)
+    (hH_fam : IsWeierstrassFamily H d) (hH_irr : WeierstrassIrreducible H d)
+    (hHdisc_ne : order ℂ (fun w => (H w).discr) (0 : CParam s e) ≠ ⊤)
+    (hHdisc_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (fun w => (H w).discr) ((y, 0) : CParam s e)
+        = order ℂ (fun w => (H w).discr) ((0, 0) : CParam s e)) :
+    ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      ∃ α : ℂ, ∀ β : ℂ, (H ((y, 0) : CParam s e)).IsRoot β ↔ β = α := by
+  rcases Nat.lt_or_ge d 2 with hd1 | hd2
+  · -- `d = 1`: a monic degree-one family has a single root everywhere on the section.
+    have hd1' : d = 1 := le_antisymm (by omega) hd
+    refine Filter.Eventually.of_forall fun y => ?_
+    set p := H ((y, 0) : CParam s e) with hp
+    have hmonic : p.Monic := hH_fam.monic _
+    have hdeg : p.natDegree = 1 := by rw [hp, hH_fam.degree_eq, hd1']
+    have hlc : p.coeff 1 = 1 := by have := hmonic.coeff_natDegree; rwa [hdeg] at this
+    refine ⟨-p.coeff 0, fun β => ?_⟩
+    have heval : p.eval β = β + p.coeff 0 := by
+      rw [eval_eq_sum_range' (n := 2) (by rw [hdeg]; omega),
+        Finset.sum_range_succ, Finset.sum_range_one, hlc]; ring
+    rw [Polynomial.IsRoot.def, heval, add_eq_zero_iff_eq_neg]
+  · -- `d ≥ 2`: the genuine monodromy case.
+    exact irreducible_section_single_root_deg H d hd2 hH_fam hH_irr hHdisc_ne hHdisc_oi
 
 /-- **(A4) Each irreducible factor is nonsplitting over the section — THEOREM.**
 
