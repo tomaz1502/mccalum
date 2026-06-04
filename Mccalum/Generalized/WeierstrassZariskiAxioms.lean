@@ -60,29 +60,6 @@ theorem weierstrass_division_unique {s e : ℕ}
   (weierstrass_division (fun wt => (weierstrassPoly m a wt.1).eval wt.2)
     (weierstrassPolyEval_analyticAt m a ha_an) m (weierstrassPolyEval_order m a ha0)).2 q ρ hq hρ hzero
 
-/-- **Zariski's theorem 4.1.1 — single holomorphic root section (Phase E, AXIOM).**
-
-Given a monic Weierstrass polynomial `h(w, t) = t^m + ∑ a_i(w) t^i` (coefficients analytic,
-`a_i(0) = 0`) whose discriminant `disc(h)` (i) does not vanish identically and (ii) has constant
-vanishing order along the section `T = ℂˢ × {0}` near `0`, the roots of `h` over `T` are a **single**
-holomorphic section `ψ : ℂˢ → ℂ` (nonsplitting) of multiplicity `m`. The single deepest ingredient
-(Chapter 4 / Puiseux–Newton–monodromy); nothing of it is in Mathlib. -/
-axiom zariski_single_branch {s e : ℕ}
-    (m : ℕ) (hm_pos : 0 < m)
-    (a : Fin m → (CParam s e → ℂ))
-    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0)
-    (ha0 : ∀ i, a i 0 = 0)
-    (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
-    (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-      order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
-        = order ℂ (weierstrassDiscFn m a) (0 : CParam s e)) :
-    ∃ ψ : (Fin s → ℂ) → ℂ,
-      AnalyticAt ℂ ψ 0 ∧ ψ 0 = 0 ∧
-      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
-        (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ α = ψ y) ∧
-      (∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-        (weierstrassPoly m a ((y, 0) : CParam s e)).rootMultiplicity (ψ y) = m)
-
 /-- **Zariski's theorem 4.1.1 — order-invariance in the graph (conclusion (2), AXIOM).**
 
 The *second* conclusion of Zariski 4.1.1: under the same hypotheses, with `ψ` the single holomorphic

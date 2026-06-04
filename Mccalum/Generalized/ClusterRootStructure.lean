@@ -1,4 +1,5 @@
 import Mccalum.Generalized.RootSectionsAlgebra
+import Mccalum.Generalized.ZariskiNonsplitting
 
 /-!
 # Single-cluster composition (part 1): disc-order ⟹ root structure
