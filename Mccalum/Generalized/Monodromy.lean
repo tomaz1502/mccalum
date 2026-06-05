@@ -1,9 +1,13 @@
 import Mccalum.Generalized.ComplexCovering
+import Mccalum.Puiseux.Covering
+import Mccalum.Puiseux.RootCover
 import Mathlib.Topology.Connected.Basic
+import Mathlib.Topology.Connected.PathConnected
+import Mathlib.Topology.Connected.Clopen
 import Mathlib.Topology.Homotopy.Lifting
 
 /-!
-# Monodromy reduction toward `irreducible_section_single_root_deg` (M4)
+# Monodromy reduction toward `irreducible_section_single_root_deg` (M0/M4)
 
 This file collects the reusable kernel of the homotopy-deformation contradiction in the thesis proof
 of Theorem 4.2.2 (the `d ≥ 2` case of `irreducible_section_single_root`). The thesis argument, given
@@ -18,8 +22,16 @@ Bochner–Martin), runs:
 
 The **confinement** step — a continuous path into a disjoint union of opens starting in one component
 stays in it — is the genuine topological kernel and is proved here in full (`path_confined_to_open`,
-`liftPath_confined`). The deformation of `Γ` to `Γ''` (two explicit homotopies in the thesis, codim-1
-specific) and Lemma 4.2.5 itself remain the substantial geometric/foundational pieces of M4/M3.
+`liftPath_confined`, `monodromy_exchange_contradiction`).
+
+**Reactivation note (M0).** This file was archived in favour of the Newton–Puiseux route and is now
+brought back into the build: the connectedness kernel of Lemma 4.2.5 — the missing
+"Bochner–Martin content" — is supplied by `clopen_split_contradiction'`
+(`Mccalum.Puiseux.RootCover`), so the monodromy route is unblocked (see `MONODROMY_PLAN.md`). The
+topological half of Lemma 4.2.5, `transitive_monodromy_of_pathConnected`, now lives in
+`Mccalum.Puiseux.Covering` (imported above) rather than being duplicated here. Remaining pieces:
+M1 (path-connectedness from the clopen kernel), M2 (Rouché disc separation), M3 (the two explicit
+deformations `Γ → Γ''`).
 -/
 
 noncomputable section
@@ -93,4 +105,182 @@ theorem monodromy_exchange_contradiction {E X : Type*} [TopologicalSpace E] [Top
       hA hB hAB hconf (by rw [cov.liftPath_zero]; exact heA)
   exact hnotB (hend ▸ heβB)
 
+/-! ### Transitive monodromy from path-connectedness (the topological half of Lemma 4.2.5)
+
+Lemma 4.2.5 (transitive monodromy: any two roots over `U` are connected by a path `Γ` with
+`Γ_h[α] = α'`) splits into a *topological* half and an *algebraic* kernel:
+
+* **topological half** `transitive_monodromy_of_pathConnected` (proved, now in
+  `Mccalum.Puiseux.Covering`): if the total space `E` of the covering is path-connected, monodromy is
+  transitive;
+* **algebraic kernel**: the root variety of an *irreducible* Weierstrass polynomial is path-connected
+  over `U` — the genuine Bochner–Martin [BMA48] content. This is no longer an isolated axiom: it is
+  supplied by `clopen_split_contradiction'` (`Mccalum.Puiseux.RootCover`) via the
+  preconnected ⟹ path-connected bridge (task **M1**). -/
+
+open Polynomial Filter
+open scoped Topology
+
+/-- **A local homeomorphism pulls back local path-connectedness.** If `p : E → X` is a local
+homeomorphism and `X` is locally path-connected, so is `E`. (Each point lies in a chart homeomorphic
+to an open subset of `X`; pull back `X`'s path-connected neighbourhood basis through the chart's
+inverse.) This fills a gap in Mathlib's covering API and gives `LocPathConnectedSpace` of a covering
+total space over a locally path-connected base. -/
+theorem IsLocalHomeomorph.locPathConnectedSpace {E X : Type*} [TopologicalSpace E]
+    [TopologicalSpace X] {p : E → X} (hp : IsLocalHomeomorph p) [LocPathConnectedSpace X] :
+    LocPathConnectedSpace E := by
+  refine LocPathConnectedSpace.of_bases
+    (p := fun x V => V ∈ 𝓝 (p x) ∧ IsPathConnected V ∧ V ⊆ (hp x).choose.target)
+    (s := fun x V => (hp x).choose.symm '' V) (fun x => ?_) (fun x V hV => ?_)
+  · set e := (hp x).choose with he
+    have hxe : x ∈ e.source := (hp x).choose_spec.1
+    have hpx : p x = e x := congrFun (hp x).choose_spec.2 x
+    have hex : e x ∈ e.target := e.map_source hxe
+    have hmap := (pathConnected_subset_basis e.open_target hex).map e.symm
+    rw [e.symm_map_nhds_eq hxe] at hmap
+    simpa only [hpx] using hmap
+  · set e := (hp x).choose with he
+    exact hV.2.1.image' (e.continuousOn_symm.mono (e.symm_source ▸ hV.2.2))
+
+open Classical in
+/-- **M1a, count step.** For a set `W` of the root variety that is clopen over the punctured separable
+base `U` and contains a sheet `e` lying over a point of `U`, the number of `W`-roots is `≥ 1`
+frequently near `0`. (The count is locally constant on the connected `U` and positive at `e`'s base
+point, hence positive throughout `U ∈ 𝓝[≠]0`.) -/
+private theorem rootCover_count_pos_freq {m : ℕ} (q : (Fin 1 → ℂ) → Polynomial ℂ)
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    {U : Set (Fin 1 → ℂ)} (hUopen : IsOpen U) (hUconn : IsPreconnected U)
+    (hUsep : ∀ y ∈ U, (q y).Separable) (hU0 : U ∈ 𝓝[≠] (0 : Fin 1 → ℂ))
+    {W : Set ↥(rootVariety q)} (hW : IsClopenOverBase q U W)
+    {e : ↥(rootVariety q)} (heU : (e : (Fin 1 → ℂ) × ℂ).1 ∈ U) (heW : e ∈ W) :
+    ∃ᶠ y in 𝓝[≠] (0 : Fin 1 → ℂ),
+      1 ≤ ((q y).roots.toFinset.filter (fun t => (y, t) ∈ (Subtype.val '' W))).card := by
+  classical
+  set cnt : (Fin 1 → ℂ) → ℕ := fun y =>
+    ((q y).roots.toFinset.filter (fun t => (y, t) ∈ (Subtype.val '' W))).card with hcnt
+  haveI : PreconnectedSpace (↥U) := Subtype.preconnectedSpace hUconn
+  have hlc : IsLocallyConstant (fun v : ↥U => cnt v.1) := by
+    rw [IsLocallyConstant.iff_eventually_eq]
+    intro v
+    have hev := aRootCount_eventually_eq q hmonic hdeg hcoeff (hUsep v.1 v.2) hUopen v.2 (A := W) hW
+    exact (continuous_subtype_val.continuousAt).eventually hev
+  have hcnt_e : 1 ≤ cnt (e : (Fin 1 → ℂ) × ℂ).1 := by
+    rw [hcnt]
+    apply Finset.card_pos.mpr
+    refine ⟨(e : (Fin 1 → ℂ) × ℂ).2, Finset.mem_filter.mpr ⟨?_, ?_⟩⟩
+    · rw [Multiset.mem_toFinset, Polynomial.mem_roots (hmonic _).ne_zero]
+      exact e.2
+    · exact ⟨e, heW, rfl⟩
+  refine Filter.Eventually.frequently ?_
+  filter_upwards [hU0] with y hy
+  have hconst : cnt y = cnt (e : (Fin 1 → ℂ) × ℂ).1 :=
+    hlc.apply_eq_of_preconnectedSpace ⟨y, hy⟩ ⟨_, heU⟩
+  show 1 ≤ cnt y
+  rw [hconst]; exact hcnt_e
+
+open Classical in
+/-- **M1a.** For an irreducible univariate Weierstrass family, the root cover over a punctured
+separable, preconnected base `U ∈ 𝓝[≠] 0` is **preconnected**: any clopen split would give two
+nonempty components, hence two positive `∃ᶠ` counts, contradicting the (now non-vacuous) kernel
+`clopen_split_contradiction'`. This is the connectedness half of Lemma 4.2.5. -/
+theorem rootCover_preconnected {m : ℕ} (q : (Fin 1 → ℂ) → Polynomial ℂ)
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hq0 : q 0 = X ^ m) (hirr : UnivIrreducible q)
+    {U : Set (Fin 1 → ℂ)} (hUopen : IsOpen U) (hUconn : IsPreconnected U)
+    (hUsep : ∀ y ∈ U, (q y).Separable) (hU0 : U ∈ 𝓝[≠] (0 : Fin 1 → ℂ))
+    {ε : ℝ} (hε : 0 ≤ ε)
+    (hbdd : ∀ᶠ y in 𝓝[≠] (0 : Fin 1 → ℂ), ∀ t ∈ (q y).roots.toFinset, ‖t‖ ≤ ε) :
+    PreconnectedSpace ↥(rootProj q ⁻¹' U) := by
+  classical
+  have hsep : ∀ᶠ y in 𝓝[≠] (0 : Fin 1 → ℂ), (q y).Separable := by
+    filter_upwards [hU0] with y hy using hUsep y hy
+  rw [preconnectedSpace_iff_clopen]
+  intro A hAcl
+  by_contra hcon
+  rw [not_or] at hcon
+  obtain ⟨hAne_empty, hAne_univ⟩ := hcon
+  obtain ⟨a, ha⟩ := Set.nonempty_iff_ne_empty.mpr hAne_empty
+  obtain ⟨b, hb⟩ : (Aᶜ).Nonempty := Set.nonempty_compl.mpr hAne_univ
+  set Arv : Set ↥(rootVariety q) := Subtype.val '' A with hArv
+  have hArv_base : IsClopenOverBase q U Arv := by
+    show IsClopen (Subtype.val ⁻¹' Arv : Set ↥(rootProj q ⁻¹' U))
+    rw [hArv, Set.preimage_image_eq A Subtype.val_injective]
+    exact hAcl
+  have hAfreq := rootCover_count_pos_freq q hmonic hdeg hcoeff hUopen hUconn hUsep hU0
+    hArv_base (e := a.1) a.2 ⟨a, ha, rfl⟩
+  have hBfreq := rootCover_count_pos_freq q hmonic hdeg hcoeff hUopen hUconn hUsep hU0
+    hArv_base.compl (e := b.1) b.2 (by
+      intro hmem
+      obtain ⟨x, hx, hxb⟩ := hmem
+      exact hb (Subtype.ext hxb ▸ hx))
+  exact clopen_split_contradiction' q hmonic hdeg hcoeff hq0 hsep hε hbdd hirr hUopen hUconn hUsep hU0
+    hArv_base hAfreq hBfreq
+
+/-- **M1b.** For an irreducible univariate Weierstrass family of positive degree, the root cover over a
+punctured separable, preconnected base `U ∈ 𝓝[≠] 0` is **path-connected**. Combines `rootCover_preconnected`
+(M1a) with local path-connectedness of the cover (the covering map is a local homeomorphism over the
+open base `U ⊆ ℂ`) and nonemptiness (`q y` has a root for `y ∈ U`). -/
+theorem rootCover_pathConnected {m : ℕ} (q : (Fin 1 → ℂ) → Polynomial ℂ) (hm : 0 < m)
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hq0 : q 0 = X ^ m) (hirr : UnivIrreducible q)
+    {U : Set (Fin 1 → ℂ)} (hUopen : IsOpen U) (hUconn : IsPreconnected U)
+    (hUsep : ∀ y ∈ U, (q y).Separable) (hU0 : U ∈ 𝓝[≠] (0 : Fin 1 → ℂ))
+    {ε : ℝ} (hε : 0 ≤ ε)
+    (hbdd : ∀ᶠ y in 𝓝[≠] (0 : Fin 1 → ℂ), ∀ t ∈ (q y).roots.toFinset, ‖t‖ ≤ ε) :
+    PathConnectedSpace ↥(rootProj q ⁻¹' U) := by
+  have hcont : ∀ i, Continuous (fun y => (q y).coeff i) :=
+    fun i => continuous_iff_continuousAt.mpr fun y => (hcoeff i y).continuousAt
+  have cov : IsCoveringMap (U.restrictPreimage (rootProj q)) :=
+    rootProj_isCoveringMap_restrict q hmonic hdeg hcont hcoeff U hUsep
+  haveI : LocPathConnectedSpace ↥U := hUopen.locPathConnectedSpace
+  haveI : LocPathConnectedSpace ↥(rootProj q ⁻¹' U) := cov.isLocalHomeomorph.locPathConnectedSpace
+  haveI : PreconnectedSpace ↥(rootProj q ⁻¹' U) :=
+    rootCover_preconnected q hmonic hdeg hcoeff hq0 hirr hUopen hUconn hUsep hU0 hε hbdd
+  haveI : Nonempty ↥(rootProj q ⁻¹' U) := by
+    obtain ⟨y₀, hy₀⟩ := Filter.nonempty_of_mem hU0
+    obtain ⟨t₀, ht₀⟩ := IsAlgClosed.exists_root (q y₀) (by
+      rw [Polynomial.degree_eq_natDegree (hmonic y₀).ne_zero, hdeg y₀]
+      exact_mod_cast hm.ne')
+    exact ⟨⟨⟨(y₀, t₀), ht₀⟩, hy₀⟩⟩
+  haveI : ConnectedSpace ↥(rootProj q ⁻¹' U) := ⟨inferInstance⟩
+  exact PathConnectedSpace.of_locPathConnectedSpace
+
+/-- The root cover over a base `U` on which `q` is separable is a covering map (the analytic IFT
+trivializations of `ComplexCovering`, packaged for the punctured base). -/
+theorem rootCover_isCoveringMap {m : ℕ} (q : (Fin 1 → ℂ) → Polynomial ℂ)
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    {U : Set (Fin 1 → ℂ)} (hUsep : ∀ y ∈ U, (q y).Separable) :
+    IsCoveringMap (U.restrictPreimage (rootProj q)) :=
+  rootProj_isCoveringMap_restrict q hmonic hdeg
+    (fun i => continuous_iff_continuousAt.mpr fun y => (hcoeff i y).continuousAt) hcoeff U hUsep
+
+/-- **M1c — Lemma 4.2.5 (root exchange / transitive monodromy).** For an irreducible univariate
+Weierstrass family, any two sheets `e₀, e₁` of the root cover over the same base point of `U` are
+joined by a base loop `γ` whose lift from `e₀` ends at `e₁`. This is the full transitive-monodromy
+input to the homotopy-deformation contradiction (the thesis's `Γ_h[α] = β`), assembled from
+path-connectedness of the cover (M1b) and `transitive_monodromy_of_pathConnected`. -/
+theorem rootCover_exchange {m : ℕ} (q : (Fin 1 → ℂ) → Polynomial ℂ) (hm : 0 < m)
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hq0 : q 0 = X ^ m) (hirr : UnivIrreducible q)
+    {U : Set (Fin 1 → ℂ)} (hUopen : IsOpen U) (hUconn : IsPreconnected U)
+    (hUsep : ∀ y ∈ U, (q y).Separable) (hU0 : U ∈ 𝓝[≠] (0 : Fin 1 → ℂ))
+    {ε : ℝ} (hε : 0 ≤ ε)
+    (hbdd : ∀ᶠ y in 𝓝[≠] (0 : Fin 1 → ℂ), ∀ t ∈ (q y).roots.toFinset, ‖t‖ ≤ ε)
+    {e₀ e₁ : ↥(rootProj q ⁻¹' U)}
+    (hpe : U.restrictPreimage (rootProj q) e₀ = U.restrictPreimage (rootProj q) e₁) :
+    ∃ (γ : C(unitInterval, ↥U)) (hγ0 : γ 0 = U.restrictPreimage (rootProj q) e₀),
+      γ 1 = U.restrictPreimage (rootProj q) e₀ ∧
+        (rootCover_isCoveringMap q hmonic hdeg hcoeff hUsep).liftPath γ e₀ hγ0 1 = e₁ := by
+  haveI : PathConnectedSpace ↥(rootProj q ⁻¹' U) :=
+    rootCover_pathConnected q hm hmonic hdeg hcoeff hq0 hirr hUopen hUconn hUsep hU0 hε hbdd
+  exact transitive_monodromy_of_pathConnected
+    (rootCover_isCoveringMap q hmonic hdeg hcoeff hUsep) hpe
+
 end
+
+

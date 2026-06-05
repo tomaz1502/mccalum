@@ -3,7 +3,7 @@ import Mathlib.Analysis.Calculus.InverseFunctionTheorem.FDeriv
 import Mathlib.Analysis.Calculus.FDeriv.Analytic
 import Mathlib.Analysis.Calculus.Deriv.Polynomial
 import Mathlib.Analysis.Analytic.Polynomial
-import Mathlib.Topology.Covering
+import Mathlib.Topology.Covering.Basic
 import Mathlib.FieldTheory.Separable
 import Mathlib.Algebra.Polynomial.Splits
 import Mathlib.FieldTheory.IsAlgClosed.Basic
