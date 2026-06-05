@@ -124,13 +124,70 @@ The piece the archive README lists as "not built (Bochner–Martin content)"; no
   `rootCover_pathConnected`, `rootCover_isCoveringMap`, `rootCover_exchange` are green and axiom-clean
   (`Mccalum/Generalized/Monodromy.lean`).
 
-### M2 — Rouché cluster separation (thesis step 4) *(new, standard)*
-- `hᵢ(w,z_n)` has `l` distinct roots `αⱼ` (mult `mⱼ`) ⟹ disjoint discs `Dⱼ` and a transverse disc `D'`
-  such that for every `w_{n-1}∈D'`, exactly `mⱼ` roots lie in `Dⱼ`. Argument principle / Hurwitz — the
-  project already has the argument principle (Weierstrass-division proof), so this reuses it.
-- Output: the `Dⱼ` (the disjoint opens `A=D₁`, `B=D₂`) + the confinement hypothesis
-  `hconf : ∀t, φ''(t) ∈ ⋃ⱼ Dⱼ`.
-- **Risk:** medium. Bivariate root-continuity bookkeeping.
+### G — Generalize the kernel from `Fin 1 → ℂ` to a general base *(prerequisite to M2–M4)*
+
+**Dimensional finding.** M1's Lemma 4.2.5 (`rootCover_exchange`) is over `Fin 1 → ℂ` — base dimension
+1, i.e. the degenerate `s + e = 1` (`s = 0`) case, inherited from the Puiseux kernel being `Fin 1`
+(`clopen_split_contradiction'`, `UnivIrreducible`; "task C4.2"). But M2–M4 are non-vacuous only for
+`s ≥ 1`: the section polynomial splits (`l ≥ 2` distinct roots) only with a section direction, and the
+root-exchanging loop genuinely needs `hᵢ` irreducible over the **full `(s+1)`-dim base** (the transverse
+slice is reducible — its `l` clusters collide at the branch point — so 1-d monodromy can't exchange
+them; that collapse is exactly the M3/M4 confinement). So Lemma 4.2.5 must hold over the general base.
+
+**Obstacle & route.** Generalizing the kernel needs the factor-coefficient extension across the
+discriminant locus. For `Fin 1` it is 1-variable Riemann removable singularity at a *point*
+(`exists_analyticAt_extend_funUnique`); Mathlib has only this (no Hartogs/Osgood/SCV extension). But in
+the normal-form setting (`disc = w^r·N`, `w` the distinguished transverse coordinate) the singular set
+is the **coordinate hyperplane `{w = 0}`**, so the extension is a *parameter Cauchy integral*
+`G(y,w) = (2πi)⁻¹ ∮_{|ζ|=r} (ζ−w)⁻¹·F(y,ζ) dζ`, jointly analytic by the project's own SCV keystone
+`circleIntegral_analyticAt_fiber` (`CSCVPackage`, the `weierstrass_division` infrastructure; the
+`osgood` bridge is discharged by `holoBridge_findim`). The separable locus is then `ℂ^s × ℂ*` (ball
+minus a coordinate hyperplane), connected.
+
+- **G1 — DONE.** `Mccalum/Generalized/HyperplaneExtension.lean` (axiom-clean, not yet imported):
+  `cauchyExtend` (the parameter Cauchy integral), `cauchyExtend_analyticAt` (joint analyticity via the
+  keystone), `cauchyExtend_eq_fiber` (= `F` off `{w=0}` via 1-var Riemann + Cauchy formula), assembled
+  as `exists_analyticAt_extend_hyperplane`.
+- **G2a — DONE.** `exists_analyticAt_extend_funCoord0` (`HyperplaneExtension.lean`, axiom-clean): G1
+  transported to `Fin (n+1) → ℂ` (extension across `{coord 0 = 0}`) through the coordinate-split CLE
+  `coord0Equiv` (built from `Fin.consLinearEquiv ℂ`, `.toContinuousLinearEquiv`). Analyticity transports
+  along the CLE; the filter form `exists_analyticAt_extend_hyperplane_nhds` is the vehicle.
+- **G2b/c — DONE** (`Mccalum/Generalized/ConnectednessGen.lean`, axiom-clean). `factor_coeff_extends_gen`
+  (via G2a), `exists_factor_weierstrass_gen`, `clopen_split_factorization_gen`, `UnivIrreducibleGen`,
+  `clopen_split_contradiction_gen`, `aRootCount_eventually_const_gen`, `clopen_split_contradiction'_gen`,
+  all over `Fin (n+1) → ℂ` with the deleted-hyperplane filter `𝓝[{x 0 ≠ 0}] 0`. Agreement at `0` uses a
+  general-filter lemma `polynomial_eq_of_eventuallyEq_filter` + `(𝓝[{x 0 ≠ 0}] 0).NeBot`; the
+  factorisation is recorded off the dense hyperplane (full-nbhd density deferred to CParam wiring, where
+  germ-irreducibility ⇒ `UnivIrreducibleGen`).
+- **G3 — DONE** (`Mccalum/Generalized/MonodromyGen.lean`, axiom-clean). `rootCover_preconnected_gen` →
+  `rootCover_pathConnected_gen` → **`rootCover_exchange_gen`** = Lemma 4.2.5 over `Fin (n+1) → ℂ`, the
+  form thesis 4.2.2 needs. Mirrors M1 with the deleted-hyperplane filter; covering machinery +
+  `IsLocalHomeomorph.locPathConnectedSpace` reused as-is.
+
+**G1 + G2 + G3 COMPLETE** — green, axiom-clean, wired into `Mccalum`. Remaining toward Conclusion 1:
+M2 (Rouché), M3 (homotopies), M4 (assemble via `monodromy_exchange_contradiction`), M5 (normal form +
+blow-up); plus CParam wiring (`UnivIrreducibleGen` ↔ `WeierstrassIrreducible`).
+
+### M2 — Rouché cluster separation (thesis step 4) *(DONE)*
+`Mccalum/Generalized/RoucheSeparation.lean` (axiom-clean, wired into `Mccalum`, full library green).
+The **complex** analogue of `multi_cluster_real_delineation`, for a monic family `P : ℂ → ℂ[X]` of
+constant degree with analytic coefficients (the transverse-coordinate slice of the section family):
+
+- **`roots_confined`** (confinement): `∀ᶠ w near 0, ∀ root t of P w, ∃ α ∈ (P 0).roots, t ∈ ball α ρ`.
+  Ported the real `multi_cluster` tube-lemma + `cauchyBound` argument to ℂ (helpers
+  `fam_eval_continuousOn_C`, `generalized_tube_lemma`). *Soft* — no argument principle.
+- **`disc_roots_nonempty`** (non-emptiness / the degree-theoretic content): each disc keeps a root for
+  `w` near `0`. The contour root count `(2πi)⁻¹∮_{|t|=ρ} ∂ₜG/G` is **analytic** in `w`
+  (`powerSum_analyticAt`, the project's SCV keystone, with my own radius `ρ`) and **integer-valued**
+  (`slice_powerSum_eq_rootSum`), hence locally constant, `= (P 0).rootMultiplicity α ≥ 1` at `w = 0`.
+  Transported through `CParam 0 1` (`transL`/`transι`) to reuse the `Layer-C` threading lemmas; helpers
+  `analyticOrderAt_eval_eq_rootMultiplicity`, `analyticAt_taylor_coeff_C`, `eventually_nat_eq...`.
+- **`cluster_separation`** (bundled M2): picks `ρ` from the gap (`exists_sep_radius`), gives pairwise
+  **disjoint** discs + `∀ᶠ w` (confinement ∧ each disc non-empty). This is thesis step 4.
+
+Interface for M4: discs are `ball αⱼ ρ` in the *root* plane (lift to `A=D₁`, `B=⋃_{j≥2}Dⱼ` in the cover);
+confinement is the `hconf : ∀t, φ''(t) ∈ ⋃ⱼ Dⱼ`; non-emptiness supplies `α∈D₁`, `β∈D₂` at the off-section
+base point. **Risk retired.**
 
 ### M3 — The two explicit homotopies (thesis steps 7–8) *(the genuine geometric work)*
 The thesis gives explicit formulas:

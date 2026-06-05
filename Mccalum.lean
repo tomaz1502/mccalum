@@ -11,10 +11,14 @@ import Mccalum.DiscrProdInvariant
 import Mccalum.Generalized.CArgPrinciple
 import Mccalum.Generalized.CDivisionAlgebra
 import Mccalum.Generalized.ComplexCovering
+import Mccalum.Generalized.ConnectednessGen
 import Mccalum.Generalized.CParamIntegral
+import Mccalum.Generalized.HyperplaneExtension
 import Mccalum.Generalized.Lifting
 import Mccalum.Generalized.Monodromy
+import Mccalum.Generalized.MonodromyGen
 import Mccalum.Generalized.Projection
+import Mccalum.Generalized.RoucheSeparation
 import Mccalum.Generalized.SimpleRoots
 import Mccalum.Invariance
 import Mccalum.Order
