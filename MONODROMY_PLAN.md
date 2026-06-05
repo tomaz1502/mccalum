@@ -189,21 +189,45 @@ Interface for M4: discs are `ball αⱼ ρ` in the *root* plane (lift to `A=D₁
 confinement is the `hconf : ∀t, φ''(t) ∈ ⋃ⱼ Dⱼ`; non-emptiness supplies `α∈D₁`, `β∈D₂` at the off-section
 base point. **Risk retired.**
 
-### M3 — The two explicit homotopies (thesis steps 7–8) *(the genuine geometric work)*
-The thesis gives explicit formulas:
-- `H(s,t) = ((1−s)Γ(t)+s·w, Γ_{n-1}(t))` — collapse section component to `w`, untouched `z_{n-1}` ⟹
-  stays in `U={z_{n-1}≠0}` (uses the normal form: `disc≠0 ⇔ z_{n-1}≠0`).
-- `K(s,t) = (w, (1−s)Γ_{n-1}(t) + s·Γ_{n-1}(t)|w'_{n-1}|/|Γ_{n-1}(t)|)` — radial push onto the circle
-  `|z_{n-1}|=|w'_{n-1}|`, stays in `U`.
-- Obligations: each continuous, valued in `U`, `HomotopicRel {0,1}`; compose to `Γ.HomotopicRel Γ'' {0,1}`
-  with `Γ''` on the small circle. Mathlib `ContinuousMap.HomotopyRel` / `Path.Homotopy`.
-- **Risk:** medium–high — the fiddly part, but bounded: the maps are explicit and the downstream
-  interface (`monodromy_exchange_contradiction`'s `hhom`, `hconf`, `heA`, `heβB`) is already fixed.
+### M3 — The two explicit homotopies (thesis steps 7–8) *(DONE)*
+`Mccalum/Generalized/MonodromyDeform.lean` (axiom-clean, wired into `Mccalum`, full library green).
+**Key design decision:** the base nbhd is the *punctured sup-norm ball* `punctBall δ = ball 0 δ ∩ {z₀≠0}`
+(coord `0` = transverse). In normal form this is exactly the separable locus, so `rootCover_exchange_gen`
+applies to it, *and* both homotopies stay inside it automatically — no separate "tube around `w'`" needed.
 
-### M4 — Assemble the single-factor result *(wiring)*
-- Combine M1 (`Γ`, `Γ_{hᵢ}[α]=β`) + M3 (`Γ≃Γ''`) + M2 (`hconf`, `D₁`, `D₂`) into
-  `monodromy_exchange_contradiction` (done) ⟹ each irreducible factor has a single distinct root over `H*`.
-- This is the codim-1 (`e=1`) form of `irreducible_section_single_root_deg`.
+- `mkHomRel` — builder turning an ambient homotopy formula `F : C(I×I, Fin(n+1)→ℂ)` that stays in
+  `punctBall δ` into a `ContinuousMap.HomotopyRel` into the subtype `↥(punctBall δ)`.
+- `deform_to_transverse_loop` (M3): a loop `Γ` in `punctBall δ` based at `w' = Γ 0` deforms, rel `{0,1}`,
+  to a loop `Γ''` with section pinned (`Γ'' t i = w' i` for `i≠0`) and transverse on the circle
+  (`‖Γ'' t 0‖ = ‖w'₀‖`); returns also `Γ.HomotopicRel Γ'' {0,1}`. Built as `H.trans K`:
+  - `H(s,t) = (1−s)•Γ(t) + s•c(t)`, `c t = update (Γ 0) 0 (Γ₀ t)` — collapse section, stays in the ball
+    by **convexity** (`convex_ball`), coord 0 untouched (`≠0`);
+  - `K(s,t) = update (Γ 0) 0 ([(1−s)+s·‖w'₀‖/‖Γ₀ t‖]•Γ₀ t)` — radial push, `|z₀|` a **convex combination**
+    of `‖Γ₀ t‖` and `‖w'₀‖` (both `<δ`, both `>0`), section `= w'`.
+- Endpoints fixed using the loop property `Γ 0 = Γ 1` (so `Γ''(0)=Γ''(1)=w'`).
+- **Risk retired.** The two side facts (section constant, transverse modulus constant) are exactly what
+  M4 feeds into the M2 confinement at the slice `q(w'_sec,·)`.
+
+### M4 — Assemble the single-factor result *(DONE)*
+`Mccalum/Generalized/MonodromyAssemble.lean` (axiom-clean, wired into `Mccalum`, full library green).
+**`section_card_le_one`**: for an irreducible normal-form Weierstrass family `q` over `punctBall δ`
+(separable there, preconnected), the section polynomial `q a` at any small section point
+(`a 0 = 0`, `‖a‖ < δ`) has `(q a).roots.toFinset.card ≤ 1` — the codim-1 (`e=1`) form of
+`irreducible_section_single_root_deg`.
+
+Proof = the homotopy-deformation contradiction, by `by_contra` on `2 ≤ card`:
+- slice `P τ := q (update a 0 τ)` (`P 0 = q a`); coeffs analytic via `AnalyticAt.comp_of_eq` with the
+  affine `update a 0 ·`; run **M2** `cluster_separation P` → radius `ρ`, disjoint discs, `∀ᶠ`
+  confinement+non-emptiness; extract `η`-ball;
+- pick `r = min η δ / 2`, base point `w' = update a 0 r ∈ punctBall δ`; M2 non-emptiness at `r` gives
+  roots `α ∈ D₁`, `β ∈ D₂` of `q w'`, hence two sheets `e₀,e₁` over `w'` (same base ⟹ `hpe := rfl`);
+- **M1** `rootCover_exchange_gen` → loop `γ` (lift `e₀↦e₁`); **M3** `deform_to_transverse_loop` → `Γ''`;
+- opens `A = rc⁻¹(D₁)`, `B = rc⁻¹(⋃_{β'∈S.erase α₁} ball β' ρ)` via the root-coordinate map
+  `rc e = ((e:rootVariety):_×ℂ).2`; disjoint from M2's disc-disjointness;
+- **confinement (`hconf`)**: the lift's base is `Γ'' t` (`liftPath_lifts`), so `rc(lift t)` is a root of
+  `q(Γ'' t) = P(Γ''ₜ 0)` (slice identity `Γ'' t = update a 0 (Γ''ₜ 0)` from M3's section-pinning), and
+  `|Γ''ₜ 0| = r < η` ⟹ M2 confinement puts it in `⋃ⱼ Dⱼ = A∪B`;
+- `monodromy_exchange_contradiction hcov hγ0 he'' hexch hhom … hconf heA heβB`.
 
 ### M5 — Normal form + blow-up to the general-`e` axiom
 - **M5a (`e = 1` normal form):** derive `disc = z_{n-1}^r·N`, `N` non-vanishing, from the

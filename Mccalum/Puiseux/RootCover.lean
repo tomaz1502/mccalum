@@ -46,9 +46,10 @@ degree-`d` analytic family `q`, there is an open neighbourhood `V ∋ y₀` and 
 `φ : Fin d → (Fin n → ℂ) → ℂ` such that for every `y ∈ V`, the values `φ i y` are *distinct* and form
 *exactly* the root set of `q y`. -/
 theorem exists_local_root_sections {n d : ℕ} (q : (Fin n → ℂ) → Polynomial ℂ)
+    {y₀ : Fin n → ℂ}
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = d)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
-    {y₀ : Fin n → ℂ} (hsep : (q y₀).Separable)
+    (hcoeff : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) y₀)
+    (hsep : (q y₀).Separable)
     (B : Set (Fin n → ℂ)) (hBopen : IsOpen B) (hy₀B : y₀ ∈ B) :
     ∃ (V : Set (Fin n → ℂ)) (φ : Fin d → (Fin n → ℂ) → ℂ),
       IsOpen V ∧ y₀ ∈ V ∧ IsPreconnected V ∧ V ⊆ B ∧
@@ -62,10 +63,10 @@ theorem exists_local_root_sections {n d : ℕ} (q : (Fin n → ℂ) → Polynomi
   set F : (Fin n → ℂ) × ℂ → ℂ := fun p => (q p.1).eval p.2 with hF
   have hroot : ∀ j, F (y₀, t j) = 0 := fun j => (ht_roots (t j)).mpr ⟨j, rfl⟩
   have hF_an : ∀ j, AnalyticAt ℂ F (y₀, t j) :=
-    fun j => evalFamily_analyticAt q hdeg (t j) (fun i => hcoeff i y₀)
+    fun j => evalFamily_analyticAt q hdeg (t j) hcoeff
   have hsimple : ∀ j, fderiv ℂ F (y₀, t j) (0, 1) ≠ 0 := by
     intro j
-    rw [evalFamily_fderiv_t q hdeg (t j) (fun i => hcoeff i y₀)]
+    rw [evalFamily_fderiv_t q hdeg (t j) hcoeff]
     exact ht_simple j
   obtain ⟨U, φ, hUopen, hy₀U, hφan, _hφval, hφroot, hφdisj⟩ :=
     local_disjoint_root_sections F y₀ d t ht_inj hF_an hroot hsimple
@@ -95,9 +96,10 @@ analytic coefficients at every separable point `y₀`. Combines `exists_local_ro
 enumerate the roots), `clopen_mem_const_of_continuous` (component membership is locally constant along
 sheets — single-valuedness), and `globalPartialProd_analyticAt` (the gluing). -/
 theorem factor_coeff_analyticAt {n d : ℕ} (q : (Fin n → ℂ) → Polynomial ℂ)
+    {y₀ : Fin n → ℂ}
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = d)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
-    {y₀ : Fin n → ℂ} (hsep : (q y₀).Separable)
+    (hcoeff : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) y₀)
+    (hsep : (q y₀).Separable)
     {U : Set (Fin n → ℂ)} (hUopen : IsOpen U) (hy₀U : y₀ ∈ U)
     (A : Set ↥(rootVariety q)) (hA : IsClopenOverBase q U A) (j : ℕ) :
     AnalyticAt ℂ (fun y => ((q y).roots.toFinset.filter
@@ -158,7 +160,7 @@ theorem factor_coeff_extends {d : ℕ} (q : (Fin 1 → ℂ) → Polynomial ℂ)
           (fun t => X - C t) |>.coeff j) := by
   refine exists_analyticAt_extend_funUnique ?_ (M := (1 + ε) ^ d) ?_
   · filter_upwards [hsep, hU0] with y hy hyU
-    exact factor_coeff_analyticAt q hmonic hdeg hcoeff hy hUopen hyU A hA j
+    exact factor_coeff_analyticAt q hmonic hdeg (fun i => hcoeff i y) hy hUopen hyU A hA j
   · filter_upwards [hbdd] with y hy
     have hbound := norm_coeff_factor_le hε (fun t => (y, t) ∈ (Subtype.val '' A)) hy j
     rwa [hdeg y] at hbound
@@ -210,9 +212,10 @@ open Classical in
 component membership is locally constant by `sheet_mem_locally_const`.) Propagated over the connected
 punctured disc, this gives the constant degree `d_A` of the Weierstrass factor `h_A`. -/
 theorem aRootCount_eventually_eq {n d : ℕ} (q : (Fin n → ℂ) → Polynomial ℂ)
+    {y₀ : Fin n → ℂ}
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = d)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
-    {y₀ : Fin n → ℂ} (hsep : (q y₀).Separable)
+    (hcoeff : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) y₀)
+    (hsep : (q y₀).Separable)
     {U : Set (Fin n → ℂ)} (hUopen : IsOpen U) (hy₀U : y₀ ∈ U)
     {A : Set ↥(rootVariety q)} (hA : IsClopenOverBase q U A) :
     ∀ᶠ y in 𝓝 y₀, ((q y).roots.toFinset.filter (fun t => (y, t) ∈ (Subtype.val '' A))).card
@@ -257,7 +260,8 @@ theorem aRootCount_eventually_const {d : ℕ} (q : (Fin 1 → ℂ) → Polynomia
   have hlc : IsLocallyConstant (fun v : ↥U => cnt v.1) := by
     rw [IsLocallyConstant.iff_eventually_eq]
     intro v
-    have hev := aRootCount_eventually_eq q hmonic hdeg hcoeff (hUsep v.1 v.2) hUopen v.2 (A := A) hA
+    have hev := aRootCount_eventually_eq q hmonic hdeg (fun i => hcoeff i v.1) (hUsep v.1 v.2) hUopen
+      v.2 (A := A) hA
     exact (continuous_subtype_val.continuousAt).eventually hev
   obtain ⟨y₁, hy₁⟩ := Filter.nonempty_of_mem hU0
   refine ⟨cnt y₁, ?_⟩

@@ -35,12 +35,12 @@ analytic *at* `0` agreeing with it off `{x 0 = 0}`. The `Fin (n+1)` analogue of 
 using the multivariable hyperplane extension `exists_analyticAt_extend_funCoord0` (G2a). -/
 theorem factor_coeff_extends_gen {d : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = d)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     (hsep : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), x 0 ≠ 0 → (q x).Separable)
     {ε : ℝ} (hε : 0 ≤ ε)
     (hbdd : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), ∀ t ∈ (q x).roots.toFinset, ‖t‖ ≤ ε)
     {U : Set (Fin (n + 1) → ℂ)} (hUopen : IsOpen U)
     (hU0 : U ∈ 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ))
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     (A : Set ↥(rootVariety q)) (hA : IsClopenOverBase q U A) (j : ℕ) :
     ∃ F : (Fin (n + 1) → ℂ) → ℂ, AnalyticAt ℂ F (0 : Fin (n + 1) → ℂ) ∧
       (∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), x 0 ≠ 0 →
@@ -49,7 +49,8 @@ theorem factor_coeff_extends_gen {d : ℕ} (q : (Fin (n + 1) → ℂ) → Polyno
   refine exists_analyticAt_extend_funCoord0 (rfl : (0 : Fin (n + 1) → ℂ) 0 = 0) ?_
     (M := (1 + ε) ^ d) ?_
   · filter_upwards [hsep, eventually_nhdsWithin_iff.mp hU0] with x hxsep hxU hx0
-    exact factor_coeff_analyticAt q hmonic hdeg hcoeff (hxsep hx0) hUopen (hxU hx0) A hA j
+    exact factor_coeff_analyticAt q hmonic hdeg (fun i => hanaU i x (hxU hx0)) (hxsep hx0)
+      hUopen (hxU hx0) A hA j
   · filter_upwards [hbdd] with x hx
     have hb := norm_coeff_factor_le hε (fun t => (x, t) ∈ (Subtype.val '' A)) hx j
     rwa [hdeg x] at hb
@@ -61,12 +62,12 @@ degree `d_A`, build a monic family `H_A` with analytic coefficients at `0` agree
 product off the hyperplane `{x 0 = 0}`. -/
 theorem exists_factor_weierstrass_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     (hsep : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), x 0 ≠ 0 → (q x).Separable)
     {ε : ℝ} (hε : 0 ≤ ε)
     (hbdd : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), ∀ t ∈ (q x).roots.toFinset, ‖t‖ ≤ ε)
     {U : Set (Fin (n + 1) → ℂ)} (hUopen : IsOpen U)
     (hU0 : U ∈ 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ))
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {A : Set ↥(rootVariety q)} (hA : IsClopenOverBase q U A) {dA : ℕ} (hdA : 1 ≤ dA)
     (hdA_eq : ∀ᶠ x in 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ),
       ((q x).roots.toFinset.filter (fun t => (x, t) ∈ (Subtype.val '' A))).card = dA) :
@@ -80,7 +81,7 @@ theorem exists_factor_weierstrass_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → P
     fun y => ((q y).roots.toFinset.filter (fun t => (y, t) ∈ (Subtype.val '' A))).prod
       (fun t => X - C t) with hhpA
   choose Fj hFj_an hFj_eq using fun j =>
-    factor_coeff_extends_gen q hmonic hdeg hcoeff hsep hε hbdd hUopen hU0 A hA j
+    factor_coeff_extends_gen q hmonic hdeg hsep hε hbdd hUopen hU0 hanaU A hA j
   set HA : (Fin (n + 1) → ℂ) → Polynomial ℂ :=
     fun y => X ^ dA + ∑ j ∈ Finset.range dA, C (Fj j y) * X ^ j with hHA
   have hlower_deg : ∀ y, (∑ j ∈ Finset.range dA, C (Fj j y) * X ^ j).natDegree < dA := by
@@ -169,12 +170,13 @@ hyperplane. `Fin (n+1)` analogue of `clopen_split_factorization` (`hval0` via th
 agreement `polynomial_eq_of_eventuallyEq_filter`; the factorisation is recorded off the dense locus). -/
 theorem clopen_split_factorization_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m) (hq0 : q 0 = X ^ m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hana0 : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (0 : Fin (n + 1) → ℂ))
     (hsep : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), x 0 ≠ 0 → (q x).Separable)
     {ε : ℝ} (hε : 0 ≤ ε)
     (hbdd : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), ∀ t ∈ (q x).roots.toFinset, ‖t‖ ≤ ε)
     {U : Set (Fin (n + 1) → ℂ)} (hUopen : IsOpen U)
     (hU0 : U ∈ 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ))
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {A : Set ↥(rootVariety q)} (hA : IsClopenOverBase q U A) {dA dB : ℕ}
     (hdA : 1 ≤ dA) (hdB : 1 ≤ dB)
     (hdA_eq : ∀ᶠ x in 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ),
@@ -188,9 +190,9 @@ theorem clopen_split_factorization_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → 
         (∀ i, AnalyticAt ℂ (fun y => (HB y).coeff i) 0) ∧ HB 0 = X ^ dB ∧
       (∀ᶠ x in 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ), q x = HA x * HB x) := by
   obtain ⟨HA, hHA_mono, hHA_deg, hHA_an, hHA_eq⟩ :=
-    exists_factor_weierstrass_gen q hmonic hdeg hcoeff hsep hε hbdd hUopen hU0 hA hdA hdA_eq
+    exists_factor_weierstrass_gen q hmonic hdeg hsep hε hbdd hUopen hU0 hanaU hA hdA hdA_eq
   obtain ⟨HB, hHB_mono, hHB_deg, hHB_an, hHB_eq⟩ :=
-    exists_factor_weierstrass_gen q hmonic hdeg hcoeff hsep hε hbdd hUopen hU0 hA.compl hdB hdB_eq
+    exists_factor_weierstrass_gen q hmonic hdeg hsep hε hbdd hUopen hU0 hanaU hA.compl hdB hdB_eq
   have hoff : ∀ᶠ x in 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ), q x = HA x * HB x := by
     have hsepS : ∀ᶠ x in 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ), (q x).Separable :=
       eventually_nhdsWithin_iff.mpr hsep
@@ -206,7 +208,7 @@ theorem clopen_split_factorization_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → 
     exact Finset.analyticAt_fun_sum _ fun p _ => (hHA_an p.1).mul (hHB_an p.2)
   have hval0 : q 0 = HA 0 * HB 0 :=
     polynomial_eq_of_eventuallyEq_filter nhdsWithin_le_nhds hoff
-      (fun j => (hcoeff j 0).continuousAt) (fun j => (hprod_an j).continuousAt)
+      (fun j => (hana0 j).continuousAt) (fun j => (hprod_an j).continuousAt)
   have hHA0 : HA 0 = X ^ dA := by
     have hdvd : HA 0 ∣ X ^ m := by rw [← hq0, hval0]; exact Dvd.intro _ rfl
     have hp := eq_X_pow_of_monic_dvd_X_pow (hHA_mono 0) hdvd
@@ -235,13 +237,14 @@ family over `Fin (n+1) → ℂ`, no clopen `A` over the separable locus `{x 0 �
 contributing positively, since that yields a factorisation contradicting irreducibility. -/
 theorem clopen_split_contradiction_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m) (hq0 : q 0 = X ^ m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hana0 : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (0 : Fin (n + 1) → ℂ))
     (hsep : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), x 0 ≠ 0 → (q x).Separable)
     {ε : ℝ} (hε : 0 ≤ ε)
     (hbdd : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), ∀ t ∈ (q x).roots.toFinset, ‖t‖ ≤ ε)
     (hirr : UnivIrreducibleGen q)
     {U : Set (Fin (n + 1) → ℂ)} (hUopen : IsOpen U)
     (hU0 : U ∈ 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ))
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {A : Set ↥(rootVariety q)} (hA : IsClopenOverBase q U A) {dA dB : ℕ}
     (hdA : 1 ≤ dA) (hdB : 1 ≤ dB)
     (hdA_eq : ∀ᶠ x in 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ),
@@ -250,7 +253,8 @@ theorem clopen_split_contradiction_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → 
       ((q x).roots.toFinset.filter (fun t => (x, t) ∈ (Subtype.val '' Aᶜ))).card = dB) :
     False := by
   obtain ⟨HA, HB, hHA_mono, hHA_deg, hHA_an, hHA0, hHB_mono, hHB_deg, hHB_an, hHB0, hnear⟩ :=
-    clopen_split_factorization_gen q hmonic hdeg hq0 hcoeff hsep hε hbdd hUopen hU0 hA hdA hdB hdA_eq hdB_eq
+    clopen_split_factorization_gen q hmonic hdeg hq0 hana0 hsep hε hbdd hUopen hU0 hanaU hA hdA hdB
+      hdA_eq hdB_eq
   exact hirr ⟨dA, dB, HA, HB, hdA, hdB, hHA_mono, hHA_deg, hHA_an, hHA0,
     hHB_mono, hHB_deg, hHB_an, hHB0, hnear⟩
 
@@ -260,9 +264,9 @@ of `aRootCount_eventually_const`: on a preconnected separable `U ∈ 𝓝[{x 0 �
 locally constant (`aRootCount_eventually_eq`) hence globally constant on `U`. -/
 theorem aRootCount_eventually_const_gen {d : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = d)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {U : Set (Fin (n + 1) → ℂ)} (hUopen : IsOpen U) (hUconn : IsPreconnected U)
     (hUsep : ∀ y ∈ U, (q y).Separable) (hU0 : U ∈ 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ))
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {A : Set ↥(rootVariety q)} (hA : IsClopenOverBase q U A) :
     ∃ dA : ℕ, ∀ᶠ x in 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ),
       ((q x).roots.toFinset.filter (fun t => (x, t) ∈ (Subtype.val '' A))).card = dA := by
@@ -272,7 +276,8 @@ theorem aRootCount_eventually_const_gen {d : ℕ} (q : (Fin (n + 1) → ℂ) →
   have hlc : IsLocallyConstant (fun v : ↥U => cnt v.1) := by
     rw [IsLocallyConstant.iff_eventually_eq]
     intro v
-    have hev := aRootCount_eventually_eq q hmonic hdeg hcoeff (hUsep v.1 v.2) hUopen v.2 (A := A) hA
+    have hev := aRootCount_eventually_eq q hmonic hdeg (fun i => hanaU i v.1 v.2) (hUsep v.1 v.2)
+      hUopen v.2 (A := A) hA
     exact (continuous_subtype_val.continuousAt).eventually hev
   obtain ⟨y₁, hy₁⟩ := Filter.nonempty_of_mem hU0
   refine ⟨cnt y₁, ?_⟩
@@ -285,13 +290,14 @@ open Classical in
 `∃ᶠ ... 1 ≤ card` of both `A` and `Aᶜ` over the deleted-hyperplane neighbourhood. -/
 theorem clopen_split_contradiction'_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m) (hq0 : q 0 = X ^ m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hana0 : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (0 : Fin (n + 1) → ℂ))
     (hsep : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), x 0 ≠ 0 → (q x).Separable)
     {ε : ℝ} (hε : 0 ≤ ε)
     (hbdd : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), ∀ t ∈ (q x).roots.toFinset, ‖t‖ ≤ ε)
     (hirr : UnivIrreducibleGen q)
     {U : Set (Fin (n + 1) → ℂ)} (hUopen : IsOpen U) (hUconn : IsPreconnected U)
     (hUsep : ∀ y ∈ U, (q y).Separable) (hU0 : U ∈ 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ))
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {A : Set ↥(rootVariety q)} (hA : IsClopenOverBase q U A)
     (hAne : ∃ᶠ x in 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ),
       1 ≤ ((q x).roots.toFinset.filter (fun t => (x, t) ∈ (Subtype.val '' A))).card)
@@ -299,10 +305,10 @@ theorem clopen_split_contradiction'_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) →
       1 ≤ ((q x).roots.toFinset.filter (fun t => (x, t) ∈ (Subtype.val '' Aᶜ))).card) :
     False := by
   obtain ⟨dA, hdA_eq⟩ :=
-    aRootCount_eventually_const_gen q hmonic hdeg hcoeff hUopen hUconn hUsep hU0 hA
+    aRootCount_eventually_const_gen q hmonic hdeg hUopen hUconn hUsep hU0 hanaU hA
   obtain ⟨dB, hdB_eq⟩ :=
-    aRootCount_eventually_const_gen q hmonic hdeg hcoeff hUopen hUconn hUsep hU0 hA.compl
+    aRootCount_eventually_const_gen q hmonic hdeg hUopen hUconn hUsep hU0 hanaU hA.compl
   have hdA : 1 ≤ dA := by obtain ⟨y, h1, h2⟩ := (hAne.and_eventually hdA_eq).exists; omega
   have hdB : 1 ≤ dB := by obtain ⟨y, h1, h2⟩ := (hBne.and_eventually hdB_eq).exists; omega
-  exact clopen_split_contradiction_gen q hmonic hdeg hq0 hcoeff hsep hε hbdd hirr hUopen hU0 hA
+  exact clopen_split_contradiction_gen q hmonic hdeg hq0 hana0 hsep hε hbdd hirr hUopen hU0 hanaU hA
     hdA hdB hdA_eq hdB_eq

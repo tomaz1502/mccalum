@@ -163,7 +163,8 @@ private theorem rootCover_count_pos_freq {m : ℕ} (q : (Fin 1 → ℂ) → Poly
   have hlc : IsLocallyConstant (fun v : ↥U => cnt v.1) := by
     rw [IsLocallyConstant.iff_eventually_eq]
     intro v
-    have hev := aRootCount_eventually_eq q hmonic hdeg hcoeff (hUsep v.1 v.2) hUopen v.2 (A := W) hW
+    have hev := aRootCount_eventually_eq q hmonic hdeg (fun i => hcoeff i v.1) (hUsep v.1 v.2)
+      hUopen v.2 (A := W) hW
     exact (continuous_subtype_val.continuousAt).eventually hev
   have hcnt_e : 1 ≤ cnt (e : (Fin 1 → ℂ) × ℂ).1 := by
     rw [hcnt]
@@ -234,7 +235,7 @@ theorem rootCover_pathConnected {m : ℕ} (q : (Fin 1 → ℂ) → Polynomial �
   have hcont : ∀ i, Continuous (fun y => (q y).coeff i) :=
     fun i => continuous_iff_continuousAt.mpr fun y => (hcoeff i y).continuousAt
   have cov : IsCoveringMap (U.restrictPreimage (rootProj q)) :=
-    rootProj_isCoveringMap_restrict q hmonic hdeg hcont hcoeff U hUsep
+    rootProj_isCoveringMap_restrict q hmonic hdeg hcont U (fun i y _ => hcoeff i y) hUsep
   haveI : LocPathConnectedSpace ↥U := hUopen.locPathConnectedSpace
   haveI : LocPathConnectedSpace ↥(rootProj q ⁻¹' U) := cov.isLocalHomeomorph.locPathConnectedSpace
   haveI : PreconnectedSpace ↥(rootProj q ⁻¹' U) :=
@@ -256,7 +257,8 @@ theorem rootCover_isCoveringMap {m : ℕ} (q : (Fin 1 → ℂ) → Polynomial �
     {U : Set (Fin 1 → ℂ)} (hUsep : ∀ y ∈ U, (q y).Separable) :
     IsCoveringMap (U.restrictPreimage (rootProj q)) :=
   rootProj_isCoveringMap_restrict q hmonic hdeg
-    (fun i => continuous_iff_continuousAt.mpr fun y => (hcoeff i y).continuousAt) hcoeff U hUsep
+    (fun i => continuous_iff_continuousAt.mpr fun y => (hcoeff i y).continuousAt) U
+    (fun i y _ => hcoeff i y) hUsep
 
 /-- **M1c — Lemma 4.2.5 (root exchange / transitive monodromy).** For an irreducible univariate
 Weierstrass family, any two sheets `e₀, e₁` of the root cover over the same base point of `U` are

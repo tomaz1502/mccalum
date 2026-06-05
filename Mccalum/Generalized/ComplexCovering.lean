@@ -486,8 +486,9 @@ include hmonic hdeg hcont in
 are the closed-map property `rootProj_isClosedMap`, finite fibers `fiber_root_finite`, and the local
 trivializations `rootProj_openPartialHomeomorph` (each root over `s` is simple by separability). -/
 theorem rootProj_isCoveringMapOn
-    (han : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
-    (s : Set (Fin n → ℂ)) (hs : ∀ y ∈ s, (q y).Separable) :
+    (s : Set (Fin n → ℂ))
+    (han : ∀ i, ∀ y ∈ s, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hs : ∀ y ∈ s, (q y).Separable) :
     IsCoveringMapOn (rootProj q) s := by
   apply (rootProj_isClosedMap q hmonic hdeg hcont).isCoveringMapOn_of_openPartialHomeomorph
   · -- finite fibers: inject into the finite root set `{t | (q y).eval t = 0}`
@@ -513,17 +514,18 @@ theorem rootProj_isCoveringMapOn
       have hd := hsep.eval₂_derivative_ne_zero (RingHom.id ℂ) hroot₂
       rwa [eval₂_id] at hd
     obtain ⟨Φ, hmem, hcoe⟩ := rootProj_openPartialHomeomorph q hdeg (e : (Fin n → ℂ) × ℂ).2 e.2
-      (fun i => han i _) hsimple
+      (fun i => han i _ hys) hsimple
     exact ⟨Φ, hmem, hcoe⟩
 
 include hmonic hdeg hcont in
 /-- **The restricted root projection over the separable locus is a covering map.** Packaged as a
 `IsCoveringMap` on the subtypes via `IsCoveringMapOn.isCoveringMap_restrictPreimage`. -/
 theorem rootProj_isCoveringMap_restrict
-    (han : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
-    (s : Set (Fin n → ℂ)) (hs : ∀ y ∈ s, (q y).Separable) :
+    (s : Set (Fin n → ℂ))
+    (han : ∀ i, ∀ y ∈ s, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hs : ∀ y ∈ s, (q y).Separable) :
     IsCoveringMap (s.restrictPreimage (rootProj q)) :=
-  (rootProj_isCoveringMapOn q hmonic hdeg hcont han s hs).isCoveringMap_restrictPreimage
+  (rootProj_isCoveringMapOn q hmonic hdeg hcont s han hs).isCoveringMap_restrictPreimage
 
 end Covering
 

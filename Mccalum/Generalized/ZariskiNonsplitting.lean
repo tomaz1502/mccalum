@@ -1,6 +1,7 @@
 import Mccalum.Generalized.ZariskiFactorization
 import Mccalum.Generalized.ZariskiCodim1
 import Mccalum.Generalized.A5Coincidence
+import Mccalum.Generalized.ZariskiE1
 import Mathlib.Algebra.Polynomial.Splits
 import Mathlib.Algebra.Polynomial.Roots
 import Mathlib.Algebra.Polynomial.Monic
@@ -44,7 +45,7 @@ the roots of an irreducible family, which the thesis itself *cites* from Bochner
 root-exchanging loop to a small circle around the section; the lift stays in one disc, contradicting
 the exchange). The `d = 1` case is now **proved** (`irreducible_section_single_root` below): a monic
 degree-one family has a single root identically, so this axiom is restricted to `d ≥ 2`. -/
-axiom irreducible_section_single_root_deg {s e : ℕ}
+axiom irreducible_section_single_root_blowup {s e : ℕ} (he : 2 ≤ e)
     (H : CParam s e → Polynomial ℂ) (d : ℕ) (hd : 2 ≤ d)
     (hH_fam : IsWeierstrassFamily H d) (hH_irr : WeierstrassIrreducible H d)
     (hHdisc_ne : order ℂ (fun w => (H w).discr) (0 : CParam s e) ≠ ⊤)
@@ -53,6 +54,32 @@ axiom irreducible_section_single_root_deg {s e : ℕ}
         = order ℂ (fun w => (H w).discr) ((0, 0) : CParam s e)) :
     ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       ∃ α : ℂ, ∀ β : ℂ, (H ((y, 0) : CParam s e)).IsRoot β ↔ β = α
+
+/-- **(A4-core, degenerate case `d ≥ 2`) Irreducible Weierstrass family is nonsplitting over the
+section — now a THEOREM dispatching on the section codimension `e`.**
+
+* `e = 0` (`irreducible_section_single_root_e0`) — vacuous (the disc-order hypotheses are contradictory
+  when the transverse factor is trivial);
+* `e = 1` (`irreducible_section_single_root_e1`) — the genuine codimension-1 monodromy + homotopy
+  contradiction, **fully proved** (`ZariskiE1.lean`);
+* `e ≥ 2` (`irreducible_section_single_root_blowup`) — the thesis Case II blow-up to codimension 1,
+  the single remaining temporary axiom of Conclusion (1). -/
+theorem irreducible_section_single_root_deg {s e : ℕ}
+    (H : CParam s e → Polynomial ℂ) (d : ℕ) (hd : 2 ≤ d)
+    (hH_fam : IsWeierstrassFamily H d) (hH_irr : WeierstrassIrreducible H d)
+    (hHdisc_ne : order ℂ (fun w => (H w).discr) (0 : CParam s e) ≠ ⊤)
+    (hHdisc_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (fun w => (H w).discr) ((y, 0) : CParam s e)
+        = order ℂ (fun w => (H w).discr) ((0, 0) : CParam s e)) :
+    ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      ∃ α : ℂ, ∀ β : ℂ, (H ((y, 0) : CParam s e)).IsRoot β ↔ β = α := by
+  match e, H, hH_fam, hH_irr, hHdisc_ne, hHdisc_oi with
+  | 0, H, hH_fam, _, hHdisc_ne, hHdisc_oi =>
+      exact irreducible_section_single_root_e0 H d hd hH_fam hHdisc_ne hHdisc_oi
+  | 1, H, hH_fam, hH_irr, hHdisc_ne, hHdisc_oi =>
+      exact irreducible_section_single_root_e1 H d hd hH_fam hH_irr hHdisc_ne hHdisc_oi
+  | (k + 2), H, hH_fam, hH_irr, hHdisc_ne, hHdisc_oi =>
+      exact irreducible_section_single_root_blowup (by omega) H d hd hH_fam hH_irr hHdisc_ne hHdisc_oi
 
 /-- **(A4-core) Single irreducible Weierstrass family is nonsplitting over the section.**
 

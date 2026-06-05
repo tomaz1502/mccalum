@@ -27,9 +27,9 @@ open Classical in
 `e ∈ W` over a point of `U`. `Fin (n+1)` analogue of `rootCover_count_pos_freq`. -/
 private theorem rootCover_count_pos_freq_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {U : Set (Fin (n + 1) → ℂ)} (hUopen : IsOpen U) (hUconn : IsPreconnected U)
     (hUsep : ∀ y ∈ U, (q y).Separable) (hU0 : U ∈ 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ))
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {W : Set ↥(rootVariety q)} (hW : IsClopenOverBase q U W)
     {e : ↥(rootVariety q)} (heU : (e : (Fin (n + 1) → ℂ) × ℂ).1 ∈ U) (heW : e ∈ W) :
     ∃ᶠ x in 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ),
@@ -41,7 +41,8 @@ private theorem rootCover_count_pos_freq_gen {m : ℕ} (q : (Fin (n + 1) → ℂ
   have hlc : IsLocallyConstant (fun v : ↥U => cnt v.1) := by
     rw [IsLocallyConstant.iff_eventually_eq]
     intro v
-    have hev := aRootCount_eventually_eq q hmonic hdeg hcoeff (hUsep v.1 v.2) hUopen v.2 (A := W) hW
+    have hev := aRootCount_eventually_eq q hmonic hdeg (fun i => hanaU i v.1 v.2) (hUsep v.1 v.2)
+      hUopen v.2 (A := W) hW
     exact (continuous_subtype_val.continuousAt).eventually hev
   have hcnt_e : 1 ≤ cnt (e : (Fin (n + 1) → ℂ) × ℂ).1 := by
     rw [hcnt]
@@ -62,10 +63,11 @@ open Classical in
 `rootCover_preconnected`, resting on the generalized kernel `clopen_split_contradiction'_gen`. -/
 theorem rootCover_preconnected_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hana0 : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (0 : Fin (n + 1) → ℂ))
     (hq0 : q 0 = X ^ m) (hirr : UnivIrreducibleGen q)
     {U : Set (Fin (n + 1) → ℂ)} (hUopen : IsOpen U) (hUconn : IsPreconnected U)
     (hUsep : ∀ y ∈ U, (q y).Separable) (hU0 : U ∈ 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ))
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {ε : ℝ} (hε : 0 ≤ ε)
     (hbdd : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), ∀ t ∈ (q x).roots.toFinset, ‖t‖ ≤ ε) :
     PreconnectedSpace ↥(rootProj q ⁻¹' U) := by
@@ -84,42 +86,45 @@ theorem rootCover_preconnected_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → Poly
     show IsClopen (Subtype.val ⁻¹' Arv : Set ↥(rootProj q ⁻¹' U))
     rw [hArv, Set.preimage_image_eq A Subtype.val_injective]
     exact hAcl
-  have hAfreq := rootCover_count_pos_freq_gen q hmonic hdeg hcoeff hUopen hUconn hUsep hU0
+  have hAfreq := rootCover_count_pos_freq_gen q hmonic hdeg hUopen hUconn hUsep hU0 hanaU
     hArv_base (e := a.1) a.2 ⟨a, ha, rfl⟩
-  have hBfreq := rootCover_count_pos_freq_gen q hmonic hdeg hcoeff hUopen hUconn hUsep hU0
+  have hBfreq := rootCover_count_pos_freq_gen q hmonic hdeg hUopen hUconn hUsep hU0 hanaU
     hArv_base.compl (e := b.1) b.2 (by
       intro hmem
       obtain ⟨x, hx, hxb⟩ := hmem
       exact hb (Subtype.ext hxb ▸ hx))
-  exact clopen_split_contradiction'_gen q hmonic hdeg hq0 hcoeff hsep hε hbdd hirr hUopen hUconn
-    hUsep hU0 hArv_base hAfreq hBfreq
+  exact clopen_split_contradiction'_gen q hmonic hdeg hq0 hana0 hsep hε hbdd hirr hUopen hUconn
+    hUsep hU0 hanaU hArv_base hAfreq hBfreq
 
 /-- The root cover over a separable base `U` is a covering map (`Fin (n+1)` packaging). -/
 theorem rootCover_isCoveringMap_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
-    {U : Set (Fin (n + 1) → ℂ)} (hUsep : ∀ y ∈ U, (q y).Separable) :
+    (hcont : ∀ i, Continuous (fun y => (q y).coeff i))
+    {U : Set (Fin (n + 1) → ℂ)}
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hUsep : ∀ y ∈ U, (q y).Separable) :
     IsCoveringMap (U.restrictPreimage (rootProj q)) :=
-  rootProj_isCoveringMap_restrict q hmonic hdeg
-    (fun i => continuous_iff_continuousAt.mpr fun y => (hcoeff i y).continuousAt) hcoeff U hUsep
+  rootProj_isCoveringMap_restrict q hmonic hdeg hcont U hanaU hUsep
 
 /-- **G3 — the root cover over a general base is path-connected.** `Fin (n+1)` analogue of
 `rootCover_pathConnected`. -/
 theorem rootCover_pathConnected_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (hm : 0 < m)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hcont : ∀ i, Continuous (fun y => (q y).coeff i))
+    (hana0 : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (0 : Fin (n + 1) → ℂ))
     (hq0 : q 0 = X ^ m) (hirr : UnivIrreducibleGen q)
     {U : Set (Fin (n + 1) → ℂ)} (hUopen : IsOpen U) (hUconn : IsPreconnected U)
     (hUsep : ∀ y ∈ U, (q y).Separable) (hU0 : U ∈ 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ))
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {ε : ℝ} (hε : 0 ≤ ε)
     (hbdd : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), ∀ t ∈ (q x).roots.toFinset, ‖t‖ ≤ ε) :
     PathConnectedSpace ↥(rootProj q ⁻¹' U) := by
   have cov : IsCoveringMap (U.restrictPreimage (rootProj q)) :=
-    rootCover_isCoveringMap_gen q hmonic hdeg hcoeff hUsep
+    rootCover_isCoveringMap_gen q hmonic hdeg hcont hanaU hUsep
   haveI : LocPathConnectedSpace ↥U := hUopen.locPathConnectedSpace
   haveI : LocPathConnectedSpace ↥(rootProj q ⁻¹' U) := cov.isLocalHomeomorph.locPathConnectedSpace
   haveI : PreconnectedSpace ↥(rootProj q ⁻¹' U) :=
-    rootCover_preconnected_gen q hmonic hdeg hcoeff hq0 hirr hUopen hUconn hUsep hU0 hε hbdd
+    rootCover_preconnected_gen q hmonic hdeg hana0 hq0 hirr hUopen hUconn hUsep hU0 hanaU hε hbdd
   haveI : Nonempty ↥(rootProj q ⁻¹' U) := by
     obtain ⟨y₀, hy₀⟩ := Filter.nonempty_of_mem hU0
     obtain ⟨t₀, ht₀⟩ := IsAlgClosed.exists_root (q y₀) (by
@@ -135,21 +140,24 @@ point of `U` are joined by a base loop whose lift carries `e₀` to `e₁`. This
 input to the thesis homotopy-deformation contradiction, now in the base dimension the proof requires. -/
 theorem rootCover_exchange_gen {m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (hm : 0 < m)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hcont : ∀ i, Continuous (fun y => (q y).coeff i))
+    (hana0 : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (0 : Fin (n + 1) → ℂ))
     (hq0 : q 0 = X ^ m) (hirr : UnivIrreducibleGen q)
     {U : Set (Fin (n + 1) → ℂ)} (hUopen : IsOpen U) (hUconn : IsPreconnected U)
     (hUsep : ∀ y ∈ U, (q y).Separable) (hU0 : U ∈ 𝓝[{x | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ))
+    (hanaU : ∀ i, ∀ y ∈ U, AnalyticAt ℂ (fun z => (q z).coeff i) y)
     {ε : ℝ} (hε : 0 ≤ ε)
     (hbdd : ∀ᶠ x in 𝓝 (0 : Fin (n + 1) → ℂ), ∀ t ∈ (q x).roots.toFinset, ‖t‖ ≤ ε)
     {e₀ e₁ : ↥(rootProj q ⁻¹' U)}
     (hpe : U.restrictPreimage (rootProj q) e₀ = U.restrictPreimage (rootProj q) e₁) :
     ∃ (γ : C(unitInterval, ↥U)) (hγ0 : γ 0 = U.restrictPreimage (rootProj q) e₀),
       γ 1 = U.restrictPreimage (rootProj q) e₀ ∧
-        (rootCover_isCoveringMap_gen q hmonic hdeg hcoeff hUsep).liftPath γ e₀ hγ0 1 = e₁ := by
+        (rootCover_isCoveringMap_gen q hmonic hdeg hcont hanaU hUsep).liftPath γ e₀ hγ0 1 = e₁ := by
   haveI : PathConnectedSpace ↥(rootProj q ⁻¹' U) :=
-    rootCover_pathConnected_gen q hm hmonic hdeg hcoeff hq0 hirr hUopen hUconn hUsep hU0 hε hbdd
+    rootCover_pathConnected_gen q hm hmonic hdeg hcont hana0 hq0 hirr hUopen hUconn hUsep hU0 hanaU
+      hε hbdd
   exact transitive_monodromy_of_pathConnected
-    (rootCover_isCoveringMap_gen q hmonic hdeg hcoeff hUsep) hpe
+    (rootCover_isCoveringMap_gen q hmonic hdeg hcont hanaU hUsep) hpe
 
 end
 
