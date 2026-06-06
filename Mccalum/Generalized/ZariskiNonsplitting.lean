@@ -2,6 +2,8 @@ import Mccalum.Generalized.ZariskiFactorization
 import Mccalum.Generalized.ZariskiCodim1
 import Mccalum.Generalized.A5Coincidence
 import Mccalum.Generalized.ZariskiE1
+import Mccalum.Generalized.ZariskiShareRoot
+import Mccalum.Generalized.ZariskiE2Main
 import Mathlib.Algebra.Polynomial.Splits
 import Mathlib.Algebra.Polynomial.Roots
 import Mathlib.Algebra.Polynomial.Monic
@@ -34,26 +36,22 @@ open Polynomial Filter
 open scoped Topology
 
 /-- **(A4-core, degenerate case `d ≥ 2`) Irreducible Weierstrass family is nonsplitting over the
-section — TEMPORARY AXIOM (Lemma 4.2.5 + homotopy contradiction).**
+section — now a THEOREM via the blow-up reduction (`ZariskiE2Main`).**
 
-The genuine monodromy kernel of Zariski's Theorem 4.2.2, for an irreducible Weierstrass family `H` of
-degree `d ≥ 2` with `disc(H)` of finite, section-constant order: `H` has, for `y` near `0`, a *single*
-distinct root over the section. This is the nontrivial case of the thesis proof: with the branched
-root-covering (built, `ComplexCovering.lean`), it requires **Lemma 4.2.5** — transitive monodromy on
-the roots of an irreducible family, which the thesis itself *cites* from Bochner–Martin [BMA48, Ch. 9
-§3] rather than proving — together with the homotopy-deformation contradiction (deform the
-root-exchanging loop to a small circle around the section; the lift stays in one disc, contradicting
-the exchange). The `d = 1` case is now **proved** (`irreducible_section_single_root` below): a monic
-degree-one family has a single root identically, so this axiom is restricted to `d ≥ 2`. -/
-axiom irreducible_section_single_root_blowup {s e : ℕ} (he : 2 ≤ e)
-    (H : CParam s e → Polynomial ℂ) (d : ℕ) (hd : 2 ≤ d)
+The genuine monodromy kernel of Zariski's Theorem 4.2.2 at codimension `e ≥ 2`, reduced to the
+proved codimension-one case (`irreducible_section_single_root_e1`) by the thesis Case II quadratic
+blow-up. Formerly a temporary axiom; now discharged by
+`ZariskiE2.irreducible_section_single_root_blowup_proof`. -/
+theorem irreducible_section_single_root_blowup {s k : ℕ}
+    (H : CParam s (k + 2) → Polynomial ℂ) (d : ℕ) (hd : 2 ≤ d)
     (hH_fam : IsWeierstrassFamily H d) (hH_irr : WeierstrassIrreducible H d)
-    (hHdisc_ne : order ℂ (fun w => (H w).discr) (0 : CParam s e) ≠ ⊤)
+    (hHdisc_ne : order ℂ (fun w => (H w).discr) (0 : CParam s (k + 2)) ≠ ⊤)
     (hHdisc_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-      order ℂ (fun w => (H w).discr) ((y, 0) : CParam s e)
-        = order ℂ (fun w => (H w).discr) ((0, 0) : CParam s e)) :
+      order ℂ (fun w => (H w).discr) ((y, 0) : CParam s (k + 2))
+        = order ℂ (fun w => (H w).discr) ((0, 0) : CParam s (k + 2))) :
     ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-      ∃ α : ℂ, ∀ β : ℂ, (H ((y, 0) : CParam s e)).IsRoot β ↔ β = α
+      ∃ α : ℂ, ∀ β : ℂ, (H ((y, 0) : CParam s (k + 2))).IsRoot β ↔ β = α :=
+  ZariskiE2.irreducible_section_single_root_blowup_proof H d hd hH_fam hH_irr hHdisc_ne hHdisc_oi
 
 /-- **(A4-core, degenerate case `d ≥ 2`) Irreducible Weierstrass family is nonsplitting over the
 section — now a THEOREM dispatching on the section codimension `e`.**
@@ -79,7 +77,7 @@ theorem irreducible_section_single_root_deg {s e : ℕ}
   | 1, H, hH_fam, hH_irr, hHdisc_ne, hHdisc_oi =>
       exact irreducible_section_single_root_e1 H d hd hH_fam hH_irr hHdisc_ne hHdisc_oi
   | (k + 2), H, hH_fam, hH_irr, hHdisc_ne, hHdisc_oi =>
-      exact irreducible_section_single_root_blowup (by omega) H d hd hH_fam hH_irr hHdisc_ne hHdisc_oi
+      exact irreducible_section_single_root_blowup H d hd hH_fam hH_irr hHdisc_ne hHdisc_oi
 
 /-- **(A4-core) Single irreducible Weierstrass family is nonsplitting over the section.**
 
@@ -179,33 +177,6 @@ theorem irreducible_factor_section_single_root {s e : ℕ}
         (fun l => (hfac_irr l).1) hfac_eq j hk2
   exact irreducible_section_single_root (fac j) (deg j) (hfac_irr j).1 (hfac_fam j) (hfac_irr j)
     hDj.1 hDj.2
-
-/-- **(A5) Distinct factors coincide over the section — THEOREM (resultant coincidence).**
-
-Any two factors `facᵢ, facⱼ` of the factorization *share a root* over the section, for `y` near `0`.
-Proved (no axiom) by `pair_share_root`: the discriminant `disc(h)` carries `res(facᵢ,facⱼ)²` as a
-factor (`discr_mul_eq`); its order-invariance along the section descends to `res²` (the project's
-`order_factor_const_of_mul_analytic`); since the base-point factors are `Xᵈ` (sharing root `0`),
-constant order forces `res(facᵢ((y,0)),facⱼ((y,0))) = 0`, hence a shared root. -/
-theorem irreducible_factors_section_share_root {s e : ℕ}
-    (m : ℕ) (a : Fin m → (CParam s e → ℂ))
-    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
-    (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
-    (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-      order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
-        = order ℂ (weierstrassDiscFn m a) (0 : CParam s e))
-    (k : ℕ) (deg : Fin k → ℕ) (fac : Fin k → (CParam s e → Polynomial ℂ))
-    (hk : 0 < k) (hfac_fam : ∀ j, IsWeierstrassFamily (fac j) (deg j))
-    (hfac_irr : ∀ j, WeierstrassIrreducible (fac j) (deg j))
-    (hfac_eq : ∀ᶠ w in 𝓝 (0 : CParam s e), weierstrassPoly m a w = ∏ j : Fin k, fac j w) :
-    ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-      ∀ i j : Fin k, ∃ β : ℂ,
-        (fac i ((y, 0) : CParam s e)).IsRoot β ∧ (fac j ((y, 0) : CParam s e)).IsRoot β := by
-  rw [Filter.eventually_all]
-  intro i
-  rw [Filter.eventually_all]
-  intro j
-  exact pair_share_root m a hdisc_ne hdisc k deg fac hfac_fam (fun l => (hfac_irr l).1) hfac_eq i j
 
 /-- **The irreducible factors share one common single section root — THEOREM (from A4 + A5).**
 

@@ -14,6 +14,8 @@ import Mccalum.Generalized.ComplexCovering
 import Mccalum.Generalized.ConnectednessGen
 import Mccalum.Generalized.CoordTranslate
 import Mccalum.Generalized.AnalyticDivCoord
+import Mccalum.Generalized.BlowupNormalForm
+import Mccalum.Generalized.BlowupMap
 import Mccalum.Generalized.DiscNormalForm
 import Mccalum.Generalized.FamilyGlobalize
 import Mccalum.Generalized.PunctBallConnected
