@@ -380,7 +380,8 @@ separable, then `ρ` is analytic at `τ₁` (it locally coincides with one of th
 by continuity + the separation of distinct roots). -/
 theorem analyticAt_continuous_root {n : ℕ} (q : (Fin n → ℂ) → Polynomial ℂ) (m : ℕ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    {g : ℂ → Fin n → ℂ} {ρ : ℂ → ℂ} {τ₁ : ℂ}
+    {W : Type*} [NormedAddCommGroup W] [NormedSpace ℂ W]
+    {g : W → Fin n → ℂ} {ρ : W → ℂ} {τ₁ : W}
     (hg : AnalyticAt ℂ g τ₁)
     (hcoeff : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (g τ₁))
     (hsep : (q (g τ₁)).Separable)

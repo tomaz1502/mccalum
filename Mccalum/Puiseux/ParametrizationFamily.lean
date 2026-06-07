@@ -103,6 +103,78 @@ lemma ptOfF_mem_baseU {δz c : ℝ} {p : (Fin n → ℂ) × ℂ} (hp : p ∈ pro
   · rw [show Fin.tail (ptOfF n p) = p.1 from Fin.tail_cons _ _]
     exact ptOfF_section_norm hp
 
+/-- **Joint analyticity of the family root section.** A continuous root section over the product domain
+is jointly analytic in `(z, τ)` (via the `W`-general `analyticAt_continuous_root` with `W = (Fin n→ℂ)×ℂ`,
+`g = ptOfF`). -/
+theorem analyticOn_root_family (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (m : ℕ)
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    {δz c : ℝ} (hsep : ∀ y ∈ baseU n δz c, (q y).Separable)
+    {ρ : (Fin n → ℂ) × ℂ → ℂ} (hcont : ContinuousOn ρ (prodDom n δz c))
+    (hroot : ∀ p ∈ prodDom n δz c, (q (ptOfF n p)).eval (ρ p) = 0) :
+    ∀ p ∈ prodDom n δz c, AnalyticAt ℂ ρ p := by
+  intro p hp
+  refine analyticAt_continuous_root q m hmonic hdeg (analyticAt_ptOfF p) (fun i => hcoeff i _)
+    (hsep (ptOfF n p) (ptOfF_mem_baseU hp))
+    (hcont.continuousAt ((isOpen_prodDom δz c).mem_nhds hp)) ?_
+  filter_upwards [(isOpen_prodDom δz c).mem_nhds hp] with p' hp'
+  exact hroot p' hp'
+
+/-- The homeomorphism `(Fin (n+1) → ℂ) ≃ₜ ℂ × (Fin n → ℂ)` splitting off coordinate `0`. -/
+def consHomeo (n : ℕ) : (Fin (n + 1) → ℂ) ≃ₜ ℂ × (Fin n → ℂ) where
+  toFun y := (y 0, Fin.tail y)
+  invFun p := Fin.cons p.1 p.2
+  left_inv y := Fin.cons_self_tail y
+  right_inv p := by simp only [Fin.cons_zero, Fin.tail_cons]
+  continuous_toFun := by
+    refine Continuous.prodMk (continuous_apply 0) (continuous_pi fun i => ?_)
+    exact continuous_apply i.succ
+  continuous_invFun := by
+    refine continuous_pi fun j => ?_
+    refine Fin.cases ?_ (fun i => ?_) j
+    · simp only [Fin.cons_zero]; exact continuous_fst
+    · simp only [Fin.cons_succ]; exact (continuous_apply i).comp continuous_snd
+
+@[simp] lemma consHomeo_apply (y : Fin (n + 1) → ℂ) : consHomeo n y = (y 0, Fin.tail y) := rfl
+
+lemma baseU_eq_preimage (δz c : ℝ) :
+    baseU n δz c = consHomeo n ⁻¹' ((Metric.ball (0 : ℂ) (Real.exp c) \ {0}) ×ˢ
+      Metric.ball (0 : Fin n → ℂ) δz) := by
+  ext y
+  simp only [baseU, Set.mem_setOf_eq, consHomeo_apply,
+    Set.mem_preimage, Set.mem_prod, Set.mem_diff, Metric.mem_ball, dist_zero_right,
+    Set.mem_singleton_iff, norm_pos_iff]
+  tauto
+
+lemma isOpen_baseU (δz c : ℝ) : IsOpen (baseU n δz c) := by
+  rw [baseU_eq_preimage]
+  exact (consHomeo n).continuous.isOpen_preimage _
+    ((Metric.isOpen_ball.sdiff isClosed_singleton).prod Metric.isOpen_ball)
+
+lemma isPreconnected_baseU {δz : ℝ} (hδz : 0 < δz) (c : ℝ) : IsPreconnected (baseU n δz c) := by
+  rw [baseU_eq_preimage, (consHomeo n).isPreconnected_preimage]
+  have hrank : (1 : Cardinal) < Module.rank ℝ ℂ := by
+    rw [Complex.rank_real_complex]; exact_mod_cast Nat.one_lt_two
+  exact (isPathConnected_ball_diff_singleton hrank (Real.exp_pos c)).isConnected.isPreconnected.prod
+    (convex_ball _ _).isPreconnected
+
+lemma baseU_mem_nhdsWithin {δz : ℝ} (hδz : 0 < δz) (c : ℝ) :
+    baseU n δz c ∈ 𝓝[{x : Fin (n + 1) → ℂ | x 0 ≠ 0}] (0 : Fin (n + 1) → ℂ) := by
+  have ht : {y : Fin (n + 1) → ℂ | ‖y 0‖ < Real.exp c ∧ ‖Fin.tail y‖ < δz} ∈
+      𝓝 (0 : Fin (n + 1) → ℂ) := by
+    refine IsOpen.mem_nhds ?_ ?_
+    · exact (isOpen_lt ((continuous_apply 0).norm) continuous_const).inter
+        (isOpen_lt (continuous_pi (fun i => (continuous_apply i.succ))).norm continuous_const)
+    · refine ⟨?_, ?_⟩
+      · show ‖(0 : Fin (n + 1) → ℂ) 0‖ < Real.exp c
+        simp only [Pi.zero_apply, norm_zero]; exact Real.exp_pos c
+      · show ‖Fin.tail (0 : Fin (n + 1) → ℂ)‖ < δz
+        rw [show Fin.tail (0 : Fin (n + 1) → ℂ) = 0 from by funext i; rfl, norm_zero]; exact hδz
+  have := inter_mem_nhdsWithin {x : Fin (n + 1) → ℂ | x 0 ≠ 0} ht
+  refine Filter.mem_of_superset this ?_
+  intro y hy
+  exact ⟨norm_pos_iff.mpr hy.1, hy.2.1, hy.2.2⟩
+
 /-- The `τ`-shift on the product domain (section fixed, transverse shifted by an imaginary `T`). -/
 def shiftHPF (δz c : ℝ) (T : ℂ) (hT : T.re = 0) :
     C(↥(prodDom n δz c), ↥(prodDom n δz c)) where
@@ -428,5 +500,215 @@ theorem exists_root_lift_family (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (
     · rw [Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one]
     · simp only [hρdef]
       rw [dif_pos hk_mem, hk_eq]
+
+set_option maxHeartbeats 1000000 in
+/-- **Family descent (Lemma 4.2.6, s≥1, step 3).** `φ(z,u) := ρ(z, m·log u)` is single-valued (period),
+jointly analytic on the punctured `u`-disc, with `(q (cons uᵐ z)).eval (φ (z,u)) = 0` and the
+root-bijection. The log branch cut is invisible because the `±2πi` jump is a period of `ρ(z,·)`. -/
+theorem descend_phi_family {ρ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ} {m : ℕ} (hm : 0 < m)
+    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hρ_root : ∀ p ∈ prodDom n δz c, (q (ptOfF n p)).eval (ρ p) = 0)
+    (hρ_an : ∀ p ∈ prodDom n δz c, AnalyticAt ℂ ρ p)
+    (hρ_period : ∀ p ∈ prodDom n δz c,
+      ρ (p.1, p.2 + (m : ℂ) * (2 * (π : ℂ) * Complex.I)) = ρ p)
+    (hρ_surj : ∀ p ∈ prodDom n δz c, ∀ t : ℂ, (q (ptOfF n p)).eval t = 0 →
+      ∃ τ' : ℂ, (p.1, τ') ∈ prodDom n δz c ∧
+        Complex.exp τ' = Complex.exp p.2 ∧ ρ (p.1, τ') = t) :
+    ∃ φ : (Fin n → ℂ) × ℂ → ℂ,
+      (∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+        (q (Fin.cons (u ^ m) z)).eval (φ (z, u)) = 0) ∧
+      (∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c → AnalyticAt ℂ φ (z, u)) ∧
+      (∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+        ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t)) := by
+  set T₀ : ℂ := (m : ℂ) * (2 * (π : ℂ) * Complex.I) with hT₀
+  have hmne : (m : ℂ) ≠ 0 := by exact_mod_cast hm.ne'
+  -- domain membership of `(z, m·log u)`
+  have hmemτ : ∀ (z : Fin n → ℂ) (u : ℂ), ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      (z, (m : ℂ) * Complex.log u) ∈ prodDom n δz c := by
+    intro z u hz hu hud
+    refine ⟨by rwa [Metric.mem_ball, dist_zero_right], ?_⟩
+    show ((m : ℂ) * Complex.log u).re < c
+    rw [Complex.mul_re, Complex.log_re, Complex.natCast_im, Complex.natCast_re]
+    simp only [zero_mul, sub_zero]
+    rw [← Real.log_pow]
+    calc Real.log (‖u‖ ^ m) < Real.log (Real.exp c) := Real.log_lt_log (by positivity) hud
+      _ = c := Real.log_exp c
+  -- ℤ-multiple period (in the transverse component)
+  have hshiftmem : ∀ (z : Fin n → ℂ) (τ : ℂ) (k : ℤ), (z, τ) ∈ prodDom n δz c →
+      (z, τ + (k : ℂ) * T₀) ∈ prodDom n δz c := by
+    intro z τ k hzτ
+    refine ⟨hzτ.1, ?_⟩
+    show (τ + (k : ℂ) * T₀).re < c
+    rw [Complex.add_re, hT₀, show ((k : ℂ) * ((m : ℂ) * (2 * (π : ℂ) * Complex.I))).re = 0 from by
+      simp [Complex.mul_re, Complex.mul_im], add_zero]
+    exact hzτ.2
+  have hperiodZ : ∀ (k : ℤ) (z : Fin n → ℂ) (τ : ℂ), (z, τ) ∈ prodDom n δz c →
+      ρ (z, τ + (k : ℂ) * T₀) = ρ (z, τ) := by
+    intro k
+    induction k using Int.induction_on with
+    | zero => intro z τ _; simp
+    | succ j ih =>
+        intro z τ hzτ
+        have hstep := hρ_period (z, τ + ((j : ℤ) : ℂ) * T₀) (hshiftmem z τ (j : ℤ) hzτ)
+        rw [show τ + (((j : ℤ) + 1 : ℤ) : ℂ) * T₀ = τ + ((j : ℤ) : ℂ) * T₀ + T₀ from by
+          push_cast; ring, hstep, ih z τ hzτ]
+    | pred j ih =>
+        intro z τ hzτ
+        have hstep := hρ_period (z, τ + ((-(j : ℤ) - 1 : ℤ) : ℂ) * T₀)
+          (hshiftmem z τ (-(j : ℤ) - 1) hzτ)
+        rw [show τ + ((-(j : ℤ) - 1 : ℤ) : ℂ) * T₀ + T₀ = τ + ((-(j : ℤ) : ℤ) : ℂ) * T₀ from by
+          push_cast; ring] at hstep
+        rw [← hstep, ih z τ hzτ]
+  refine ⟨fun p => ρ (p.1, (m : ℂ) * Complex.log p.2), ?_, ?_, ?_⟩
+  · -- root equation
+    intro z u hz hu hud
+    have hr := hρ_root _ (hmemτ z u hz hu hud)
+    rwa [show ptOfF n (z, (m : ℂ) * Complex.log u) = Fin.cons (u ^ m) z from by
+      rw [ptOfF, show Complex.exp ((m : ℂ) * Complex.log u) = u ^ m from by
+        rw [Complex.exp_nat_mul, Complex.exp_log (norm_pos_iff.mp hu)]]] at hr
+  · -- joint analyticity (branch-cut-invisible)
+    intro z₀ u₀ hz₀ hu₀ hud₀
+    obtain ⟨L, hL_an, hL_exp⟩ := exists_local_log_branch (norm_pos_iff.mp hu₀)
+    have hexp0 : Complex.exp (L u₀) = u₀ := hL_exp.self_of_nhds
+    have hLre : (L u₀).re = Real.log ‖u₀‖ := by
+      have hh : Real.exp (L u₀).re = ‖u₀‖ := by rw [← Complex.norm_exp, hexp0]
+      rw [← hh, Real.log_exp]
+    have hLmem : (z₀, (m : ℂ) * L u₀) ∈ prodDom n δz c := by
+      refine ⟨by rwa [Metric.mem_ball, dist_zero_right], ?_⟩
+      show ((m : ℂ) * L u₀).re < c
+      rw [Complex.mul_re, hLre, Complex.natCast_im, Complex.natCast_re]
+      simp only [zero_mul, sub_zero]; rw [← Real.log_pow]
+      calc Real.log (‖u₀‖ ^ m) < Real.log (Real.exp c) := Real.log_lt_log (by positivity) hud₀
+        _ = c := Real.log_exp c
+    have hφeq : (fun p : (Fin n → ℂ) × ℂ => ρ (p.1, (m : ℂ) * Complex.log p.2))
+        =ᶠ[𝓝 (z₀, u₀)] fun p => ρ (p.1, (m : ℂ) * L p.2) := by
+      rw [nhds_prod_eq]
+      have hune : ∀ᶠ p : (Fin n → ℂ) × ℂ in 𝓝 z₀ ×ˢ 𝓝 u₀, p.2 ≠ 0 :=
+        tendsto_snd.eventually (isOpen_ne.mem_nhds (norm_pos_iff.mp hu₀))
+      have hexpL : ∀ᶠ p : (Fin n → ℂ) × ℂ in 𝓝 z₀ ×ˢ 𝓝 u₀, Complex.exp (L p.2) = p.2 :=
+        tendsto_snd.eventually hL_exp
+      have hzd : ∀ᶠ p : (Fin n → ℂ) × ℂ in 𝓝 z₀ ×ˢ 𝓝 u₀, ‖p.1‖ < δz :=
+        tendsto_fst.eventually
+          ((isOpen_lt continuous_norm continuous_const).mem_nhds (show ‖z₀‖ < δz from hz₀))
+      have hud' : ∀ᶠ p : (Fin n → ℂ) × ℂ in 𝓝 z₀ ×ˢ 𝓝 u₀, ‖p.2‖ ^ m < Real.exp c :=
+        tendsto_snd.eventually
+          ((isOpen_lt (continuous_norm.pow m) continuous_const).mem_nhds
+            (show ‖u₀‖ ^ m < Real.exp c from hud₀))
+      filter_upwards [hune, hexpL, hzd, hud'] with p hpne hpexp hpz hpud
+      have hpu : 0 < ‖p.2‖ := norm_pos_iff.mpr hpne
+      have hdiff : Complex.exp (L p.2 - Complex.log p.2) = 1 := by
+        rw [Complex.exp_sub, hpexp, Complex.exp_log hpne, div_self hpne]
+      obtain ⟨k, hk⟩ := Complex.exp_eq_one_iff.mp hdiff
+      have hmL : (m : ℂ) * L p.2 = (m : ℂ) * Complex.log p.2 + (k : ℂ) * T₀ := by
+        rw [hT₀]
+        have hLu : L p.2 = Complex.log p.2 + (k : ℂ) * (2 * (π : ℂ) * Complex.I) := by
+          linear_combination hk
+        rw [hLu]; ring
+      show ρ (p.1, (m : ℂ) * Complex.log p.2) = ρ (p.1, (m : ℂ) * L p.2)
+      rw [hmL, hperiodZ k p.1 _ (hmemτ p.1 p.2 hpz hpu hpud)]
+    have hinner : AnalyticAt ℂ (fun p : (Fin n → ℂ) × ℂ => (p.1, (m : ℂ) * L p.2)) (z₀, u₀) :=
+      ((ContinuousLinearMap.fst ℂ (Fin n → ℂ) ℂ).analyticAt (z₀, u₀)).prod
+        (analyticAt_const.mul (hL_an.comp ((ContinuousLinearMap.snd ℂ (Fin n → ℂ) ℂ).analyticAt (z₀, u₀))))
+    have hcomp : AnalyticAt ℂ (ρ ∘ fun p : (Fin n → ℂ) × ℂ => (p.1, (m : ℂ) * L p.2)) (z₀, u₀) :=
+      AnalyticAt.comp (g := ρ) (f := fun p : (Fin n → ℂ) × ℂ => (p.1, (m : ℂ) * L p.2))
+        (hρ_an _ hLmem) hinner
+    exact hcomp.congr hφeq.symm
+  · -- the iff
+    intro z u t hz hu hud
+    have hbase : ptOfF n (z, (m : ℂ) * Complex.log u) = Fin.cons (u ^ m) z := by
+      rw [ptOfF, show Complex.exp ((m : ℂ) * Complex.log u) = u ^ m from by
+        rw [Complex.exp_nat_mul, Complex.exp_log (norm_pos_iff.mp hu)]]
+    constructor
+    · intro hroott
+      have hroot' : (q (ptOfF n (z, (m : ℂ) * Complex.log u))).eval t = 0 := by rw [hbase]; exact hroott
+      obtain ⟨τ', hτ'mem, hexpτ', hρτ'⟩ := hρ_surj _ (hmemτ z u hz hu hud) t hroot'
+      dsimp only at hτ'mem hexpτ' hρτ'
+      refine ⟨Complex.exp (τ' / (m : ℂ)), ?_, ?_⟩
+      · have hmul : (m : ℂ) * (τ' / (m : ℂ)) = τ' := by field_simp
+        have hpow : (Complex.exp (τ' / (m : ℂ))) ^ m = Complex.exp τ' := by
+          rw [← Complex.exp_nat_mul, hmul]
+        rw [hpow, hexpτ']
+        show Complex.exp ((m : ℂ) * Complex.log u) = u ^ m
+        rw [Complex.exp_nat_mul, Complex.exp_log (norm_pos_iff.mp hu)]
+      · show ρ (z, (m : ℂ) * Complex.log (Complex.exp (τ' / (m : ℂ)))) = t
+        obtain ⟨k₀, hk₀⟩ := Complex.exp_eq_one_iff.mp
+          (show Complex.exp (Complex.log (Complex.exp (τ' / (m : ℂ))) - τ' / (m : ℂ)) = 1 by
+            rw [Complex.exp_sub, Complex.exp_log (Complex.exp_ne_zero _),
+              div_self (Complex.exp_ne_zero _)])
+        have hml : (m : ℂ) * Complex.log (Complex.exp (τ' / (m : ℂ))) = τ' + (k₀ : ℂ) * T₀ := by
+          have hlog : Complex.log (Complex.exp (τ' / (m : ℂ)))
+              = τ' / (m : ℂ) + (k₀ : ℂ) * (2 * (π : ℂ) * Complex.I) := by linear_combination hk₀
+          rw [hlog, hT₀]; field_simp
+        rw [hml, hperiodZ k₀ z τ' hτ'mem, hρτ']
+    · rintro ⟨u', hu'm, hφu'⟩
+      have h2 : ‖u'‖ ^ m = ‖u‖ ^ m := by rw [← norm_pow, ← norm_pow, hu'm]
+      have hu'pos : 0 < ‖u'‖ := by
+        have h1 : (0 : ℝ) < ‖u‖ ^ m := pow_pos hu m
+        have hne : ‖u'‖ ≠ 0 := fun h => by
+          rw [h, zero_pow hm.ne'] at h2; exact absurd h2.symm (ne_of_gt h1)
+        exact (norm_nonneg u').lt_of_ne (Ne.symm hne)
+      have hr := hρ_root _ (hmemτ z u' hz hu'pos (by rw [h2]; exact hud))
+      rw [show ptOfF n (z, (m : ℂ) * Complex.log u') = Fin.cons (u' ^ m) z from by
+        rw [ptOfF, show Complex.exp ((m : ℂ) * Complex.log u') = u' ^ m from by
+          rw [Complex.exp_nat_mul, Complex.exp_log (norm_pos_iff.mp hu'pos)]], hu'm] at hr
+      have hval : ρ (z, (m : ℂ) * Complex.log u') = t := hφu'
+      rwa [hval] at hr
+
+/-- The sup-norm on `Fin (n+1) → ℂ` is bounded by the max of the coordinate-`0` norm and the tail. -/
+lemma norm_le_max_zero_tail (y : Fin (n + 1) → ℂ) : ‖y‖ ≤ max (‖y 0‖) (‖Fin.tail y‖) := by
+  refine (pi_norm_le_iff_of_nonneg (le_trans (norm_nonneg _) (le_max_left _ _))).mpr (fun i => ?_)
+  refine Fin.cases ?_ (fun j => ?_) i
+  · exact le_max_left _ _
+  · calc ‖y j.succ‖ = ‖Fin.tail y j‖ := rfl
+      _ ≤ ‖Fin.tail y‖ := norm_le_pi_norm _ _
+      _ ≤ _ := le_max_right _ _
+
+/-- **`hsep` on `baseU` from separability off the hyperplane (Lemma 4.2.6 prerequisite, #16).** Given
+that `q` is separable on a ball away from `{z₀ = 0}` (which `DiscNormalForm.sep_off_hyperplane` +
+`separable_of_discr_ne_zero` provide from the discriminant hypotheses `order ≠ ⊤` + order-invariance),
+`q` is separable on the product punctured region `baseU` for small `δz, c`. -/
+lemma exists_hsep_baseU {q : (Fin (n + 1) → ℂ) → Polynomial ℂ} {δ₀ : ℝ}
+    (hsep₀ : ∀ z ∈ Metric.ball (0 : Fin (n + 1) → ℂ) δ₀, z 0 ≠ 0 → (q z).Separable)
+    {δz c : ℝ} (hc : Real.exp c ≤ δ₀) (hz : δz ≤ δ₀) :
+    ∀ y ∈ baseU n δz c, (q y).Separable := by
+  intro y hy
+  refine hsep₀ y ?_ (norm_pos_iff.mp hy.1)
+  rw [Metric.mem_ball, dist_zero_right]
+  calc ‖y‖ ≤ max (‖y 0‖) (‖Fin.tail y‖) := norm_le_max_zero_tail y
+    _ < δ₀ := max_lt (lt_of_lt_of_le hy.2.1 hc) (lt_of_lt_of_le hy.2.2 hz)
+
+/-- **Lemma 4.2.6, `s ≥ 1` family (punctured), for an irreducible Weierstrass family.** Discharges the
+root-bound and path-connectedness prerequisites (`roots_eventually_bounded`, `rootCover_pathConnected_gen`
+with `baseU` preconnected), then assembles the lift, joint analyticity, and descent into the family
+parametrization `φ(z,u)`: jointly analytic on the punctured `u`-disc, with the root equation and the
+root-bijection. Only separability off `0` (the discriminant condition) remains a hypothesis. -/
+theorem exists_param_family (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (m : ℕ) (hm : 0 < m)
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hq0 : q 0 = X ^ m) (hirr : UnivIrreducibleGen q)
+    {δz c : ℝ} (hδz : 0 < δz) (hsep : ∀ y ∈ baseU n δz c, (q y).Separable) :
+    ∃ φ : (Fin n → ℂ) × ℂ → ℂ,
+      (∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+        (q (Fin.cons (u ^ m) z)).eval (φ (z, u)) = 0) ∧
+      (∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c → AnalyticAt ℂ φ (z, u)) ∧
+      (∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+        ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t)) := by
+  have hcont : ∀ i, Continuous (fun y => (q y).coeff i) :=
+    fun i => continuous_iff_continuousAt.mpr fun y => (hcoeff i y).continuousAt
+  have hbdd := roots_eventually_bounded q m hm hmonic hdeg hcont hq0 (R := 1) one_pos
+  have hpc : PathConnectedSpace ↥(rootProj q ⁻¹' baseU n δz c) :=
+    rootCover_pathConnected_gen q hm hmonic hdeg hcont (fun i => hcoeff i 0) hq0 hirr
+      (isOpen_baseU δz c) (isPreconnected_baseU hδz c) hsep (baseU_mem_nhdsWithin hδz c)
+      (fun i y _ => hcoeff i y) zero_le_one hbdd
+  have hp₀ : ((0 : Fin n → ℂ), ((c - 1 : ℝ) : ℂ)) ∈ prodDom n δz c :=
+    Set.mk_mem_prod (Metric.mem_ball_self hδz)
+      (by simp only [halfPlane, Set.mem_setOf_eq, Complex.ofReal_re]; linarith)
+  obtain ⟨t₀, ht₀⟩ := IsAlgClosed.exists_root
+    (q (ptOfF n ((0 : Fin n → ℂ), ((c - 1 : ℝ) : ℂ)))) (by
+      rw [Polynomial.degree_eq_natDegree (hmonic _).ne_zero, hdeg]; exact_mod_cast hm.ne')
+  obtain ⟨ρ, _, hcont_ρ, hroot_ρ, hper_ρ, hsurj_ρ⟩ :=
+    exists_root_lift_family q m hmonic hdeg hcoeff hsep hpc hp₀ ht₀
+  have han_ρ := analyticOn_root_family q m hmonic hdeg hcoeff hsep hcont_ρ hroot_ρ
+  exact descend_phi_family hm hroot_ρ han_ρ hper_ρ hsurj_ρ
 
 end Puiseux
