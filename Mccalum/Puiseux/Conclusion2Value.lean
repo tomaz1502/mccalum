@@ -366,4 +366,188 @@ theorem order_eval_value {m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → ℂ) → �
   exact order_eval_eq_min hm hmonic' hdeg' hcoeff' hroot' han' hiff' hζ hz'
     hFan' hFeq' hFfin hcentral' hana_pt' hsep_dir' hLHSan0' hsep_u' hg0'
 
+/-- **Capped order of a branch displacement equals capped order of its `ζ`-difference.** For `g`
+analytic with `g 0 = 0` and `ζ` a primitive `m`-th root of unity,
+`min(m, ord g) = min(m, ord(u ↦ g u − g(ζu)))`. This is the leading-Puiseux-coefficient identity that
+lets the *branch order* `m₁ = ord(displacement)` be controlled by *branch-difference* orders (Lemma
+4.2.7): if `ord g < m` the leading term survives the difference (`ζ^{ord g} ≠ 1`), so the two orders
+agree; if `ord g ≥ m`, both caps equal `m`. -/
+lemma min_order_eq_min_order_sub_comp_smul {g : ℂ → ℂ} (hg : AnalyticAt ℂ g 0) (hg0 : g 0 = 0)
+    {ζ : ℂ} {m : ℕ} (hm : 0 < m) (hζ : IsPrimitiveRoot ζ m) :
+    min (m : ℕ∞) (analyticOrderAt g 0)
+      = min (m : ℕ∞) (analyticOrderAt (fun u => g u - g (ζ * u)) 0) := by
+  have hζ0 : ζ ≠ 0 := hζ.ne_zero (by omega)
+  have htendζ : Filter.Tendsto (fun u : ℂ => ζ * u) (𝓝 0) (𝓝 0) := by
+    have h : Filter.Tendsto (fun u : ℂ => ζ * u) (𝓝 0) (𝓝 (ζ * 0)) :=
+      (continuous_const.mul continuous_id).tendsto 0
+    rwa [mul_zero] at h
+  have hgζan : AnalyticAt ℂ (fun u => g (ζ * u)) 0 :=
+    AnalyticAt.comp (g := g) (f := fun u : ℂ => ζ * u)
+      (by show AnalyticAt ℂ g (ζ * 0); rw [mul_zero]; exact hg) (analyticAt_const.mul analyticAt_id)
+  have hscale : analyticOrderAt (fun u => g (ζ * u)) 0 = analyticOrderAt g 0 :=
+    analyticOrderAt_comp_smul hg hζ0
+  have hdiffan : AnalyticAt ℂ (fun u => g u - g (ζ * u)) 0 := hg.sub hgζan
+  -- lower bound: `ord g ≤ ord (g − g(ζ·))`
+  have hge : analyticOrderAt g 0 ≤ analyticOrderAt (fun u => g u - g (ζ * u)) 0 := by
+    have h : min (analyticOrderAt g 0) (analyticOrderAt (fun u => g (ζ * u)) 0)
+        ≤ analyticOrderAt (g - fun u => g (ζ * u)) 0 := le_analyticOrderAt_sub
+    rw [hscale, min_self] at h; exact h
+  rcases lt_or_ge (analyticOrderAt g 0) (m : ℕ∞) with halt | hage
+  · -- `ord g < m`: the difference has the same order
+    have hfin : analyticOrderAt g 0 ≠ ⊤ := ne_top_of_lt halt
+    set k := (analyticOrderAt g 0).toNat with hkdef
+    have hak : analyticOrderAt g 0 = (k : ℕ∞) := (ENat.coe_toNat hfin).symm
+    have hkm : k < m := by have := hak ▸ halt; exact_mod_cast this
+    have ha_ne0 : analyticOrderAt g 0 ≠ 0 := fun h => (hg.analyticOrderAt_eq_zero.mp h) hg0
+    have hkpos : 0 < k := Nat.pos_of_ne_zero (by
+      rw [hkdef]; intro h
+      rcases ENat.toNat_eq_zero.mp h with h0 | htop
+      · exact ha_ne0 h0
+      · exact hfin htop)
+    obtain ⟨G, hGan, hG0, hgfac⟩ := hg.analyticOrderAt_eq_natCast.mp hak
+    have hGζan : AnalyticAt ℂ (fun u => G (ζ * u)) 0 :=
+      AnalyticAt.comp (g := G) (f := fun u : ℂ => ζ * u)
+        (by show AnalyticAt ℂ G (ζ * 0); rw [mul_zero]; exact hGan)
+        (analyticAt_const.mul analyticAt_id)
+    have hζk : ζ ^ k ≠ 1 := fun h =>
+      Nat.not_dvd_of_pos_of_lt hkpos hkm ((hζ.pow_eq_one_iff_dvd k).mp h)
+    set H : ℂ → ℂ := fun u => G u - ζ ^ k * G (ζ * u) with hHdef
+    have hHan : AnalyticAt ℂ H 0 := hGan.sub (analyticAt_const.mul hGζan)
+    have hH0 : H 0 ≠ 0 := by
+      show G 0 - ζ ^ k * G (ζ * 0) ≠ 0
+      rw [mul_zero, show G 0 - ζ ^ k * G 0 = G 0 * (1 - ζ ^ k) from by ring]
+      exact mul_ne_zero hG0 (sub_ne_zero.mpr fun h => hζk h.symm)
+    have hgfac' : (fun u => g u - g (ζ * u)) =ᶠ[𝓝 0] fun u => u ^ k • H u := by
+      filter_upwards [hgfac, htendζ.eventually hgfac] with u hu huζ
+      show g u - g (ζ * u) = u ^ k • H u
+      rw [hu, huζ, hHdef]
+      simp only [smul_eq_mul, sub_zero, mul_pow]; ring
+    have hord_diff : analyticOrderAt (fun u => g u - g (ζ * u)) 0 = (k : ℕ∞) := by
+      rw [analyticOrderAt_congr hgfac']
+      exact ((analyticAt_id.pow k).smul hHan).analyticOrderAt_eq_natCast.mpr
+        ⟨H, hHan, hH0, by filter_upwards with u; simp [sub_zero]⟩
+    rw [hak, hord_diff]
+  · rw [min_eq_left hage, min_eq_left (le_trans hage hge)]
+
+/-- **Capped displacement order = capped `ζ`-difference order, for a branch `F` with `F 0 = ρ`.**
+A packaging of `min_order_eq_min_order_sub_comp_smul` for `g = F − ρ` (the centered branch), where the
+constant `ρ` cancels in the difference. -/
+lemma min_order_displacement_eq_diff {F : ℂ → ℂ} (hFan : AnalyticAt ℂ F 0) (ρ : ℂ) (hF0 : F 0 = ρ)
+    {ζ : ℂ} {m : ℕ} (hm : 0 < m) (hζ : IsPrimitiveRoot ζ m) :
+    min (m : ℕ∞) (analyticOrderAt (fun w => F w - ρ) 0)
+      = min (m : ℕ∞) (analyticOrderAt (fun u => F u - F (ζ * u)) 0) := by
+  have hg0 : (fun w => F w - ρ) 0 = 0 := by simp [hF0]
+  have hkey := min_order_eq_min_order_sub_comp_smul (hFan.sub analyticAt_const) hg0 hm hζ
+  refine hkey.trans ?_
+  congr 1
+  apply analyticOrderAt_congr
+  filter_upwards with u
+  show (F u - ρ) - (F (ζ * u) - ρ) = F u - F (ζ * u)
+  ring
+
+/-- **The `F`-difference order equals the `φ`-branch-difference order** `(i,j)=(0,1)`. Since
+`F =ᶠ φ(y,·)` on the punctured neighbourhood (and both differences vanish at `0`), the orders agree.
+This links `min_order_displacement_eq_diff` to the branch-difference constancy of Lemma 4.2.7. -/
+lemma analyticOrderAt_F_diff_eq_phi {F : ℂ → ℂ} {φ : (Fin n → ℂ) × ℂ → ℂ} {y : Fin n → ℂ}
+    (hFeq : F =ᶠ[𝓝[≠] (0 : ℂ)] fun u => φ (y, u)) {ζ : ℂ} (hζ0 : ζ ≠ 0) :
+    analyticOrderAt (fun u => F u - F (ζ * u)) 0
+      = analyticOrderAt (fun u => φ (y, ζ ^ (0 : ℕ) * u) - φ (y, ζ ^ (1 : ℕ) * u)) 0 := by
+  apply analyticOrderAt_congr
+  have htζ : Filter.Tendsto (fun u : ℂ => ζ * u) (𝓝[≠] 0) (𝓝[≠] 0) := by
+    rw [tendsto_nhdsWithin_iff]
+    refine ⟨?_, ?_⟩
+    · have h0 : Filter.Tendsto (fun u : ℂ => ζ * u) (𝓝 0) (𝓝 (ζ * 0)) :=
+        (continuous_const.mul continuous_id).tendsto 0
+      rw [mul_zero] at h0; exact h0.mono_left nhdsWithin_le_nhds
+    · filter_upwards [self_mem_nhdsWithin] with u hu; exact mul_ne_zero hζ0 (by simpa using hu)
+  have hpunc : (fun u => F u - F (ζ * u))
+      =ᶠ[𝓝[≠] (0 : ℂ)] fun u => φ (y, ζ ^ (0 : ℕ) * u) - φ (y, ζ ^ (1 : ℕ) * u) := by
+    filter_upwards [hFeq, htζ.eventually hFeq] with u h1 h2
+    show F u - F (ζ * u) = φ (y, ζ ^ (0 : ℕ) * u) - φ (y, ζ ^ (1 : ℕ) * u)
+    rw [h1, h2]; simp
+  rw [← nhdsNE_sup_pure (0 : ℂ)]
+  refine Filter.eventually_sup.mpr ⟨hpunc, ?_⟩
+  simp [Filter.eventually_pure]
+
+/-- **Lemma 4.2.8 for the axiom — the glued value at a section point.** Packages all of
+`order_eval_value`'s hypotheses from more primitive data: the section root `ρ` (single root on the
+hyperplane near `z'`, `hroot_single`) gives `hcentral` via `monic_eq_pow_of_unique_root`; the disc
+normal form `(q y).discr = (y 0)ʳ·G` on `U` gives `hsep_dir` via `sep_dir_of_disc`; the branch slice
+`F` and its finiteness come from `exists_phi_slice_extend` and `branch_centered_order_ne_top`. Concludes
+the order value `= min(m, ord of the centered branch)`, with the branch `F` produced existentially. -/
+theorem order_eval_value_glue {m : ℕ} (hm2 : 2 ≤ m) {q : (Fin (n + 1) → ℂ) → ℂ[X]}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcoeff : ∀ i, Continuous (fun y => (q y).coeff i))
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
+    (hroot : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      (q (Fin.cons (u ^ m) z)).eval (φ (z, u)) = 0)
+    (han : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c → AnalyticAt ℂ φ (z, u))
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z' : Fin n → ℂ} (hz' : ‖z'‖ < δz)
+    (hana_pt : ∀ i, AnalyticAt ℂ (fun y => (q y).coeff i) (Fin.cons 0 z'))
+    {ρ : (Fin n → ℂ) → ℂ} (hρ_cont : Continuous ρ)
+    (hρ_ana : ∀ z, ‖z‖ < δz → AnalyticAt ℂ ρ z)
+    (hroot_single : ∀ᶠ z in 𝓝 z', ∀ β : ℂ, (q (Fin.cons 0 z)).IsRoot β ↔ β = ρ z)
+    {U : Set (Fin (n + 1) → ℂ)} (hU : IsOpen U) {r : ℕ} {G : (Fin (n + 1) → ℂ) → ℂ}
+    (hGeq : ∀ y ∈ U, (q y).discr = (y 0) ^ r * G y) (hGne : ∀ y ∈ U, G y ≠ 0)
+    (hz'U : (Fin.cons 0 z' : Fin (n + 1) → ℂ) ∈ U)
+    (hsep_u : ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z')).Separable) :
+    ∃ F : ℂ → ℂ, AnalyticAt ℂ F 0 ∧ F =ᶠ[𝓝[≠] (0 : ℂ)] (fun w => φ (z', w)) ∧
+      order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2) (Fin.cons 0 z', ρ z')
+        = min (m : ℕ∞) (analyticOrderAt (fun w => F w - ρ z') 0) := by
+  have hm : 0 < m := by omega
+  obtain ⟨F, hFan, hFeq⟩ := exists_phi_slice_extend hm hmonic hdeg hcoeff hroot han hz'
+  have hcentral : ∀ᶠ z in 𝓝 z', q (Fin.cons 0 z) = (X - C (ρ z)) ^ m := by
+    filter_upwards [hroot_single] with z hz
+    exact monic_eq_pow_of_unique_root (hmonic _) (hdeg _) hz
+  have hFfin := branch_centered_order_ne_top hm2 hmonic hdeg hiff hζ hz' hsep_u hFeq (ρ z')
+  have hsep_dir : ∀ v : Fin (n + 1) → ℂ, v 0 ≠ 0 →
+      ∀ᶠ s in 𝓝[≠] (0 : ℂ), (q (Fin.cons 0 z' + s ^ m • v)).Separable :=
+    fun v hv0 => sep_dir_of_disc hm hmonic hdeg hU hGeq hGne hz'U hv0
+  exact ⟨F, hFan, hFeq, order_eval_value hm hmonic hdeg hcoeff hroot han hiff hζ hz'
+    hFan hFeq hana_pt hρ_cont hρ_ana hcentral hFfin hsep_dir hsep_u⟩
+
+/-- **Lemma 4.2.8 for the axiom — eventual value along the section.** The `∀ᶠ z'` version of
+`order_eval_value_glue`: for `z'` near `0`, the order at the graph point `(cons 0 z', ρ z')` is
+`min(m, m₁(z'))`. All per-`z'` hypotheses of the glue hold eventually (the `δz`-ball, membership in the
+disc-normal-form open `U`, the single-root germ via `eventually_eventually_nhds`, and the separability
+of the ramified slice). The parametrization `φ` is fixed (produced once by `exists_param_family`). -/
+theorem order_eval_value_eventually {m : ℕ} (hm2 : 2 ≤ m) {q : (Fin (n + 1) → ℂ) → ℂ[X]}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcoeff : ∀ i, Continuous (fun y => (q y).coeff i))
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ} (hδz : 0 < δz)
+    (hroot : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      (q (Fin.cons (u ^ m) z)).eval (φ (z, u)) = 0)
+    (han : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c → AnalyticAt ℂ φ (z, u))
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m)
+    (hana_cons : ∀ i, ∀ z : Fin n → ℂ, ‖z‖ < δz →
+      AnalyticAt ℂ (fun y => (q y).coeff i) (Fin.cons 0 z))
+    {ρ : (Fin n → ℂ) → ℂ} (hρ_cont : Continuous ρ)
+    (hρ_ana : ∀ z, ‖z‖ < δz → AnalyticAt ℂ ρ z)
+    (hroot_single : ∀ᶠ z in 𝓝 (0 : Fin n → ℂ), ∀ β : ℂ, (q (Fin.cons 0 z)).IsRoot β ↔ β = ρ z)
+    {U : Set (Fin (n + 1) → ℂ)} (hU : IsOpen U) (hU0 : (0 : Fin (n + 1) → ℂ) ∈ U)
+    {r : ℕ} {G : (Fin (n + 1) → ℂ) → ℂ}
+    (hGeq : ∀ y ∈ U, (q y).discr = (y 0) ^ r * G y) (hGne : ∀ y ∈ U, G y ≠ 0)
+    (hsep_nbhd : ∀ᶠ z in 𝓝 (0 : Fin n → ℂ),
+      ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable) :
+    ∀ᶠ z' in 𝓝 (0 : Fin n → ℂ), ∃ F : ℂ → ℂ, AnalyticAt ℂ F 0 ∧
+      F =ᶠ[𝓝[≠] (0 : ℂ)] (fun w => φ (z', w)) ∧
+      order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2) (Fin.cons 0 z', ρ z')
+        = min (m : ℕ∞) (analyticOrderAt (fun w => F w - ρ z') 0) := by
+  have hcons_cont : Continuous (fun z : Fin n → ℂ => (Fin.cons 0 z : Fin (n + 1) → ℂ)) :=
+    continuous_pi (fun j => Fin.cases continuous_const (fun i => continuous_apply i) j)
+  have hcons00 : (Fin.cons 0 (0 : Fin n → ℂ) : Fin (n + 1) → ℂ) = 0 := by
+    funext j; refine Fin.cases ?_ (fun i => ?_) j <;> simp
+  have hball : ∀ᶠ z' in 𝓝 (0 : Fin n → ℂ), ‖z'‖ < δz :=
+    (continuous_norm.tendsto 0).eventually_lt tendsto_const_nhds (by simpa using hδz)
+  have hUcons : ∀ᶠ z' in 𝓝 (0 : Fin n → ℂ), (Fin.cons 0 z' : Fin (n + 1) → ℂ) ∈ U :=
+    hcons_cont.continuousAt.preimage_mem_nhds (hU.mem_nhds (by rw [hcons00]; exact hU0))
+  filter_upwards [hball, hUcons, eventually_eventually_nhds.mpr hroot_single, hsep_nbhd]
+    with z' hz' hz'U hsingle hsepu
+  exact order_eval_value_glue hm2 hmonic hdeg hcoeff hroot han hiff hζ hz'
+    (fun i => hana_cons i z' hz') hρ_cont hρ_ana hsingle hU hGeq hGne hz'U hsepu
+
 end Puiseux
