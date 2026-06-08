@@ -1696,7 +1696,7 @@ theorem coeff_fst_order_ge {n m : ℕ} {q : (Fin (n + 1) → ℂ) → Polynomial
     {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z' : Fin n → ℂ} (hz' : ‖z'‖ < δz) {k : ℕ} (hk : k ≤ m)
     {G : ℂ → ℂ} (hGan : AnalyticAt ℂ G 0) (hGeq : G =ᶠ[𝓝[≠] (0 : ℂ)] fun w => φ (z', w))
     {M : ℕ} (hM : (M : ℕ∞) ≤ analyticOrderAt G 0)
-    (hcentral : ∀ z : Fin n → ℂ, q (Fin.cons 0 z) = X ^ m)
+    (hcentral : ∀ᶠ z in 𝓝 z', q (Fin.cons 0 z) = X ^ m)
     (hana_pt : ∀ i, AnalyticAt ℂ (fun y => (q y).coeff i) (Fin.cons 0 z'))
     (hsep : ∀ v : Fin (n + 1) → ℂ, v 0 ≠ 0 →
       ∀ᶠ s in 𝓝[≠] (0 : ℂ), (q (Fin.cons 0 z' + s ^ m • v)).Separable) :
@@ -1721,17 +1721,21 @@ theorem coeff_fst_order_ge {n m : ℕ} {q : (Fin (n + 1) → ℂ) → Polynomial
     exact AnalyticAt.comp (g := fun y => (q y).coeff k)
       (f := fun t : ℂ => Fin.cons 0 z' + t • v) hpt hcurve
   rcases eq_or_ne (v 0) 0 with hv0 | hv0
-  · have hcons_eq : (fun t : ℂ => (q (Fin.cons 0 z' + t • v)).coeff k)
-        = fun _ : ℂ => (X ^ m : ℂ[X]).coeff k := by
-      funext t
+  · have htend : Filter.Tendsto (fun t : ℂ => z' + t • Fin.tail v) (𝓝 0) (𝓝 z') := by
+      have hcont : Continuous (fun t : ℂ => z' + t • Fin.tail v) :=
+        continuous_const.add (continuous_id.smul continuous_const)
+      simpa using hcont.tendsto 0
+    have hcons_ev : (fun t : ℂ => (q (Fin.cons 0 z' + t • v)).coeff k)
+        =ᶠ[𝓝 0] fun _ : ℂ => (X ^ m : ℂ[X]).coeff k := by
+      filter_upwards [htend.eventually hcentral] with t ht
       have heq : (Fin.cons 0 z' + t • v : Fin (n + 1) → ℂ)
           = Fin.cons 0 (z' + t • Fin.tail v) := by
         funext j
         refine Fin.cases ?_ (fun i => ?_) j
         · simp [Fin.cons_zero, hv0]
         · simp [Fin.cons_succ, Fin.tail]
-      rw [heq, hcentral]
-    rw [hcons_eq]
+      rw [heq, ht]
+    rw [analyticOrderAt_congr hcons_ev]
     rcases lt_or_eq_of_le hk with hklt | hkm
     · rw [show (X ^ m : ℂ[X]).coeff k = 0 from by
         rw [Polynomial.coeff_X_pow, if_neg (Nat.ne_of_lt hklt)],
@@ -1769,7 +1773,7 @@ theorem order_eval_ge_min {n m : ℕ} {q : (Fin (n + 1) → ℂ) → Polynomial 
     {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z' : Fin n → ℂ} (hz' : ‖z'‖ < δz)
     {G : ℂ → ℂ} (hGan : AnalyticAt ℂ G 0) (hGeq : G =ᶠ[𝓝[≠] (0 : ℂ)] fun w => φ (z', w))
     {M : ℕ} (hM : (M : ℕ∞) ≤ analyticOrderAt G 0)
-    (hcentral : ∀ z : Fin n → ℂ, q (Fin.cons 0 z) = X ^ m)
+    (hcentral : ∀ᶠ z in 𝓝 z', q (Fin.cons 0 z) = X ^ m)
     (hana_pt : ∀ i, AnalyticAt ℂ (fun y => (q y).coeff i) (Fin.cons 0 z'))
     (hsep : ∀ v : Fin (n + 1) → ℂ, v 0 ≠ 0 →
       ∀ᶠ s in 𝓝[≠] (0 : ℂ), (q (Fin.cons 0 z' + s ^ m • v)).Separable) :
@@ -1819,6 +1823,62 @@ theorem order_eval_translate {n : ℕ} {q : (Fin (n + 1) → ℂ) → Polynomial
     (by simp [hΨdef, hΨ'def]) (fun yx _ => hinv2 yx)
   rw [hex] at hcomp_eq
   exact hcomp_eq.symm
+
+/-- **Local version of `order_eval_translate`.** The ψ-shear identity where `ψfun` need only be
+analytic at the base point `cons 0 z'` — not globally `ContDiff` — matching the axiom's section `ψ`,
+which is only locally analytic. Order is a local invariant, so `order_comp_eq_of_diffeo_C` applies on
+the analyticity neighborhoods of `ψfun` and the evaluation map. -/
+theorem order_eval_translate_local {n : ℕ} {q : (Fin (n + 1) → ℂ) → Polynomial ℂ} {z' : Fin n → ℂ}
+    {ψfun : (Fin (n + 1) → ℂ) → ℂ} (hψ : AnalyticAt ℂ ψfun (Fin.cons 0 z'))
+    (hg_an : AnalyticAt ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2)
+      (Fin.cons 0 z', ψfun (Fin.cons 0 z'))) :
+    order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2)
+        (Fin.cons 0 z', ψfun (Fin.cons 0 z'))
+      = order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval (yx.2 + ψfun yx.1))
+        (Fin.cons 0 z', 0) := by
+  set g := fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2 with hgdef
+  set Ψ : (Fin (n + 1) → ℂ) × ℂ → (Fin (n + 1) → ℂ) × ℂ :=
+    fun yx => (yx.1, yx.2 + ψfun yx.1) with hΨdef
+  set Ψ' : (Fin (n + 1) → ℂ) × ℂ → (Fin (n + 1) → ℂ) × ℂ :=
+    fun yx => (yx.1, yx.2 - ψfun yx.1) with hΨ'def
+  set x : (Fin (n + 1) → ℂ) × ℂ := (Fin.cons 0 z', 0) with hxdef
+  obtain ⟨P, hPan, hP_open, hP_mem⟩ := eventually_nhds_iff.mp hψ.eventually_analyticAt
+  obtain ⟨t₀, ht₀an, ht₀_open, ht₀_mem⟩ := eventually_nhds_iff.mp hg_an.eventually_analyticAt
+  have hψ_on : AnalyticOnNhd ℂ ψfun P := fun y hy => hPan y hy
+  have hψ_cdo : ContDiffOn ℂ (⊤ : WithTop ℕ∞) ψfun P := hψ_on.contDiffOn_of_completeSpace
+  set t : Set ((Fin (n + 1) → ℂ) × ℂ) := t₀ ∩ (P ×ˢ Set.univ) with htdef
+  have hPU_open : IsOpen (P ×ˢ (Set.univ : Set ℂ)) := hP_open.prod isOpen_univ
+  have ht_open : IsOpen t := ht₀_open.inter hPU_open
+  have ht_sub_P : t ⊆ P ×ˢ Set.univ := Set.inter_subset_right
+  have hΨx : Ψ x = (Fin.cons 0 z', ψfun (Fin.cons 0 z')) := by simp [hΨdef, hxdef]
+  have ht_mem : Ψ x ∈ t := by rw [hΨx]; exact ⟨ht₀_mem, hP_mem, Set.mem_univ _⟩
+  have hΨ_cont : ContinuousOn Ψ (P ×ˢ Set.univ) :=
+    continuousOn_fst.prodMk (continuousOn_snd.add
+      (hψ_cdo.continuousOn.comp continuousOn_fst (fun yx hyx => hyx.1)))
+  set s : Set ((Fin (n + 1) → ℂ) × ℂ) := (P ×ˢ Set.univ) ∩ Ψ ⁻¹' t with hsdef
+  have hs_open : IsOpen s := hΨ_cont.isOpen_inter_preimage hPU_open ht_open
+  have hx_s : x ∈ s := ⟨⟨hP_mem, Set.mem_univ _⟩, by rw [Set.mem_preimage]; exact ht_mem⟩
+  have hg_on : AnalyticOnNhd ℂ g t := fun y hy => ht₀an y hy.1
+  have hg_cdo : ContDiffOn ℂ (⊤ : WithTop ℕ∞) g t := hg_on.contDiffOn_of_completeSpace
+  have hΨ_cdo : ContDiffOn ℂ (⊤ : WithTop ℕ∞) Ψ s :=
+    contDiffOn_fst.prodMk (contDiffOn_snd.add
+      (hψ_cdo.comp contDiffOn_fst (fun yx hyx => hyx.1.1)))
+  have hΨ'_cdo : ContDiffOn ℂ (⊤ : WithTop ℕ∞) Ψ' t :=
+    contDiffOn_fst.prodMk (contDiffOn_snd.sub
+      (hψ_cdo.comp contDiffOn_fst (fun yx hyx => (ht_sub_P hyx).1)))
+  have hmaps : Set.MapsTo Ψ s t := fun yx hyx => hyx.2
+  have hmaps' : Set.MapsTo Ψ' t s := by
+    intro y hy
+    refine ⟨⟨(ht_sub_P hy).1, Set.mem_univ _⟩, ?_⟩
+    rw [Set.mem_preimage, show Ψ (Ψ' y) = y from by simp [hΨdef, hΨ'def]]; exact hy
+  have hinv : Ψ' (Ψ x) = x := by simp [hΨdef, hΨ'def, hxdef]
+  have hinv' : ∀ y ∈ t, Ψ (Ψ' y) = y := fun y _ => by simp [hΨdef, hΨ'def]
+  have hcomp := order_comp_eq_of_diffeo_C (g := g) (e := Ψ) (e' := Ψ')
+    hs_open ht_open hx_s hg_cdo hΨ_cdo hΨ'_cdo hmaps hmaps' hinv hinv'
+  rw [hΨx] at hcomp
+  rw [show (g ∘ Ψ) = fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval (yx.2 + ψfun yx.1) from by
+    funext yx; simp [hgdef, hΨdef, Function.comp]] at hcomp
+  exact hcomp.symm
 
 open Polynomial in
 /-- **Final wiring — the frozen-slice order equals the transverse order.** The order `M` of the frozen
@@ -1927,7 +1987,7 @@ theorem order_eval_eq_min {n m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → ℂ) �
     {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z' : Fin n → ℂ} (hz' : ‖z'‖ < δz)
     {F : ℂ → ℂ} (hFan : AnalyticAt ℂ F 0) (hFeq : F =ᶠ[𝓝[≠] (0 : ℂ)] fun w => φ (z', w))
     (hFfin : analyticOrderAt F 0 ≠ ⊤)
-    (hcentral : ∀ z : Fin n → ℂ, q (Fin.cons 0 z) = X ^ m)
+    (hcentral : ∀ᶠ z in 𝓝 z', q (Fin.cons 0 z) = X ^ m)
     (hana_pt : ∀ i, AnalyticAt ℂ (fun y => (q y).coeff i) (Fin.cons 0 z'))
     (hsep_dir : ∀ v : Fin (n + 1) → ℂ, v 0 ≠ 0 →
       ∀ᶠ s in 𝓝[≠] (0 : ℂ), (q (Fin.cons 0 z' + s ^ m • v)).Separable)
@@ -1945,7 +2005,8 @@ theorem order_eval_eq_min {n m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → ℂ) �
     exact (AnalyticAt.comp (g := fun y => (q y).coeff k)
       (f := fun yx : (Fin (n + 1) → ℂ) × ℂ => yx.1) (hana_pt k) analyticAt_fst).mul
       (analyticAt_snd.pow k)
-  have hle := order_eval_le_min q (ψ := 0) (by rw [map_zero, sub_zero]; exact hcentral z') hf
+  have hle := order_eval_le_min q (ψ := 0)
+    (by rw [map_zero, sub_zero]; exact hcentral.self_of_nhds) hf
   rw [frozen_order_eq_transverse hm hmonic hdeg hiff hζ hz' hFan hFeq hLHSan0 hsep_u hg0] at hle
   have hM : ((analyticOrderAt F 0).toNat : ℕ∞) ≤ analyticOrderAt F 0 := ENat.coe_toNat_le_self _
   have hge := order_eval_ge_min hm hmonic hdeg hcoeff hroot han hiff hζ hz' hFan hFeq hM hcentral
