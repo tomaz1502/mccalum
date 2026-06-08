@@ -23,10 +23,6 @@ open scoped Topology
 
 variable {n : ℕ}
 
-/-- The separable locus in the normal form: the complement of the coordinate hyperplane `{x 0 = 0}`. -/
-theorem isOpen_coord0_ne : IsOpen {x : Fin (n + 1) → ℂ | x 0 ≠ 0} :=
-  isOpen_compl_singleton.preimage (continuous_apply 0)
-
 open Classical in
 /-- **G2b — the factor coefficient extends across the hyperplane `{x 0 = 0}`.** For a clopen component
 `A` over the separable locus `{x 0 ≠ 0}`, the partial-product coefficient — analytic off the hyperplane

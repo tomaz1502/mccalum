@@ -193,19 +193,6 @@ theorem norm_coeff_factor_le {p : Polynomial ℂ} {ε : ℝ} (hε : 0 ≤ ε)
     _ ≤ Multiset.card p.roots := Multiset.toFinset_card_le _
     _ ≤ p.natDegree := Polynomial.card_roots' _
 
-/-- **A monic polynomial with vanishing lower coefficients is a power of `X`.** If `p` is monic of
-degree `m` and `p.coeff i = 0` for all `i < m`, then `p = X ^ m`. This is the algebraic form of the
-Weierstrass `coeff_zero_vanish` condition for the factor `h_A` at `0` (where all `A`-roots collapse to
-`0`, so `h_A 0 = X ^ d_A`). -/
-theorem eq_X_pow_of_monic_of_coeff_zero {p : Polynomial ℂ} {m : ℕ} (hp : p.Monic)
-    (hdeg : p.natDegree = m) (hvanish : ∀ i, i < m → p.coeff i = 0) : p = X ^ m := by
-  ext i
-  rw [Polynomial.coeff_X_pow]
-  rcases lt_trichotomy i m with hlt | heq | hgt
-  · rw [hvanish i hlt, if_neg (Nat.ne_of_lt hlt)]
-  · subst heq; rw [if_pos rfl]; have hc := hp.coeff_natDegree; rwa [hdeg] at hc
-  · rw [Polynomial.coeff_eq_zero_of_natDegree_lt (by omega), if_neg (by omega)]
-
 /-- **A monic divisor of `X ^ m` is a power of `X`.** Since `X` is prime, any monic `p ∣ X ^ m` is
 associated to some `X ^ k`, hence (both monic) equals `X ^ (p.natDegree)`. This discharges the
 Weierstrass `coeff_zero_vanish` of the factor `h_A` *without root continuity*: from

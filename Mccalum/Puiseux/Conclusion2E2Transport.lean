@@ -27,40 +27,6 @@ open scoped Topology
 
 namespace Puiseux
 
-/-- **The order transport core (thesis "t ≥ ord h'").** If `F` has finite order `t` at `p`, then among any
-dense set `S` of directions, some `v ∈ S` realizes the order: the line restriction `τ ↦ F (p + τ • v)` has
-order `≤ t` (equivalently `= t`, since every line has order `≥ order F p`). -/
-theorem exists_line_order_le {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    {F : E → ℂ} {p : E} (hF : AnalyticAt ℂ F p) {t : ℕ} (hord : order ℂ F p = (t : ℕ∞))
-    {S : Set E} (hS : Dense S) :
-    ∃ v ∈ S, analyticOrderAt (fun τ : ℂ => F (p + τ • v)) 0 ≤ (t : ℕ∞) := by
-  by_contra hcon
-  push_neg at hcon
-  -- the leading form `L = iteratedFDeriv ℂ t F p` is nonzero
-  set L := iteratedFDeriv ℂ t F p with hL
-  have hLne : L ≠ 0 := (order_eq_natCast_iff.mp hord).2
-  -- its diagonal vanishes on `S` (each such line has order `> t`)
-  have hdiag_S : ∀ v ∈ S, L (fun _ => v) = 0 := by
-    intro v hv
-    have hlt : (t : ℕ∞) < analyticOrderAt (fun τ : ℂ => F (p + τ • v)) 0 := hcon v hv
-    have hle : ((t + 1 : ℕ) : ℕ∞) ≤ analyticOrderAt (fun τ : ℂ => F (p + τ • v)) 0 := by
-      rw [Nat.cast_add, Nat.cast_one]; exact Order.add_one_le_of_lt hlt
-    rw [natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero (analyticAt_line_restriction F p v hF)]
-      at hle
-    have ht := hle t (by omega)
-    rw [iteratedDeriv_line_eq_iteratedFDeriv_diag F p v t hF] at ht
-    exact ht
-  -- by continuity, the diagonal vanishes on `closure S = univ`
-  have hcont : Continuous (fun w : E => L (fun _ => w)) :=
-    L.cont.comp (continuous_pi fun _ => continuous_id)
-  have hdiag_all : ∀ w : E, L (fun _ => w) = 0 := by
-    have hclosed : IsClosed {w : E | L (fun _ => w) = 0} := isClosed_eq hcont continuous_const
-    have hsub : closure S ⊆ {w : E | L (fun _ => w) = 0} := hclosed.closure_subset_iff.mpr hdiag_S
-    intro w; exact hsub (hS.closure_eq ▸ Set.mem_univ w)
-  -- polarization: a symmetric multilinear map with zero diagonal is zero — contradiction
-  exact hLne (symmetric_multilinear_eq_zero_of_diagonal_zero L
-    (fun v σ => hF.contDiffAt.iteratedFDeriv_comp_perm v σ) hdiag_all)
-
 /-- **Multivariate identity theorem corollary.** A nonzero analytic function on a (connected) normed
 space is nonzero somewhere in every nonempty open set. -/
 theorem exists_mem_open_ne_zero {P : Type*} [NormedAddCommGroup P] [NormedSpace ℂ P]

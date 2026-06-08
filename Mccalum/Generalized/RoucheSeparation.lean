@@ -32,27 +32,6 @@ open scoped Topology Real
 
 namespace RoucheSeparation
 
-/-- The coefficients of the Taylor-shifted complex family stay analytic (the `ℂ`-analogue of
-`analyticAt_taylor_coeff`). -/
-lemma analyticAt_taylor_coeff_C {D : Type*} [NormedAddCommGroup D] [NormedSpace ℂ D]
-    (N : ℕ) (g : D → Polynomial ℂ) (x₀ : D)
-    (hdeg : ∀ w, (g w).natDegree ≤ N)
-    (hcoeff : ∀ i, AnalyticAt ℂ (fun w => (g w).coeff i) x₀) (c : ℂ) (j : ℕ) :
-    AnalyticAt ℂ (fun w => (taylor c (g w)).coeff j) x₀ := by
-  have hrepr : (fun w => (taylor c (g w)).coeff j)
-      = fun w => ∑ i ∈ Finset.range (N + 1), (g w).coeff i * ((X + C c) ^ i).coeff j := by
-    funext w
-    conv_lhs => rw [as_sum_range' (g w) (N + 1) (by have := hdeg w; omega : (g w).natDegree < N + 1)]
-    rw [map_sum, Polynomial.finset_sum_coeff]
-    refine Finset.sum_congr rfl (fun i _ => ?_)
-    rw [show (monomial i ((g w).coeff i) : Polynomial ℂ) = (g w).coeff i • (X : Polynomial ℂ) ^ i from
-        by rw [smul_eq_C_mul, C_mul_X_pow_eq_monomial], map_smul, taylor_X_pow,
-      Polynomial.coeff_smul, smul_eq_mul]
-  rw [hrepr]
-  apply Finset.analyticAt_fun_sum
-  intro i _
-  exact (hcoeff i).mul analyticAt_const
-
 /-- **Joint continuity of evaluation** for a complex analytic family (the `ℂ`-analogue of
 `fam_eval_continuousOn`). -/
 lemma fam_eval_continuousOn_C (P : ℂ → Polynomial ℂ) (w₀ : ℂ) (d : ℕ)

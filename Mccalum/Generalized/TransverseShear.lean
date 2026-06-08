@@ -24,9 +24,6 @@ variable {n : ℕ}
 def shearₗ (i : Fin n) (ξ : Fin n → ℂ) : (Fin n → ℂ) →ₗ[ℂ] (Fin n → ℂ) :=
   LinearMap.id + (LinearMap.proj i).smulRight (ξ - Pi.single i 1)
 
-lemma shearₗ_apply (i : Fin n) (ξ w : Fin n → ℂ) :
-    shearₗ i ξ w = w + (w i) • (ξ - Pi.single i 1) := rfl
-
 /-- The shear, as a linear equivalence (invertible since `ξ i ≠ 0`). -/
 def shearEquivₗ (i : Fin n) (ξ : Fin n → ℂ) (hξ : ξ i ≠ 0) :
     (Fin n → ℂ) ≃ₗ[ℂ] (Fin n → ℂ) :=
@@ -66,9 +63,6 @@ lemma shearEquivₗ_single (i : Fin n) (ξ : Fin n → ℂ) (hξ : ξ i ≠ 0) :
 def shearCLE (i : Fin n) (ξ : Fin n → ℂ) (hξ : ξ i ≠ 0) :
     (Fin n → ℂ) ≃L[ℂ] (Fin n → ℂ) :=
   (shearEquivₗ i ξ hξ).toContinuousLinearEquiv
-
-@[simp] lemma shearCLE_apply (i : Fin n) (ξ : Fin n → ℂ) (hξ : ξ i ≠ 0) (w : Fin n → ℂ) :
-    shearCLE i ξ hξ w = w + (w i) • (ξ - Pi.single i 1) := rfl
 
 lemma shearCLE_single (i : Fin n) (ξ : Fin n → ℂ) (hξ : ξ i ≠ 0) :
     shearCLE i ξ hξ (Pi.single i 1) = ξ := shearEquivₗ_single i ξ hξ

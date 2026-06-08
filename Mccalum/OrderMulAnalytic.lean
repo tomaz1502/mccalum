@@ -468,29 +468,6 @@ theorem order_unit_mul_analytic
     order ℂ (fun z => u z * f z) x = order ℂ f x := by
   rw [order_mul_analytic u f x hu hf, order_eq_zero_of_ne u x hu0, zero_add]
 
-/-- **L2.5 (multi-cluster order additivity).** If `F = ∏ i, h i` near `x` and every factor except
-`i₀` is non-vanishing at `x` (all analytic), then the order of the product equals the order of the
-single (possibly) vanishing factor: `order(∏ h i) = order(h i₀)`. This is the additivity step that
-collapses the multi-cluster Weierstrass product onto one branch: at branch `i₀`'s graph point only
-`h i₀` vanishes (distinct clusters have disjoint roots, so the other factors are units there), so the
-per-cluster order-invariance transports to the whole family. Proof: split off the unit
-`∏_{i ≠ i₀} h i` (analytic, non-vanishing at `x`) and apply `order_unit_mul_analytic`. -/
-theorem order_finprod_of_single_vanishing
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (h : ι → E → ℂ) (x : E) (i₀ : ι)
-    (h_an : ∀ i, AnalyticAt ℂ (h i) x)
-    (h_ne : ∀ i, i ≠ i₀ → h i x ≠ 0) :
-    order ℂ (fun z => ∏ i, h i z) x = order ℂ (h i₀) x := by
-  have hfac : (fun z => ∏ i, h i z)
-      = fun z => (∏ i ∈ Finset.univ.erase i₀, h i z) * h i₀ z := by
-    funext z
-    rw [Finset.prod_erase_mul Finset.univ (fun i => h i z) (Finset.mem_univ i₀)]
-  rw [hfac]
-  refine order_unit_mul_analytic _ (h i₀) x
-    (Finset.analyticAt_fun_prod _ fun i _ => h_an i) ?_ (h_an i₀)
-  exact Finset.prod_ne_zero_iff.mpr fun i hi => h_ne i (Finset.ne_of_mem_erase hi)
-
 /-! ## Reverse factor bridge for the analytic order along a preconnected set (Phase D3 core) -/
 
 /-- **Analytic reverse factor bridge.** If `f, g` are holomorphic and not identically zero on a

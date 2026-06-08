@@ -31,22 +31,4 @@ lemma polyOfFamily_coeff (N : ℕ) (gℂ : CParam s e → Polynomial ℂ) (j : �
   rw [Finset.sum_ite_eq' (Finset.range (N + 1)) j (fun i => (fun z => (gℂ z).coeff i))]
   simp [Finset.mem_range]
 
-lemma polyOfFamily_natDegree_le (N : ℕ) (gℂ : CParam s e → Polynomial ℂ) :
-    (polyOfFamily N gℂ).natDegree ≤ N := by
-  apply Polynomial.natDegree_le_iff_coeff_eq_zero.mpr
-  intro j hj
-  rw [polyOfFamily_coeff, if_neg (by omega)]
-
-lemma polyToFun_polyOfFamily (N : ℕ) (gℂ : CParam s e → Polynomial ℂ)
-    (hdeg : ∀ z, (gℂ z).natDegree ≤ N) (zt : CParam s e × ℂ) :
-    polyToFun s e (polyOfFamily N gℂ) zt = (gℂ zt.1).eval zt.2 := by
-  rw [polyToFun_apply]
-  have hmapdeg : ((polyOfFamily N gℂ).map (Pi.evalRingHom (fun _ => ℂ) zt.1)).natDegree < N + 1 :=
-    Nat.lt_succ_of_le (le_trans natDegree_map_le (polyOfFamily_natDegree_le N gℂ))
-  rw [Polynomial.eval_eq_sum_range' hmapdeg,
-    Polynomial.eval_eq_sum_range' (Nat.lt_succ_of_le (hdeg zt.1))]
-  refine Finset.sum_congr rfl (fun j hj => ?_)
-  rw [Polynomial.coeff_map, polyOfFamily_coeff, if_pos (Nat.lt_succ_iff.mp (Finset.mem_range.mp hj))]
-  rfl
-
 end

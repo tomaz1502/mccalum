@@ -160,21 +160,3 @@ theorem weierstrass_irreducible_factorization
         · filter_upwards [heq, heq₁, heq₂] with w hw hw1 hw2
           rw [hw, hw1, hw2, prod_append_eval]
   exact key d H hH hd
-
-/-- **Sanity check (proved).** In any Weierstrass factorization the factor degrees sum to the total
-degree (evaluate the germ identity at the base point `0`, where everything is a power of `X` and
-degrees of a product of monics add). This validates the shape of the A2 axiom. -/
-theorem weierstrass_factorization_degree_sum
-    {H : CParam s e → Polynomial ℂ} {d : ℕ} {k : ℕ} {deg : Fin k → ℕ}
-    {fac : Fin k → (CParam s e → Polynomial ℂ)}
-    (hH : IsWeierstrassFamily H d)
-    (hfac_fam : ∀ j, IsWeierstrassFamily (fac j) (deg j))
-    (hfac_eq : ∀ᶠ w in 𝓝 (0 : CParam s e), H w = ∏ j : Fin k, fac j w) :
-    ∑ j : Fin k, deg j = d := by
-  have h0 : H (0 : CParam s e) = ∏ j : Fin k, fac j (0 : CParam s e) := hfac_eq.self_of_nhds
-  have hdeg : (∏ j : Fin k, fac j (0 : CParam s e)).natDegree = ∑ j : Fin k, deg j := by
-    rw [Polynomial.natDegree_prod _ _ (fun j _ => (hfac_fam j).monic 0 |>.ne_zero)]
-    exact Finset.sum_congr rfl fun j _ => (hfac_fam j).degree_eq 0
-  have := hH.degree_eq 0
-  rw [h0, hdeg] at this
-  exact this

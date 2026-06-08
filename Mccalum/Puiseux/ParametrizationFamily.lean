@@ -664,20 +664,6 @@ lemma norm_le_max_zero_tail (y : Fin (n + 1) → ℂ) : ‖y‖ ≤ max (‖y 0�
       _ ≤ ‖Fin.tail y‖ := norm_le_pi_norm _ _
       _ ≤ _ := le_max_right _ _
 
-/-- **`hsep` on `baseU` from separability off the hyperplane (Lemma 4.2.6 prerequisite, #16).** Given
-that `q` is separable on a ball away from `{z₀ = 0}` (which `DiscNormalForm.sep_off_hyperplane` +
-`separable_of_discr_ne_zero` provide from the discriminant hypotheses `order ≠ ⊤` + order-invariance),
-`q` is separable on the product punctured region `baseU` for small `δz, c`. -/
-lemma exists_hsep_baseU {q : (Fin (n + 1) → ℂ) → Polynomial ℂ} {δ₀ : ℝ}
-    (hsep₀ : ∀ z ∈ Metric.ball (0 : Fin (n + 1) → ℂ) δ₀, z 0 ≠ 0 → (q z).Separable)
-    {δz c : ℝ} (hc : Real.exp c ≤ δ₀) (hz : δz ≤ δ₀) :
-    ∀ y ∈ baseU n δz c, (q y).Separable := by
-  intro y hy
-  refine hsep₀ y ?_ (norm_pos_iff.mp hy.1)
-  rw [Metric.mem_ball, dist_zero_right]
-  calc ‖y‖ ≤ max (‖y 0‖) (‖Fin.tail y‖) := norm_le_max_zero_tail y
-    _ < δ₀ := max_lt (lt_of_lt_of_le hy.2.1 hc) (lt_of_lt_of_le hy.2.2 hz)
-
 /-- **Lemma 4.2.6, `s ≥ 1` family (punctured), for an irreducible Weierstrass family.** Discharges the
 root-bound and path-connectedness prerequisites (`roots_eventually_bounded`, `rootCover_pathConnected_gen`
 with `baseU` preconnected), then assembles the lift, joint analyticity, and descent into the family

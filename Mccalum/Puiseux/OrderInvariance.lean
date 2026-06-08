@@ -113,27 +113,6 @@ theorem order_comp_eq_of_diffeo_C {g : F → ℂ} {e : E → F} {e' : F → E} {
 
 end OrderCompC
 
-/-- **Linchpin (continuity of a parametrized circle integral).** If `F` is jointly continuous, then
-the Cauchy-type coefficient `z ↦ ∮_{|u|=ρ} F z u · uᵏ du` (over a fixed circle of radius `ρ > 0`) is
-continuous in the parameter `z`. The integrand is jointly continuous (the contour avoids `0`, so the
-integer power `uᵏ` is continuous), so `continuous_parametric_intervalIntegral_of_continuous'` applies. -/
-theorem continuous_circleIntegral_param {W : Type*} [TopologicalSpace W]
-    {F : W → ℂ → ℂ} (hF : ContinuousOn (Function.uncurry F) (Set.univ ×ˢ {u : ℂ | u ≠ 0}))
-    {ρ : ℝ} (hρ : 0 < ρ) (k : ℤ) :
-    Continuous (fun z => ∮ u in C(0, ρ), F z u * u ^ k) := by
-  have hcm : Continuous fun p : W × ℝ => circleMap 0 ρ p.2 :=
-    (continuous_circleMap 0 ρ).comp continuous_snd
-  have hne : ∀ p : W × ℝ, circleMap 0 ρ p.2 ≠ 0 := fun p => circleMap_ne_center hρ.ne'
-  have hF' : Continuous fun p : W × ℝ => F p.1 (circleMap 0 ρ p.2) :=
-    hF.comp_continuous (continuous_fst.prodMk hcm)
-      (fun p => Set.mk_mem_prod (Set.mem_univ _) (hne p))
-  have hint : Continuous (Function.uncurry fun (z : W) (θ : ℝ) =>
-      deriv (circleMap 0 ρ) θ • (F z (circleMap 0 ρ θ) * circleMap 0 ρ θ ^ k)) := by
-    simp only [Function.uncurry_def, deriv_circleMap, smul_eq_mul]
-    exact ((hcm.mul continuous_const).mul
-      (hF'.mul (hcm.zpow₀ k (fun p => Or.inl (hne p)))))
-  exact continuous_parametric_intervalIntegral_of_continuous' hint 0 (2 * π)
-
 /-- **Order bound from a nonzero Cauchy coefficient.** If `g` is analytic on `ball 0 R`, `ρ ∈ (0,R)`,
 and the `K`-th Cauchy coefficient `∮_{|u|=ρ} g(u)·u^(-K-1) du ≠ 0`, then `g` vanishes to order `≤ K`
 at `0`. (Contrapositive: if `g` vanishes to order `> K`, then `g(u)·u^(-K-1)` extends analytically
@@ -238,27 +217,6 @@ theorem circleIntegral_ne_of_analyticOrderAt_eq {g : ℂ → ℂ} {R ρ : ℝ}
   rw [hval] at hcontra
   rw [hcontra, smul_zero, hG0] at hformula
   exact hg₁0 hformula.symm
-
-/-- **Upper-semicontinuity of the vanishing order in a continuous family.** If `g : W → ℂ → ℂ` is
-jointly continuous, each slice `g z` is analytic on a common disc `ball 0 R`, and the slice at `z₀`
-vanishes to order exactly `K`, then nearby slices vanish to order `≤ K`. (The `K`-th Cauchy
-coefficient is `≠ 0` at `z₀` and continuous, hence `≠ 0` nearby, forcing order `≤ K`.) This is the
-engine of the constancy step in Lemma 4.2.7. -/
-theorem analyticOrderAt_le_eventually {W : Type*} [TopologicalSpace W] {g : W → ℂ → ℂ}
-    (hg : ContinuousOn (Function.uncurry g) (Set.univ ×ˢ {u : ℂ | u ≠ 0}))
-    {R ρ : ℝ} (hρ : 0 < ρ) (hρR : ρ < R) {z₀ : W}
-    (hgan : ∀ᶠ z in 𝓝 z₀, AnalyticOnNhd ℂ (g z) (Metric.ball 0 R)) {K : ℕ}
-    (hord : analyticOrderAt (g z₀) 0 = (K : ℕ∞)) :
-    ∀ᶠ z in 𝓝 z₀, analyticOrderAt (g z) 0 ≤ (K : ℕ∞) := by
-  have hgz₀ : AnalyticOnNhd ℂ (g z₀) (Metric.ball 0 R) := hgan.self_of_nhds
-  have hc0 : (∮ u in C(0, ρ), g z₀ u * u ^ (-(K : ℤ) - 1)) ≠ 0 :=
-    circleIntegral_ne_of_analyticOrderAt_eq hρ hρR hgz₀ K hord
-  have hcont : Continuous (fun z => ∮ u in C(0, ρ), g z u * u ^ (-(K : ℤ) - 1)) :=
-    continuous_circleIntegral_param hg hρ (-(K : ℤ) - 1)
-  have hev : ∀ᶠ z in 𝓝 z₀, (∮ u in C(0, ρ), g z u * u ^ (-(K : ℤ) - 1)) ≠ 0 :=
-    hcont.continuousAt.eventually_ne hc0
-  filter_upwards [hev, hgan] with z hz hzan
-  exact analyticOrderAt_le_of_circleIntegral_ne hρ hρR hzan K hz
 
 /-- **Local continuity of a parametrized circle integral.** If `F` is jointly continuous on
 `S ×ˢ {u ≠ 0}` for some neighbourhood `S` of `z₀`, then the Cauchy-type coefficient
@@ -1364,65 +1322,6 @@ theorem branchDiff_order_ne_top {n m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → �
   exact (NeBot.ne (by infer_instance) (Filter.eventually_false_iff_eq_bot.mp hcontra))
 
 open Polynomial in
-/-- **Lemma 4.2.8, step (ii) — the Weierstrass coefficient order bound.** For the slice extension `F`
-of `φ(z,·)` (`F` analytic at `0`, agreeing with `φ(z,·)` off `0`), with `m₁ := ord_u F`, the
-coefficient `a_j = ±e_j(branches)` satisfies `ord_u a_j ≥ j·m₁`. Combines the factorisation
-`q(cons(uᵐ,z)) = ∏(X − φ(z,ζⁱu))` (`q_comp_eq_prod_branches`, with `φ(z,ζⁱu) = F(ζⁱu)` off `0`), the
-symmetric-function bound (`analyticOrderAt_coeff_prod_X_sub_C`, each branch order `= m₁` by
-`analyticOrderAt_comp_smul`), and the identity theorem to extend the coefficient identity across `0`. -/
-theorem coeff_order_ge_branches {n m : ℕ} (hm : 0 < m)
-    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
-    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
-    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
-      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
-    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z : Fin n → ℂ} (hz : ‖z‖ < δz)
-    {F : ℂ → ℂ} (hFan : AnalyticAt ℂ F 0) (hFeq : F =ᶠ[𝓝[≠] (0 : ℂ)] fun w => φ (z, w))
-    (hLHSan : ∀ k, AnalyticAt ℂ (fun u => (q (Fin.cons (u ^ m) z)).coeff k) 0)
-    (hsep : ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable)
-    {j : ℕ} (hj : j ≤ m) :
-    ((j * (analyticOrderAt F 0).toNat : ℕ) : ℕ∞)
-      ≤ analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z)).coeff (m - j)) 0 := by
-  classical
-  set N := (analyticOrderAt F 0).toNat with hN
-  have hζ0 : ζ ≠ 0 := by
-    have : ‖ζ‖ = 1 := Complex.norm_eq_one_of_pow_eq_one hζ.pow_eq_one hm.ne'
-    rw [← norm_pos_iff, this]; norm_num
-  -- the analytic branches `βᵢ = F(ζⁱ·)`, each of order `m₁`
-  set β : Fin m → ℂ → ℂ := fun i u => F (ζ ^ (i : ℕ) * u) with hβdef
-  have hβan : ∀ i, AnalyticAt ℂ (β i) 0 := fun i =>
-    AnalyticAt.comp (g := F) (f := fun u => ζ ^ (i : ℕ) * u) (by simpa using hFan)
-      (analyticAt_const.mul analyticAt_id)
-  have hβord : ∀ i, (N : ℕ∞) ≤ analyticOrderAt (β i) 0 := fun i => by
-    rw [hβdef, analyticOrderAt_comp_smul hFan (pow_ne_zero _ hζ0)]
-    exact ENat.coe_toNat_le_self _
-  -- region near `0`
-  have hreg : ∀ᶠ u in 𝓝[≠] (0 : ℂ), ‖u‖ ^ m < Real.exp c := by
-    have hcont0 : ContinuousAt (fun u : ℂ => ‖u‖ ^ m) 0 := (continuous_norm.pow m).continuousAt
-    have h0 : (fun u : ℂ => ‖u‖ ^ m) 0 < Real.exp c := by
-      simpa [zero_pow hm.ne'] using Real.exp_pos c
-    exact (hcont0.eventually_lt continuousAt_const h0).filter_mono nhdsWithin_le_nhds
-  -- branches agree with `φ` off `0`
-  have hall : ∀ᶠ u in 𝓝[≠] (0 : ℂ), ∀ i : Fin m, β i u = φ (z, ζ ^ (i : ℕ) * u) :=
-    Filter.eventually_all.mpr fun i =>
-      (tendsto_const_mul_punctured (pow_ne_zero (i : ℕ) hζ0)).eventually hFeq
-  -- coefficient identity off `0`, then across `0` by the identity theorem
-  have hcoeff_eq : (fun u => (q (Fin.cons (u ^ m) z)).coeff (m - j))
-      =ᶠ[𝓝[≠] (0 : ℂ)] fun u => (∏ i : Fin m, (X - C (β i u))).coeff (m - j) := by
-    filter_upwards [hsep, hreg, self_mem_nhdsWithin, hall] with u husep hureg huneq huall
-    have hune : u ≠ 0 := huneq
-    rw [q_comp_eq_prod_branches hm hmonic hdeg hiff hζ hz (norm_pos_iff.mpr hune) hureg husep]
-    congr 1
-    refine Finset.prod_congr rfl (fun i _ => ?_)
-    rw [← huall i]
-  have hRHSan : AnalyticAt ℂ (fun u => (∏ i : Fin m, (X - C (β i u))).coeff (m - j)) 0 :=
-    analyticAt_coeff_prod_X_sub_C hβan Finset.univ (m - j)
-  have hfull := ((hLHSan (m - j)).frequently_eq_iff_eventually_eq hRHSan).mp hcoeff_eq.frequently
-  rw [analyticOrderAt_congr hfull]
-  have hbound := analyticOrderAt_coeff_prod_X_sub_C hβan hβord Finset.univ (m - j)
-  rwa [Finset.card_univ, Fintype.card_fin, show m - (m - j) = j from by omega] at hbound
-
-open Polynomial in
 /-- **Lemma 4.2.8, step (b) — ramification.** The order in `u` of the coefficient
 `u ↦ (q(cons(uᵐ,z))).coeff k` is `m` times the order in the transverse coordinate `w` of
 `w ↦ (q(cons(w,z))).coeff k` at `w = 0` (substituting `w = uᵐ`). Immediate from
@@ -1433,49 +1332,6 @@ theorem coeff_order_ramified {n m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → ℂ)
     analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z)).coeff k) 0
       = m * analyticOrderAt (fun w => (q (Fin.cons w z)).coeff k) 0 :=
   analyticOrderAt_comp_pow hg hm
-
-open Polynomial in
-/-- **Lemma 4.2.8, steps (a)+(b) combined — transverse coefficient order bound.** Combining the
-symmetric-function bound (`coeff_order_ge_branches`) with ramification, the order `tⱼ` in the
-transverse coordinate `w` of the Weierstrass coefficient `aⱼ = (q(cons(w,z))).coeff(m−j)` satisfies
-`m·tⱼ ≥ j·m₁` (the thesis bound `tⱼ ≥ j·m₁/m`). The coefficient analyticities are derived from
-analyticity of `q`'s coefficients at `cons 0 z`. -/
-theorem coeff_transverse_order_ge {n m : ℕ} (hm : 0 < m)
-    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
-    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
-    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
-      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
-    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z : Fin n → ℂ} (hz : ‖z‖ < δz)
-    (hcoeff : ∀ i, AnalyticAt ℂ (fun y => (q y).coeff i) (Fin.cons 0 z))
-    {F : ℂ → ℂ} (hFan : AnalyticAt ℂ F 0) (hFeq : F =ᶠ[𝓝[≠] (0 : ℂ)] fun w => φ (z, w))
-    (hsep : ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable)
-    {j : ℕ} (hj : j ≤ m) :
-    ((j * (analyticOrderAt F 0).toNat : ℕ) : ℕ∞)
-      ≤ m * analyticOrderAt (fun w => (q (Fin.cons w z)).coeff (m - j)) 0 := by
-  -- the transverse-slice coefficient is analytic at `0`
-  have hconsw : AnalyticAt ℂ (fun w : ℂ => (Fin.cons w z : Fin (n + 1) → ℂ)) 0 := by
-    rw [analyticAt_pi_iff]
-    intro l
-    refine Fin.cases ?_ (fun i => ?_) l
-    · simp only [Fin.cons_zero]; exact analyticAt_id
-    · simp only [Fin.cons_succ]; exact analyticAt_const
-  have hg : AnalyticAt ℂ (fun w => (q (Fin.cons w z)).coeff (m - j)) 0 :=
-    AnalyticAt.comp (g := fun y => (q y).coeff (m - j))
-      (f := fun w => (Fin.cons w z : Fin (n + 1) → ℂ)) (hcoeff (m - j)) hconsw
-  -- the ramified coefficient is analytic at `0`
-  have hconspow : AnalyticAt ℂ (fun u : ℂ => (Fin.cons (u ^ m) z : Fin (n + 1) → ℂ)) 0 := by
-    rw [analyticAt_pi_iff]
-    intro l
-    refine Fin.cases ?_ (fun i => ?_) l
-    · simp only [Fin.cons_zero]; exact analyticAt_id.pow m
-    · simp only [Fin.cons_succ]; exact analyticAt_const
-  have hLHSan : ∀ k, AnalyticAt ℂ (fun u => (q (Fin.cons (u ^ m) z)).coeff k) 0 := fun k =>
-    AnalyticAt.comp (g := fun y => (q y).coeff k)
-      (f := fun u => (Fin.cons (u ^ m) z : Fin (n + 1) → ℂ))
-      (by simpa only [zero_pow hm.ne'] using hcoeff k) hconspow
-  rw [← coeff_order_ramified hm (m - j) hg]
-  exact coeff_order_ge_branches hm hmonic hdeg hiff hζ hz hFan hFeq hLHSan hsep hj
 
 open Polynomial in
 /-- **Lemma 4.2.8, step (c) — the constant-term order is exactly `m·m₁`.** The constant term
@@ -1791,39 +1647,6 @@ theorem order_eval_ge_min {n m : ℕ} {q : (Fin (n + 1) → ℂ) → Polynomial 
     _ ≤ order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).coeff k) (Fin.cons 0 z', 0)
           + (k : ℕ∞) := by gcongr
 
-/-- **Phase 0 — the `ψ`-translation.** The order of `h(y,x) = (q y).eval x` at the graph point
-`(cons 0 z', ψ(cons 0 z'))` equals the order of the *translated* `h̃(y,x) = (q y).eval(x + ψ y)` at
-`(cons 0 z', 0)`, via order-invariance under the analytic shear `Ψ(y,x) = (y, x + ψ y)`
-(`order_comp_eq_of_diffeo_C`). This reduces the general germ to the centered case of
-`order_eval_ge_min`/`order_eval_le_min`. -/
-theorem order_eval_translate {n : ℕ} {q : (Fin (n + 1) → ℂ) → Polynomial ℂ} {z' : Fin n → ℂ}
-    {ψfun : (Fin (n + 1) → ℂ) → ℂ} (hψ : ContDiff ℂ (⊤ : WithTop ℕ∞) ψfun)
-    (hg_an : AnalyticAt ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2)
-      (Fin.cons 0 z', ψfun (Fin.cons 0 z'))) :
-    order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2)
-        (Fin.cons 0 z', ψfun (Fin.cons 0 z'))
-      = order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval (yx.2 + ψfun yx.1))
-        (Fin.cons 0 z', 0) := by
-  set g := fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2 with hgdef
-  set Ψ := fun yx : (Fin (n + 1) → ℂ) × ℂ => (yx.1, yx.2 + ψfun yx.1) with hΨdef
-  set Ψ' := fun yx : (Fin (n + 1) → ℂ) × ℂ => (yx.1, yx.2 - ψfun yx.1) with hΨ'def
-  have hΨ_cd : ContDiff ℂ (⊤ : WithTop ℕ∞) Ψ :=
-    ContDiff.prodMk contDiff_fst (ContDiff.add contDiff_snd (ContDiff.comp hψ contDiff_fst))
-  have hΨ'_cd : ContDiff ℂ (⊤ : WithTop ℕ∞) Ψ' :=
-    ContDiff.prodMk contDiff_fst (ContDiff.sub contDiff_snd (ContDiff.comp hψ contDiff_fst))
-  obtain ⟨t, htan, ht_open, hxt⟩ := eventually_nhds_iff.mp hg_an.eventually_analyticAt
-  set x : (Fin (n + 1) → ℂ) × ℂ := (Fin.cons 0 z', 0) with hxdef
-  have hex : Ψ x = (Fin.cons 0 z', ψfun (Fin.cons 0 z')) := by simp [hΨdef, hxdef]
-  have hinv2 : ∀ yx, Ψ (Ψ' yx) = yx := fun yx => by simp [hΨdef, hΨ'def]
-  have htan' : AnalyticOnNhd ℂ g t := htan
-  have hcomp_eq := order_comp_eq_of_diffeo_C (ht_open.preimage hΨ_cd.continuous) ht_open
-    (show x ∈ Ψ ⁻¹' t by rw [Set.mem_preimage, hex]; exact hxt)
-    htan'.contDiffOn_of_completeSpace hΨ_cd.contDiffOn hΨ'_cd.contDiffOn
-    (fun yx hyx => hyx) (fun yx hyx => by rw [Set.mem_preimage, hinv2 yx]; exact hyx)
-    (by simp [hΨdef, hΨ'def]) (fun yx _ => hinv2 yx)
-  rw [hex] at hcomp_eq
-  exact hcomp_eq.symm
-
 /-- **Local version of `order_eval_translate`.** The ψ-shear identity where `ψfun` need only be
 analytic at the base point `cons 0 z'` — not globally `ContDiff` — matching the axiom's section `ψ`,
 which is only locally analytic. Order is a local invariant, so `order_comp_eq_of_diffeo_C` applies on
@@ -2046,30 +1869,6 @@ theorem sep_dir_of_disc {n m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → ℂ) → 
   rw [hcoord0]
   exact mul_ne_zero (pow_ne_zero r (mul_ne_zero (pow_ne_zero m
     (Set.mem_compl_singleton_iff.mp hs0)) hv0)) (hGne _ hsU)
-
-/-- **Upper-semicontinuity of the order along a continuous map.** If `f` is analytic on an open `U`
-and `γ a ∈ U` with finite order there, then `order ℂ f (γ b) ≤ order ℂ f (γ a)` for `b` near `a`
-(the order can only *drop* nearby). This is the "order doesn't rise" half of the order-invariance
-constancy, from `isOpen_order_lt_inter`. -/
-theorem order_comp_le_eventually {α : Type*} [TopologicalSpace α]
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    {f : E → ℂ} {γ : α → E} {a : α} (hγ : ContinuousAt γ a)
-    {U : Set E} (hU : IsOpen U) (hf : AnalyticOnNhd ℂ f U) (haU : γ a ∈ U)
-    (hfin : order ℂ f (γ a) ≠ ⊤) :
-    ∀ᶠ b in 𝓝 a, order ℂ f (γ b) ≤ order ℂ f (γ a) := by
-  set K := (order ℂ f (γ a)).toNat with hKdef
-  have hK : order ℂ f (γ a) = (K : ℕ∞) := (ENat.coe_toNat hfin).symm
-  have hopen : IsOpen {z ∈ U | order ℂ f z < (K : ℕ∞) + 1} :=
-    isOpen_order_lt_inter U hU f hf ((K : ℕ∞) + 1)
-  have hmem : γ a ∈ {z ∈ U | order ℂ f z < (K : ℕ∞) + 1} :=
-    ⟨haU, by rw [hK]; exact_mod_cast Nat.lt_succ_self K⟩
-  have hpre : γ ⁻¹' {z ∈ U | order ℂ f z < (K : ℕ∞) + 1} ∈ 𝓝 a :=
-    hγ (hopen.mem_nhds hmem)
-  filter_upwards [hpre] with b hb
-  rw [hK]
-  by_contra hc
-  push_neg at hc
-  exact absurd (lt_of_lt_of_le hb.2 (Order.add_one_le_of_lt hc)) (lt_irrefl _)
 
 /-! ### Step B — order of the branch product equals the sum of branch-difference orders -/
 

@@ -43,11 +43,6 @@ theorem order_invariant_mul_mv
   intro a ha b hb
   rw [polyOrder_mul_add, polyOrder_mul_add, hf a ha b hb, hg a ha b hb]
 
-theorem order_invariant_sq_mv
-    (S : Set (Fin n → ℝ)) (f : MvPolyR n) (hf : OrderInvariantMv f S) :
-    OrderInvariantMv (f ^ 2) S := by
-  rw [sq]; exact order_invariant_mul_mv S f f hf hf
-
 theorem order_invariant_prod_mv
     (S : Set (Fin n → ℝ)) {ι : Type*} (s : Finset ι) (f : ι → MvPolyR n)
     (hf : ∀ i ∈ s, OrderInvariantMv (f i) S) :
@@ -194,52 +189,6 @@ private lemma polyOrder_factor_le
   rw [hsz] at h2
   exact (ENat.add_le_add_iff_right hB_ne).mp h2
 
-/-- **Bridge lemma (reverse direction).** If `f * g` is order-invariant on a connected set
-`S`, with `f, g` both nonzero, then `f` and `g` are each order-invariant on `S`.
-
-This is the multivariate, *connected-but-not-necessarily-open* counterpart of
-`order_invariant_mul_mv`. Unlike `order_additivity_holomorphic` it needs no open domain and
-no non-vanishing hypothesis on `S`: it relies only on upper semi-continuity of the order. -/
-theorem order_invariant_factor_of_mul
-    (S : Set (Fin n → ℝ)) (hS : IsPreconnected S) (f g : MvPolyR n)
-    (hf_ne : f ≠ 0) (hg_ne : g ≠ 0)
-    (hfg : OrderInvariantMv (f * g) S) :
-    OrderInvariantMv f S ∧ OrderInvariantMv g S := by
-  rcases S.eq_empty_or_nonempty with rfl | ⟨a₀, ha₀⟩
-  · exact ⟨fun a ha => ((Set.mem_empty_iff_false a).mp ha).elim,
-          fun a ha => ((Set.mem_empty_iff_false a).mp ha).elim⟩
-  have hsum : ∀ a ∈ S, polyOrder n f a + polyOrder n g a
-      = polyOrder n f a₀ + polyOrder n g a₀ := by
-    intro a ha
-    rw [← polyOrder_mul_add, ← polyOrder_mul_add]
-    exact hfg a ha a₀ ha₀
-  have hsum' : ∀ a ∈ S, polyOrder n g a + polyOrder n f a
-      = polyOrder n g a₀ + polyOrder n f a₀ := by
-    intro a ha; rw [add_comm, add_comm (polyOrder n g a₀)]; exact hsum a ha
-  have hf_le := polyOrder_factor_le S hS f g hf_ne hg_ne a₀ ha₀ hsum
-  have hg_le := polyOrder_factor_le S hS g f hg_ne hf_ne a₀ ha₀ hsum'
-  have hB_ne : polyOrder n g a₀ ≠ ⊤ := polyOrder_ne_top_of_ne_zero g hg_ne a₀
-  have hA_ne : polyOrder n f a₀ ≠ ⊤ := polyOrder_ne_top_of_ne_zero f hf_ne a₀
-  refine ⟨?_, ?_⟩
-  · have hf_eq : ∀ z ∈ S, polyOrder n f z = polyOrder n f a₀ := by
-      intro z hz
-      refine le_antisymm (hf_le z hz) ?_
-      have hsz := hsum z hz
-      have h2 : polyOrder n f z + polyOrder n g z ≤ polyOrder n f z + polyOrder n g a₀ :=
-        add_le_add_right (hg_le z hz) (polyOrder n f z)
-      rw [hsz] at h2
-      exact (ENat.add_le_add_iff_right hB_ne).mp h2
-    intro a ha b hb; rw [hf_eq a ha, hf_eq b hb]
-  · have hg_eq : ∀ z ∈ S, polyOrder n g z = polyOrder n g a₀ := by
-      intro z hz
-      refine le_antisymm (hg_le z hz) ?_
-      have hsz := hsum z hz
-      have h2 : polyOrder n f z + polyOrder n g z ≤ polyOrder n f a₀ + polyOrder n g z :=
-        add_le_add_left (hf_le z hz) (polyOrder n g z)
-      rw [hsz] at h2
-      exact (ENat.add_le_add_iff_left hA_ne).mp h2
-    intro a ha b hb; rw [hg_eq a ha, hg_eq b hb]
-
 /-! ### Main result -/
 
 private lemma leadingCoeff_prod_ne_zero
@@ -255,60 +204,5 @@ private theorem resultant_prod_eq
   have hlc := leadingCoeff_prod_ne_zero A hpos
   have h := resultant_prod_right A p id p.natDegree le_rfl (by simpa using hlc)
   simpa using h
-
-/-- **Theorem**: The discriminant of a product of squarefree, pairwise coprime polynomials
-of positive degree is order-invariant, given order-invariance of individual discriminants
-and pairwise resultants.
-
-This replaces the axiom `discr_prod_order_invariant` from `Mccalum.Prerequisites`, with the
-additional hypothesis `hpos` (positive degree), which is available at every call site via
-`IsSquarefreeBasis.pos_degree`. -/
-theorem discr_prod_order_invariant
-    (S : Set (Fin n → ℝ))
-    (A : Finset (PolyR n))
-    (hpos : ∀ f ∈ A, 0 < f.natDegree)
-    (hsf : ∀ f ∈ A, Squarefree f)
-    (hcop : ∀ f ∈ A, ∀ g ∈ A, f ≠ g → IsCoprime f g)
-    (hdisc : ∀ f ∈ A, OrderInvariantMv (discr f) S)
-    (hres : ∀ f ∈ A, ∀ g ∈ A, f ≠ g →
-      OrderInvariantMv (resultant f g) S) :
-    OrderInvariantMv (discr (∏ f ∈ A, f)) S := by
-  induction A using Finset.induction with
-  | empty =>
-    simp only [Finset.prod_empty]
-    rw [show (1 : PolyR n) = Polynomial.C 1 from rfl, discr_C]
-    intro a _ b _
-    have h1 : polyOrder n (1 : MvPolyR n) a = 0 := (polyOrder_zero_iff n 1 a).mpr (by simp)
-    have h2 : polyOrder n (1 : MvPolyR n) b = 0 := (polyOrder_zero_iff n 1 b).mpr (by simp)
-    rw [h1, h2]
-  | @insert p A hpA ih =>
-    have hpos' : ∀ f ∈ A, 0 < f.natDegree := fun f hf => hpos f (Finset.mem_insert_of_mem hf)
-    have hsf' : ∀ f ∈ A, Squarefree f := fun f hf => hsf f (Finset.mem_insert_of_mem hf)
-    have hcop' : ∀ f ∈ A, ∀ g ∈ A, f ≠ g → IsCoprime f g :=
-      fun f hf g hg => hcop f (Finset.mem_insert_of_mem hf) g (Finset.mem_insert_of_mem hg)
-    have hdisc' : ∀ f ∈ A, OrderInvariantMv (discr f) S :=
-      fun f hf => hdisc f (Finset.mem_insert_of_mem hf)
-    have hres' : ∀ f ∈ A, ∀ g ∈ A, f ≠ g → OrderInvariantMv (resultant f g) S :=
-      fun f hf g hg => hres f (Finset.mem_insert_of_mem hf) g (Finset.mem_insert_of_mem hg)
-    have ih_oi := ih hpos' hsf' hcop' hdisc' hres'
-    rw [Finset.prod_insert hpA]
-    by_cases hA : A = ∅
-    · subst hA; simp; exact hdisc p (Finset.mem_insert_self p ∅)
-    · have hA_ne : A.Nonempty := Finset.nonempty_of_ne_empty hA
-      have hp_pos := hpos p (Finset.mem_insert_self p A)
-      have hq_pos : 0 < (∏ f ∈ A, f).natDegree := prod_pos_degree A hA_ne hpos'
-      rw [discr_mul_eq p (∏ f ∈ A, f) hp_pos hq_pos]
-      -- res(p, ∏ A) is order-invariant
-      have hres_pq : OrderInvariantMv (resultant p (∏ f ∈ A, f)) S := by
-        rw [resultant_prod_eq p A hpos']
-        apply order_invariant_prod_mv S A (fun g => resultant p g)
-        intro g hg
-        exact hres p (Finset.mem_insert_self p A) g (Finset.mem_insert_of_mem hg)
-          (fun h => hpA (h ▸ hg))
-      exact order_invariant_mul_mv S _ _
-        (order_invariant_mul_mv S _ _
-          (hdisc p (Finset.mem_insert_self p A))
-          (order_invariant_sq_mv S _ hres_pq))
-        ih_oi
 
 end

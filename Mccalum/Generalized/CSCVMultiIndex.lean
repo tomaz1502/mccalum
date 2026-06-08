@@ -51,16 +51,4 @@ theorem norm_mtTerm_le {N n : ℕ} (c : ℂ) (assign : Fin N → Fin n) : ‖mtT
   exact mul_le_one₀ hmk (Finset.prod_nonneg fun i _ => norm_nonneg _)
     (Finset.prod_le_one (fun i _ => norm_nonneg _) fun i _ => norm_proj_pi_le _)
 
-/-- **The multi-index power series** on `ℂⁿ`: its degree-`N` term sums `mtTerm` over all coordinate
-assignments `assign : Fin N → Fin n` (each `assign` is a monomial of total degree `N`). The scalar
-coefficient `c N assign` will be the `n`-fold nested Cauchy integral. -/
-def mtSeries {n : ℕ} (c : (N : ℕ) → (Fin N → Fin n) → ℂ) :
-    FormalMultilinearSeries ℂ (Fin n → ℂ) ℂ :=
-  fun N => ∑ assign : Fin N → Fin n, mtTerm (c N assign) assign
-
-
-
-
-
-
 end

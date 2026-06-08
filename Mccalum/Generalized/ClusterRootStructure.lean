@@ -1,4 +1,3 @@
-import Mccalum.Generalized.RootSectionsAlgebra
 import Mccalum.Generalized.ZariskiNonsplitting
 import Mccalum.Puiseux.Conclusion2General
 

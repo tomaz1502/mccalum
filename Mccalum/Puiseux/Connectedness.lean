@@ -27,57 +27,6 @@ in `A`, all do. (The set `{w ∈ V : s w ∈ A}` is clopen in the preconnected `
 neighbourhood are exactly those passing through `A` at any one point.
 -/
 
-/-- **Clopen membership is constant along a continuous section over a preconnected set.** If `s` is
-continuous on a preconnected `V`, `A` is clopen, and `s w₀ ∈ A` for one `w₀ ∈ V`, then `s w ∈ A` for
-all `w ∈ V`. This is the single-valuedness core of the partial-product construction: the set of sheets
-belonging to a clopen component does not vary over a connected base neighbourhood. -/
-theorem clopen_mem_const_of_continuousOn {E X : Type*} [TopologicalSpace E] [TopologicalSpace X]
-    {s : X → E} {V : Set X} (hs : ContinuousOn s V) (hV : IsPreconnected V)
-    {A : Set E} (hA : IsClopen A) {w₀ : X} (h₀ : w₀ ∈ V) (hmem : s w₀ ∈ A) :
-    ∀ w ∈ V, s w ∈ A := by
-  haveI : PreconnectedSpace V := Subtype.preconnectedSpace hV
-  have hcont : Continuous (fun w : V => s (w : X)) := hs.restrict
-  have hclopen : IsClopen ((fun w : V => s (w : X)) ⁻¹' A) :=
-    ⟨hA.1.preimage hcont, hA.2.preimage hcont⟩
-  have hne : ((fun w : V => s (w : X)) ⁻¹' A).Nonempty := ⟨⟨w₀, h₀⟩, hmem⟩
-  have huniv := hclopen.eq_univ hne
-  intro w hw
-  have hmemuniv : (⟨w, hw⟩ : V) ∈ (Set.univ : Set V) := Set.mem_univ _
-  rw [← huniv] at hmemuniv
-  exact hmemuniv
-
-open Classical Polynomial in
-/-- **The `A`-partial product is single-valued and holomorphic.** Given continuous local sheet
-sections `s i` over a preconnected base neighbourhood `V`, with analytic root coordinates `φ i`, the
-partial product over the sheets currently lying in a clopen `A`,
-`∏_{i : s i w ∈ A} (X - C (φ i w))`, has analytic coefficients at the base point `w₀`. The point is
-single-valuedness: although the index set `{i : s i w ∈ A}` is defined pointwise in `w`, it is
-*constant* near `w₀` (by `clopen_mem_const_of_continuousOn`, both directions), so the partial product
-agrees near `w₀` with the fixed product over `{i : s i w₀ ∈ A}` — which is analytic by
-`analyticAt_coeff_prod_X_sub_C`. This is exactly the holomorphic Weierstrass factor `h_A` of one
-clopen component of the root cover. -/
-theorem partialProd_filter_coeff_analyticAt
-    {B E : Type*} [NormedAddCommGroup B] [NormedSpace ℂ B] [TopologicalSpace E]
-    {k : ℕ} (s : Fin k → B → E) (φ : Fin k → B → ℂ)
-    {V : Set B} {w₀ : B} (hVconn : IsPreconnected V) (hVnhds : V ∈ 𝓝 w₀) (hw₀ : w₀ ∈ V)
-    {A : Set E} (hA : IsClopen A)
-    (hs : ∀ i, ContinuousOn (s i) V) (hφ : ∀ i, AnalyticAt ℂ (φ i) w₀) (j : ℕ) :
-    AnalyticAt ℂ
-      (fun w => (∏ i ∈ Finset.univ.filter (fun i => s i w ∈ A), (X - C (φ i w))).coeff j) w₀ := by
-  set F₀ := Finset.univ.filter (fun i => s i w₀ ∈ A) with hF₀
-  have hbase : AnalyticAt ℂ (fun w => (∏ i ∈ F₀, (X - C (φ i w))).coeff j) w₀ :=
-    analyticAt_coeff_prod_X_sub_C F₀ φ hφ j
-  refine hbase.congr (Filter.eventually_of_mem hVnhds (fun w hw => ?_))
-  have hfilter : Finset.univ.filter (fun i => s i w ∈ A) = F₀ := by
-    rw [hF₀]
-    apply Finset.filter_congr
-    intro i _
-    constructor
-    · intro hiw; exact clopen_mem_const_of_continuousOn (hs i) hVconn hA hw hiw w₀ hw₀
-    · intro hi₀; exact clopen_mem_const_of_continuousOn (hs i) hVconn hA hw₀ hi₀ w hw
-  dsimp only
-  rw [hfilter]
-
 /-- **Removable singularity (analytic update form).** If `f : ℂ → ℂ` is complex differentiable on a
 punctured neighbourhood of `c` and bounded there (`‖f · - f c‖` bounded under `𝓝[≠] c`), then `f`
 redefined at `c` to its limit is analytic at `c`. This is the extension across the discriminant point
@@ -130,30 +79,6 @@ theorem exists_analyticAt_extend_of_bdd {f : ℂ → ℂ} {c : ℂ}
   calc ‖f z - f c‖ ≤ ‖f z‖ + ‖f c‖ := norm_sub_le _ _
     _ ≤ M + ‖f c‖ := by linarith
 
-/-- **Analytic extension across an isolated point of `Fin 1 → ℂ`.** The base-`(Fin 1 → ℂ)` form of the
-removable-singularity extension, obtained by transporting `exists_analyticAt_extend_of_bdd` through the
-linear equivalence `(Fin 1 → ℂ) ≃L[ℂ] ℂ`. This is what extends the Weierstrass factor `h_A`'s
-coefficient across the (isolated) discriminant point `0` in the convergent route's `1`-variable base. -/
-theorem exists_analyticAt_extend_funUnique {f : (Fin 1 → ℂ) → ℂ} {c : Fin 1 → ℂ}
-    (hf : ∀ᶠ y in 𝓝[≠] c, AnalyticAt ℂ f y) {M : ℝ} (hb : ∀ᶠ y in 𝓝[≠] c, ‖f y‖ ≤ M) :
-    ∃ F : (Fin 1 → ℂ) → ℂ, AnalyticAt ℂ F c ∧ F =ᶠ[𝓝[≠] c] f := by
-  set e := (ContinuousLinearEquiv.funUnique (Fin 1) ℂ ℂ : (Fin 1 → ℂ) ≃L[ℂ] ℂ) with he
-  have htend_symm : Tendsto (e.symm : ℂ → (Fin 1 → ℂ)) (𝓝[≠] (e c)) (𝓝[≠] c) := by
-    have h := (e.toHomeomorph.symm).map_punctured_nhds_eq (e c)
-    exact le_of_eq (by simpa using h)
-  have htend_e : Tendsto (e : (Fin 1 → ℂ) → ℂ) (𝓝[≠] c) (𝓝[≠] (e c)) :=
-    le_of_eq (by simpa using e.toHomeomorph.map_punctured_nhds_eq c)
-  have hg_an : ∀ᶠ z in 𝓝[≠] (e c), AnalyticAt ℂ (f ∘ (e.symm : ℂ → (Fin 1 → ℂ))) z := by
-    filter_upwards [htend_symm.eventually hf] with z hz
-    exact hz.comp ((e.symm : ℂ →L[ℂ] (Fin 1 → ℂ)).analyticAt z)
-  have hg_bd : ∀ᶠ z in 𝓝[≠] (e c), ‖(f ∘ (e.symm : ℂ → (Fin 1 → ℂ))) z‖ ≤ M :=
-    htend_symm.eventually hb
-  obtain ⟨G, hG_an, hG_eq⟩ := exists_analyticAt_extend_of_bdd hg_an hg_bd
-  refine ⟨G ∘ (e : (Fin 1 → ℂ) → ℂ), hG_an.comp ((e : (Fin 1 → ℂ) →L[ℂ] ℂ).analyticAt c), ?_⟩
-  filter_upwards [htend_e.eventually hG_eq] with y hy
-  simp only [Function.comp_apply] at hy ⊢
-  rw [hy, ContinuousLinearEquiv.symm_apply_apply]
-
 /-- **Agreement off a point + at the point ⟹ agreement near the point.** If `H₁ = H₂` on a punctured
 neighbourhood of `x` and `H₁ x = H₂ x`, then `H₁ = H₂` on a full neighbourhood of `x`. This is the
 filter core of the identity-theorem propagation of the factorisation `q = H_A · H_B` from the
@@ -165,26 +90,6 @@ theorem eventuallyEq_nhds_of_nhdsWithin_ne {α β : Type*} [TopologicalSpace α]
     rw [← nhdsWithin_union, Set.compl_union_self, nhdsWithin_univ]
   rw [Filter.EventuallyEq, hdecomp, Filter.eventually_sup]
   exact ⟨heq, by rw [nhdsWithin_singleton, Filter.eventually_pure]; exact hx⟩
-
-/-- **Polynomial-valued continuity at a non-isolated point.** If `F = G` on a punctured neighbourhood
-of `x` (`𝓝[≠] x` nontrivial) and each coefficient of `F` and `G` is continuous at `x`, then
-`F x = G x`. (Each coefficient agrees off `x` and is continuous, hence agrees at `x` by limit
-uniqueness.) This propagates `q = H_A · H_B` from the separable locus to the value at `0`, the input
-to the unique-factorisation step `H_A(0) = X ^ d_A`. -/
-theorem polynomial_eq_of_eventuallyEq_punctured {α : Type*} [TopologicalSpace α]
-    {F G : α → Polynomial ℂ} {x : α} [(𝓝[≠] x).NeBot]
-    (heq : F =ᶠ[𝓝[≠] x] G)
-    (hF : ∀ j, ContinuousAt (fun y => (F y).coeff j) x)
-    (hG : ∀ j, ContinuousAt (fun y => (G y).coeff j) x) :
-    F x = G x := by
-  ext j
-  have hcoeff_eq : (fun y => (F y).coeff j) =ᶠ[𝓝[≠] x] (fun y => (G y).coeff j) := by
-    filter_upwards [heq] with y hy; rw [hy]
-  have hFt : Filter.Tendsto (fun y => (F y).coeff j) (𝓝[≠] x) (𝓝 ((F x).coeff j)) :=
-    (hF j).continuousWithinAt.tendsto
-  have hGt : Filter.Tendsto (fun y => (G y).coeff j) (𝓝[≠] x) (𝓝 ((G x).coeff j)) :=
-    (hG j).continuousWithinAt.tendsto
-  exact tendsto_nhds_unique (Filter.Tendsto.congr' hcoeff_eq hFt) hGt
 
 /-- **The punctured ball is path-connected (rank `> 1`).** Transported from the path-connectedness of
 `E ∖ {0}` through the homeomorphism `univBall 0 r : E ≃ ball 0 r` (which fixes `0`). The connected
