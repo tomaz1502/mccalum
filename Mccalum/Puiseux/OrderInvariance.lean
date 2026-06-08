@@ -1,5 +1,6 @@
 import Mccalum.Puiseux.ParametrizationFamily
 import Mccalum.Generalized.RootBound
+import Mccalum.Generalized.DiscNormalForm
 import Mathlib.RingTheory.RootsOfUnity.Complex
 import Mathlib.RingTheory.Polynomial.Resultant.Basic
 
@@ -304,6 +305,34 @@ theorem analyticOrderAt_comp_pow {f : ℂ → ℂ} (hf : AnalyticAt ℂ f 0) {m 
       simp only [sub_zero] at hu ⊢
       rw [hu, ← pow_mul]
 
+/-- **Unit scaling preserves the order.** For `f` analytic at `0` and `a ≠ 0`, the order of
+`u ↦ f(a·u)` at `0` equals the order of `f` at `0`. (The branches `φ(z, ζⁱu)` therefore all share the
+order `m₁ = ord_u φ(z,·)` — the key input to Lemma 4.2.8.) -/
+theorem analyticOrderAt_comp_smul {f : ℂ → ℂ} (hf : AnalyticAt ℂ f 0) {a : ℂ} (ha : a ≠ 0) :
+    analyticOrderAt (fun u => f (a * u)) 0 = analyticOrderAt f 0 := by
+  have htend : Filter.Tendsto (fun u : ℂ => a * u) (𝓝 0) (𝓝 0) := by
+    have h : Filter.Tendsto (fun u : ℂ => a * u) (𝓝 0) (𝓝 (a * 0)) :=
+      (continuous_const.mul continuous_id).tendsto 0
+    rwa [mul_zero] at h
+  have hsm : AnalyticAt ℂ (fun u : ℂ => a * u) 0 := analyticAt_const.mul analyticAt_id
+  have hfa : AnalyticAt ℂ (fun u => f (a * u)) 0 :=
+    AnalyticAt.comp (g := f) (f := fun u : ℂ => a * u)
+      (by show AnalyticAt ℂ f (a * 0); rw [mul_zero]; exact hf) hsm
+  rcases eq_or_ne (analyticOrderAt f 0) ⊤ with htop | hfin
+  · rw [htop, analyticOrderAt_eq_top]
+    rw [analyticOrderAt_eq_top] at htop
+    exact htend.eventually htop
+  · obtain ⟨n, hn⟩ : ∃ n : ℕ, analyticOrderAt f 0 = (n : ℕ∞) := ⟨_, (ENat.coe_toNat hfin).symm⟩
+    obtain ⟨g, hgan, hg0, hfac⟩ := hf.analyticOrderAt_eq_natCast.mp hn
+    rw [hn]
+    refine hfa.analyticOrderAt_eq_natCast.mpr ⟨fun u => a ^ n * g (a * u), ?_, ?_, ?_⟩
+    · exact analyticAt_const.mul (AnalyticAt.comp (g := g) (f := fun u : ℂ => a * u)
+        (by show AnalyticAt ℂ g (a * 0); rw [mul_zero]; exact hgan) hsm)
+    · simpa [mul_zero] using mul_ne_zero (pow_ne_zero n ha) hg0
+    · filter_upwards [htend.eventually hfac] with u hu
+      simp only [sub_zero] at hu ⊢
+      rw [hu, mul_pow, smul_eq_mul, smul_eq_mul]; ring
+
 /-- **Reindexing the discriminant product over an injective root family.** If `r : Fin m → ℂ` is
 injective, the multiset double-product `∏_{x∈image}∏_{s∈image∖x}(x-s)` from `discr_eq_prod_roots`
 equals the indexed double-product `∏ᵢ ∏_{j≠i} (rᵢ - rⱼ)`. -/
@@ -416,6 +445,56 @@ theorem weierstrass_disc_eq_prod_branches {n m : ℕ} (hm : 0 < m)
     exact ⟨fun ⟨i, hi⟩ => ⟨i, Finset.mem_univ_val i, hi⟩, fun ⟨i, _, hi⟩ => ⟨i, hi⟩⟩
   rw [discr_eq_prod_roots (hmonic _) hpdeg, hroots, prod_roots_erase_eq_prod_fin hrinj, hpm]
 
+open Polynomial in
+/-- **The Weierstrass family factors over its Puiseux branches.** At a separable `u ≠ 0` in the
+parametrization domain, `q(cons(uᵐ,z)) = ∏ᵢ (X − φ(z,ζⁱu))` — the monic polynomial splits as the
+product over its (distinct) branch roots. This applies Vieta (`Splits.eq_prod_roots_of_monic`) to the
+root enumeration of `weierstrass_disc_eq_prod_branches`, and turns coefficient orders of `q` into
+symmetric-function orders of the branches (Lemma 4.2.8 step (ii)). -/
+theorem q_comp_eq_prod_branches {n m : ℕ} (hm : 0 < m)
+    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z : Fin n → ℂ} {u : ℂ}
+    (hz : ‖z‖ < δz) (hu : 0 < ‖u‖) (hud : ‖u‖ ^ m < Real.exp c)
+    (hsepu : (q (Fin.cons (u ^ m) z)).Separable) :
+    q (Fin.cons (u ^ m) z) = ∏ i : Fin m, (X - C (φ (z, ζ ^ (i : ℕ) * u))) := by
+  classical
+  set p := q (Fin.cons (u ^ m) z) with hp
+  set r : Fin m → ℂ := fun i => φ (z, ζ ^ (i : ℕ) * u) with hr
+  have hpne : p ≠ 0 := (hmonic _).ne_zero
+  have hpm : p.natDegree = m := hdeg _
+  have hmem : ∀ x, x ∈ p.roots ↔ ∃ i : Fin m, r i = x := by
+    intro x
+    rw [mem_roots hpne, IsRoot.def, hiff z u x hz hu hud]
+    constructor
+    · rintro ⟨u', hu'm, hu'φ⟩
+      obtain ⟨i, hi⟩ := (pow_eq_pow_iff_branch hm hζ (norm_pos_iff.mp hu)).mp hu'm
+      exact ⟨i, by show φ (z, ζ ^ (i : ℕ) * u) = x; rw [← hi]; exact hu'φ⟩
+    · rintro ⟨i, hi⟩
+      exact ⟨ζ ^ (i : ℕ) * u, (pow_eq_pow_iff_branch hm hζ (norm_pos_iff.mp hu)).mpr ⟨i, rfl⟩, hi⟩
+  have hrootcard : p.roots.toFinset.card = m := by
+    rw [Multiset.toFinset_card_of_nodup (nodup_roots hsepu),
+      (splits_iff_card_roots.mp (IsAlgClosed.splits p)), hpm]
+  have himg : Finset.image r Finset.univ = p.roots.toFinset := by
+    ext x
+    rw [Finset.mem_image, Multiset.mem_toFinset, hmem x]
+    exact ⟨fun ⟨i, _, hi⟩ => ⟨i, hi⟩, fun ⟨i, hi⟩ => ⟨i, Finset.mem_univ i, hi⟩⟩
+  have hrinj : Function.Injective r := by
+    rw [← Set.injOn_univ, ← Finset.coe_univ]
+    refine Finset.injOn_of_card_image_eq ?_
+    rw [himg, hrootcard, Finset.card_univ, Fintype.card_fin]
+  have hroots : p.roots = Finset.univ.val.map r := by
+    refine (Multiset.Nodup.ext (nodup_roots hsepu) (Finset.univ.nodup.map hrinj)).mpr ?_
+    intro x
+    rw [hmem x, Multiset.mem_map]
+    exact ⟨fun ⟨i, hi⟩ => ⟨i, Finset.mem_univ_val i, hi⟩, fun ⟨i, _, hi⟩ => ⟨i, hi⟩⟩
+  rw [(IsAlgClosed.splits p).eq_prod_roots_of_monic (hmonic _), hroots, Multiset.map_map,
+    Finset.prod_eq_multiset_prod]
+  rfl
+
 /-- **Order of a finite product is the sum of orders** (1-variable analytic functions). -/
 theorem analyticOrderAt_prod {ι : Type*} (s : Finset ι) (f : ι → ℂ → ℂ) :
     (∀ i ∈ s, AnalyticAt ℂ (f i) 0) →
@@ -431,6 +510,115 @@ theorem analyticOrderAt_prod {ι : Type*} (s : Finset ι) (f : ι → ℂ → �
     simp only [Finset.prod_insert ha, Finset.sum_insert ha]
     rw [show (fun u => f a u * ∏ i ∈ s, f i u) = (f a) * (fun u => ∏ i ∈ s, f i u) from rfl,
       analyticOrderAt_mul hfa hprodan, ih hfs]
+
+/-- **Order of a finite sum is at least the minimum of the orders** (1-variable). If every summand
+vanishes to order `≥ N`, so does the sum. -/
+theorem le_analyticOrderAt_finset_sum {ι : Type*} (s : Finset ι) {f : ι → ℂ → ℂ} {N : ℕ∞}
+    (hN : ∀ i ∈ s, N ≤ analyticOrderAt (f i) 0) :
+    N ≤ analyticOrderAt (fun u => ∑ i ∈ s, f i u) 0 := by
+  classical
+  induction s using Finset.induction with
+  | empty =>
+    simp only [Finset.sum_empty]
+    exact le_of_le_of_eq le_top
+      (analyticOrderAt_eq_top.mpr (Filter.Eventually.of_forall fun _ => rfl)).symm
+  | @insert a s ha ih =>
+    simp only [Finset.sum_insert ha]
+    refine le_trans (le_min (hN a (Finset.mem_insert_self a s))
+      (ih (fun i hi => hN i (Finset.mem_insert_of_mem hi)))) ?_
+    exact le_analyticOrderAt_add (f := f a) (g := fun u => ∑ i ∈ s, f i u)
+
+open Polynomial in
+/-- **Coefficients of `∏(X − C(βᵢ u))` are analytic in `u`.** Each coefficient is a polynomial
+expression in the analytic functions `βᵢ`, established by induction peeling one linear factor
+(`(X − C c)·Q` shifts/scales `Q`'s coefficients). -/
+theorem analyticAt_coeff_prod_X_sub_C {ι : Type*} {β : ι → ℂ → ℂ}
+    (hβ : ∀ i, AnalyticAt ℂ (β i) 0) (s : Finset ι) (k : ℕ) :
+    AnalyticAt ℂ (fun u => (∏ i ∈ s, (X - C (β i u))).coeff k) 0 := by
+  classical
+  induction s using Finset.induction generalizing k with
+  | empty =>
+    simp only [Finset.prod_empty, Polynomial.coeff_one]
+    exact analyticAt_const
+  | @insert a s ha ih =>
+    have heq : (fun u => (∏ i ∈ insert a s, (X - C (β i u))).coeff k)
+        = fun u => (X * ∏ i ∈ s, (X - C (β i u))).coeff k
+          - β a u * (∏ i ∈ s, (X - C (β i u))).coeff k := by
+      funext u
+      rw [Finset.prod_insert ha, sub_mul, Polynomial.coeff_sub, Polynomial.coeff_C_mul]
+    rw [heq]
+    cases k with
+    | zero =>
+      have h0 : (fun u => (X * ∏ i ∈ s, (X - C (β i u))).coeff 0
+            - β a u * (∏ i ∈ s, (X - C (β i u))).coeff 0)
+          = fun u => (0 : ℂ) - β a u * (∏ i ∈ s, (X - C (β i u))).coeff 0 := by
+        funext u
+        rw [Polynomial.mul_coeff_zero, Polynomial.coeff_X_zero, zero_mul]
+      rw [h0]
+      exact analyticAt_const.sub ((hβ a).mul (ih 0))
+    | succ l =>
+      have hl : (fun u => (X * ∏ i ∈ s, (X - C (β i u))).coeff (l + 1)
+            - β a u * (∏ i ∈ s, (X - C (β i u))).coeff (l + 1))
+          = fun u => (∏ i ∈ s, (X - C (β i u))).coeff l
+            - β a u * (∏ i ∈ s, (X - C (β i u))).coeff (l + 1) := by
+        funext u; rw [Polynomial.coeff_X_mul]
+      rw [hl]
+      exact (ih l).sub ((hβ a).mul (ih (l + 1)))
+
+open Polynomial in
+/-- **Symmetric-function order bound.** If each `βᵢ` vanishes to order `≥ N` at `0`, then the
+coefficient of `X^{|s|−k}` in `∏_{i∈s}(X − C(βᵢ u))` (i.e. `±` the `(|s|−k)`-th elementary symmetric
+function of the `βᵢ`) vanishes to order `≥ (|s|−k)·N`. This is step (ii) of Lemma 4.2.8: with
+`βᵢ = ζⁱ·`-branches (`N = m₁`), it bounds `ord_u` of the Weierstrass coefficients by `(m−k)·m₁`. -/
+theorem analyticOrderAt_coeff_prod_X_sub_C {ι : Type*} {β : ι → ℂ → ℂ} {N : ℕ}
+    (hβ : ∀ i, AnalyticAt ℂ (β i) 0) (hβord : ∀ i, (N : ℕ∞) ≤ analyticOrderAt (β i) 0)
+    (s : Finset ι) (k : ℕ) :
+    (((s.card - k) * N : ℕ) : ℕ∞)
+      ≤ analyticOrderAt (fun u => (∏ i ∈ s, (X - C (β i u))).coeff k) 0 := by
+  classical
+  induction s using Finset.induction generalizing k with
+  | empty => simp
+  | @insert a s ha ih =>
+    rw [Finset.card_insert_of_notMem ha]
+    have heq : (fun u => (∏ i ∈ insert a s, (X - C (β i u))).coeff k)
+        = fun u => (X * ∏ i ∈ s, (X - C (β i u))).coeff k
+          - β a u * (∏ i ∈ s, (X - C (β i u))).coeff k := by
+      funext u
+      rw [Finset.prod_insert ha, sub_mul, Polynomial.coeff_sub, Polynomial.coeff_C_mul]
+    rw [heq]
+    have hcoeffan : AnalyticAt ℂ (fun u => (∏ i ∈ s, (X - C (β i u))).coeff k) 0 :=
+      analyticAt_coeff_prod_X_sub_C hβ s k
+    have hterm1 : (((s.card + 1 - k) * N : ℕ) : ℕ∞)
+        ≤ analyticOrderAt (fun u => (X * ∏ i ∈ s, (X - C (β i u))).coeff k) 0 := by
+      cases k with
+      | zero =>
+        have h0 : (fun u => (X * ∏ i ∈ s, (X - C (β i u))).coeff 0) = fun _ => (0 : ℂ) := by
+          funext u; rw [Polynomial.mul_coeff_zero, Polynomial.coeff_X_zero, zero_mul]
+        rw [h0, analyticOrderAt_eq_top.mpr (Filter.Eventually.of_forall fun _ => rfl)]
+        exact le_top
+      | succ l =>
+        have hl : (fun u => (X * ∏ i ∈ s, (X - C (β i u))).coeff (l + 1))
+            = fun u => (∏ i ∈ s, (X - C (β i u))).coeff l := by
+          funext u; rw [Polynomial.coeff_X_mul]
+        rw [hl, show s.card + 1 - (l + 1) = s.card - l from by omega]
+        exact ih l
+    have hterm2 : (((s.card + 1 - k) * N : ℕ) : ℕ∞)
+        ≤ analyticOrderAt (fun u => β a u * (∏ i ∈ s, (X - C (β i u))).coeff k) 0 := by
+      have hmul : analyticOrderAt (fun u => β a u * (∏ i ∈ s, (X - C (β i u))).coeff k) 0
+          = analyticOrderAt (β a) 0
+            + analyticOrderAt (fun u => (∏ i ∈ s, (X - C (β i u))).coeff k) 0 :=
+        analyticOrderAt_mul (hβ a) hcoeffan
+      rw [hmul]
+      have hnat : (s.card + 1 - k) * N ≤ N + (s.card - k) * N := by
+        have h1 : s.card + 1 - k ≤ (s.card - k) + 1 := by omega
+        calc (s.card + 1 - k) * N ≤ ((s.card - k) + 1) * N := mul_le_mul_right' h1 N
+          _ = N + (s.card - k) * N := by ring
+      refine le_trans ?_ (add_le_add (hβord a) (ih k))
+      rw [← Nat.cast_add]
+      exact_mod_cast hnat
+    exact le_trans (le_min hterm1 hterm2)
+      (le_analyticOrderAt_sub (f := fun u => (X * ∏ i ∈ s, (X - C (β i u))).coeff k)
+        (g := fun u => β a u * (∏ i ∈ s, (X - C (β i u))).coeff k))
 
 /-! ### Step A — branches: per-slice analytic extension, continuity, and finiteness -/
 
@@ -638,6 +826,335 @@ theorem branchDiff_order_ne_top {n m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → �
     exact hij (hinj (by simpa using sub_eq_zero.mp hu0))
   exact (NeBot.ne (by infer_instance) (Filter.eventually_false_iff_eq_bot.mp hcontra))
 
+open Polynomial in
+/-- **Lemma 4.2.8, step (ii) — the Weierstrass coefficient order bound.** For the slice extension `F`
+of `φ(z,·)` (`F` analytic at `0`, agreeing with `φ(z,·)` off `0`), with `m₁ := ord_u F`, the
+coefficient `a_j = ±e_j(branches)` satisfies `ord_u a_j ≥ j·m₁`. Combines the factorisation
+`q(cons(uᵐ,z)) = ∏(X − φ(z,ζⁱu))` (`q_comp_eq_prod_branches`, with `φ(z,ζⁱu) = F(ζⁱu)` off `0`), the
+symmetric-function bound (`analyticOrderAt_coeff_prod_X_sub_C`, each branch order `= m₁` by
+`analyticOrderAt_comp_smul`), and the identity theorem to extend the coefficient identity across `0`. -/
+theorem coeff_order_ge_branches {n m : ℕ} (hm : 0 < m)
+    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z : Fin n → ℂ} (hz : ‖z‖ < δz)
+    {F : ℂ → ℂ} (hFan : AnalyticAt ℂ F 0) (hFeq : F =ᶠ[𝓝[≠] (0 : ℂ)] fun w => φ (z, w))
+    (hLHSan : ∀ k, AnalyticAt ℂ (fun u => (q (Fin.cons (u ^ m) z)).coeff k) 0)
+    (hsep : ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable)
+    {j : ℕ} (hj : j ≤ m) :
+    ((j * (analyticOrderAt F 0).toNat : ℕ) : ℕ∞)
+      ≤ analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z)).coeff (m - j)) 0 := by
+  classical
+  set N := (analyticOrderAt F 0).toNat with hN
+  have hζ0 : ζ ≠ 0 := by
+    have : ‖ζ‖ = 1 := Complex.norm_eq_one_of_pow_eq_one hζ.pow_eq_one hm.ne'
+    rw [← norm_pos_iff, this]; norm_num
+  -- the analytic branches `βᵢ = F(ζⁱ·)`, each of order `m₁`
+  set β : Fin m → ℂ → ℂ := fun i u => F (ζ ^ (i : ℕ) * u) with hβdef
+  have hβan : ∀ i, AnalyticAt ℂ (β i) 0 := fun i =>
+    AnalyticAt.comp (g := F) (f := fun u => ζ ^ (i : ℕ) * u) (by simpa using hFan)
+      (analyticAt_const.mul analyticAt_id)
+  have hβord : ∀ i, (N : ℕ∞) ≤ analyticOrderAt (β i) 0 := fun i => by
+    rw [hβdef, analyticOrderAt_comp_smul hFan (pow_ne_zero _ hζ0)]
+    exact ENat.coe_toNat_le_self _
+  -- region near `0`
+  have hreg : ∀ᶠ u in 𝓝[≠] (0 : ℂ), ‖u‖ ^ m < Real.exp c := by
+    have hcont0 : ContinuousAt (fun u : ℂ => ‖u‖ ^ m) 0 := (continuous_norm.pow m).continuousAt
+    have h0 : (fun u : ℂ => ‖u‖ ^ m) 0 < Real.exp c := by
+      simpa [zero_pow hm.ne'] using Real.exp_pos c
+    exact (hcont0.eventually_lt continuousAt_const h0).filter_mono nhdsWithin_le_nhds
+  -- branches agree with `φ` off `0`
+  have hall : ∀ᶠ u in 𝓝[≠] (0 : ℂ), ∀ i : Fin m, β i u = φ (z, ζ ^ (i : ℕ) * u) :=
+    Filter.eventually_all.mpr fun i =>
+      (tendsto_const_mul_punctured (pow_ne_zero (i : ℕ) hζ0)).eventually hFeq
+  -- coefficient identity off `0`, then across `0` by the identity theorem
+  have hcoeff_eq : (fun u => (q (Fin.cons (u ^ m) z)).coeff (m - j))
+      =ᶠ[𝓝[≠] (0 : ℂ)] fun u => (∏ i : Fin m, (X - C (β i u))).coeff (m - j) := by
+    filter_upwards [hsep, hreg, self_mem_nhdsWithin, hall] with u husep hureg huneq huall
+    have hune : u ≠ 0 := huneq
+    rw [q_comp_eq_prod_branches hm hmonic hdeg hiff hζ hz (norm_pos_iff.mpr hune) hureg husep]
+    congr 1
+    refine Finset.prod_congr rfl (fun i _ => ?_)
+    rw [← huall i]
+  have hRHSan : AnalyticAt ℂ (fun u => (∏ i : Fin m, (X - C (β i u))).coeff (m - j)) 0 :=
+    analyticAt_coeff_prod_X_sub_C hβan Finset.univ (m - j)
+  have hfull := ((hLHSan (m - j)).frequently_eq_iff_eventually_eq hRHSan).mp hcoeff_eq.frequently
+  rw [analyticOrderAt_congr hfull]
+  have hbound := analyticOrderAt_coeff_prod_X_sub_C hβan hβord Finset.univ (m - j)
+  rwa [Finset.card_univ, Fintype.card_fin, show m - (m - j) = j from by omega] at hbound
+
+open Polynomial in
+/-- **Lemma 4.2.8, step (b) — ramification.** The order in `u` of the coefficient
+`u ↦ (q(cons(uᵐ,z))).coeff k` is `m` times the order in the transverse coordinate `w` of
+`w ↦ (q(cons(w,z))).coeff k` at `w = 0` (substituting `w = uᵐ`). Immediate from
+`analyticOrderAt_comp_pow`. -/
+theorem coeff_order_ramified {n m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    {z : Fin n → ℂ} (k : ℕ)
+    (hg : AnalyticAt ℂ (fun w => (q (Fin.cons w z)).coeff k) 0) :
+    analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z)).coeff k) 0
+      = m * analyticOrderAt (fun w => (q (Fin.cons w z)).coeff k) 0 :=
+  analyticOrderAt_comp_pow hg hm
+
+open Polynomial in
+/-- **Lemma 4.2.8, steps (a)+(b) combined — transverse coefficient order bound.** Combining the
+symmetric-function bound (`coeff_order_ge_branches`) with ramification, the order `tⱼ` in the
+transverse coordinate `w` of the Weierstrass coefficient `aⱼ = (q(cons(w,z))).coeff(m−j)` satisfies
+`m·tⱼ ≥ j·m₁` (the thesis bound `tⱼ ≥ j·m₁/m`). The coefficient analyticities are derived from
+analyticity of `q`'s coefficients at `cons 0 z`. -/
+theorem coeff_transverse_order_ge {n m : ℕ} (hm : 0 < m)
+    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z : Fin n → ℂ} (hz : ‖z‖ < δz)
+    (hcoeff : ∀ i, AnalyticAt ℂ (fun y => (q y).coeff i) (Fin.cons 0 z))
+    {F : ℂ → ℂ} (hFan : AnalyticAt ℂ F 0) (hFeq : F =ᶠ[𝓝[≠] (0 : ℂ)] fun w => φ (z, w))
+    (hsep : ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable)
+    {j : ℕ} (hj : j ≤ m) :
+    ((j * (analyticOrderAt F 0).toNat : ℕ) : ℕ∞)
+      ≤ m * analyticOrderAt (fun w => (q (Fin.cons w z)).coeff (m - j)) 0 := by
+  -- the transverse-slice coefficient is analytic at `0`
+  have hconsw : AnalyticAt ℂ (fun w : ℂ => (Fin.cons w z : Fin (n + 1) → ℂ)) 0 := by
+    rw [analyticAt_pi_iff]
+    intro l
+    refine Fin.cases ?_ (fun i => ?_) l
+    · simp only [Fin.cons_zero]; exact analyticAt_id
+    · simp only [Fin.cons_succ]; exact analyticAt_const
+  have hg : AnalyticAt ℂ (fun w => (q (Fin.cons w z)).coeff (m - j)) 0 :=
+    AnalyticAt.comp (g := fun y => (q y).coeff (m - j))
+      (f := fun w => (Fin.cons w z : Fin (n + 1) → ℂ)) (hcoeff (m - j)) hconsw
+  -- the ramified coefficient is analytic at `0`
+  have hconspow : AnalyticAt ℂ (fun u : ℂ => (Fin.cons (u ^ m) z : Fin (n + 1) → ℂ)) 0 := by
+    rw [analyticAt_pi_iff]
+    intro l
+    refine Fin.cases ?_ (fun i => ?_) l
+    · simp only [Fin.cons_zero]; exact analyticAt_id.pow m
+    · simp only [Fin.cons_succ]; exact analyticAt_const
+  have hLHSan : ∀ k, AnalyticAt ℂ (fun u => (q (Fin.cons (u ^ m) z)).coeff k) 0 := fun k =>
+    AnalyticAt.comp (g := fun y => (q y).coeff k)
+      (f := fun u => (Fin.cons (u ^ m) z : Fin (n + 1) → ℂ))
+      (by simpa only [zero_pow hm.ne'] using hcoeff k) hconspow
+  rw [← coeff_order_ramified hm (m - j) hg]
+  exact coeff_order_ge_branches hm hmonic hdeg hiff hζ hz hFan hFeq hLHSan hsep hj
+
+open Polynomial in
+/-- **Lemma 4.2.8, step (c) — the constant-term order is exactly `m·m₁`.** The constant term
+`a_m = (q(cons(uᵐ,z))).coeff 0 = (-1)ᵐ ∏ᵢ βᵢ` (Vieta), so its order in `u` is *exactly*
+`Σᵢ ord βᵢ = m·m₁` (`analyticOrderAt_prod`; the `±1` is a unit). With ramification this gives
+`t_m = m₁` exactly — the order achieved at `j = m`, the minimum in Case II of Lemma 4.2.8. -/
+theorem coeff_zero_order_eq {n m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z : Fin n → ℂ} (hz : ‖z‖ < δz)
+    {F : ℂ → ℂ} (hFan : AnalyticAt ℂ F 0) (hFeq : F =ᶠ[𝓝[≠] (0 : ℂ)] fun w => φ (z, w))
+    (hLHSan0 : AnalyticAt ℂ (fun u => (q (Fin.cons (u ^ m) z)).coeff 0) 0)
+    (hsep : ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable) :
+    analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z)).coeff 0) 0 = m * analyticOrderAt F 0 := by
+  classical
+  have hζ0 : ζ ≠ 0 := by
+    have : ‖ζ‖ = 1 := Complex.norm_eq_one_of_pow_eq_one hζ.pow_eq_one hm.ne'
+    rw [← norm_pos_iff, this]; norm_num
+  set β : Fin m → ℂ → ℂ := fun i u => F (ζ ^ (i : ℕ) * u) with hβdef
+  have hβan : ∀ i, AnalyticAt ℂ (β i) 0 := fun i =>
+    AnalyticAt.comp (g := F) (f := fun u => ζ ^ (i : ℕ) * u) (by simpa using hFan)
+      (analyticAt_const.mul analyticAt_id)
+  have hreg : ∀ᶠ u in 𝓝[≠] (0 : ℂ), ‖u‖ ^ m < Real.exp c := by
+    have hcont0 : ContinuousAt (fun u : ℂ => ‖u‖ ^ m) 0 := (continuous_norm.pow m).continuousAt
+    have h0 : (fun u : ℂ => ‖u‖ ^ m) 0 < Real.exp c := by
+      simpa [zero_pow hm.ne'] using Real.exp_pos c
+    exact (hcont0.eventually_lt continuousAt_const h0).filter_mono nhdsWithin_le_nhds
+  have hall : ∀ᶠ u in 𝓝[≠] (0 : ℂ), ∀ i : Fin m, β i u = φ (z, ζ ^ (i : ℕ) * u) :=
+    Filter.eventually_all.mpr fun i =>
+      (tendsto_const_mul_punctured (pow_ne_zero (i : ℕ) hζ0)).eventually hFeq
+  -- the constant term equals `(-1)ᵐ ∏ βᵢ` off `0`
+  have heq : (fun u => (q (Fin.cons (u ^ m) z)).coeff 0)
+      =ᶠ[𝓝[≠] (0 : ℂ)] fun u => (-1 : ℂ) ^ m * ∏ i : Fin m, β i u := by
+    filter_upwards [hsep, hreg, self_mem_nhdsWithin, hall] with u husep hureg huneq huall
+    have hune : u ≠ 0 := huneq
+    rw [q_comp_eq_prod_branches hm hmonic hdeg hiff hζ hz (norm_pos_iff.mpr hune) hureg husep,
+      Polynomial.coeff_zero_eq_eval_zero, Polynomial.eval_prod]
+    have hfac : ∀ i : Fin m,
+        ((X - C (φ (z, ζ ^ (i : ℕ) * u))) : ℂ[X]).eval 0 = -β i u := fun i => by
+      simp only [Polynomial.eval_sub, Polynomial.eval_X, Polynomial.eval_C, zero_sub]
+      rw [huall i]
+    rw [Finset.prod_congr rfl (fun i _ => hfac i),
+      show (fun i : Fin m => -β i u) = (fun i => (-1 : ℂ) * β i u) from
+        funext (fun i => (neg_one_mul _).symm),
+      Finset.prod_mul_distrib, Finset.prod_const, Finset.card_univ, Fintype.card_fin]
+  have hRHSan : AnalyticAt ℂ (fun u => (-1 : ℂ) ^ m * ∏ i : Fin m, β i u) 0 :=
+    analyticAt_const.mul (Finset.analyticAt_fun_prod _ (fun i _ => hβan i))
+  have hfull := (hLHSan0.frequently_eq_iff_eventually_eq hRHSan).mp heq.frequently
+  rw [analyticOrderAt_congr hfull,
+    show (fun u => (-1 : ℂ) ^ m * ∏ i : Fin m, β i u)
+      = (fun _ => (-1 : ℂ) ^ m) * (fun u => ∏ i : Fin m, β i u) from rfl,
+    analyticOrderAt_mul analyticAt_const (Finset.analyticAt_fun_prod _ (fun i _ => hβan i)),
+    analyticAt_const.analyticOrderAt_eq_zero.mpr (pow_ne_zero _ (by norm_num)), zero_add,
+    analyticOrderAt_prod Finset.univ β (fun i _ => hβan i)]
+  have hβord : ∀ i, analyticOrderAt (β i) 0 = analyticOrderAt F 0 := fun i => by
+    rw [hβdef, analyticOrderAt_comp_smul hFan (pow_ne_zero _ hζ0)]
+  rw [Finset.sum_congr rfl (fun i _ => hβord i), Finset.sum_const, Finset.card_univ,
+    Fintype.card_fin, nsmul_eq_mul]
+
+/-! ### Step (d) infrastructure — multivariate order via line restrictions -/
+
+/-- **The multivariate order is bounded by every line-restriction order.** For `f` analytic at `x₀`
+and any direction `w`, `order ℂ f x₀ ≤ analyticOrderAt (t ↦ f(x₀ + t·w)) 0`. (If `f` vanishes to
+multivariate order `≥ N`, all its iterated Fréchet derivatives of degree `< N` vanish, so the
+line-restriction's Taylor coefficients of degree `< N` vanish too.) This gives the *upper bound* side
+of Lemma 4.2.8 (`ord h ≤ m` via the `x`-axis line, `≤ m₁` via the transverse line), sidestepping the
+general Newton-polygon no-cancellation. -/
+theorem order_le_line {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (f : E → ℂ) (x₀ w : E) (hf : AnalyticAt ℂ f x₀) :
+    order ℂ f x₀ ≤ analyticOrderAt (fun t : ℂ => f (x₀ + t • w)) 0 := by
+  have hline : AnalyticAt ℂ (fun t : ℂ => f (x₀ + t • w)) 0 :=
+    analyticAt_line_restriction f x₀ w hf
+  have hkey : ∀ N : ℕ, (N : ℕ∞) ≤ order ℂ f x₀ →
+      (N : ℕ∞) ≤ analyticOrderAt (fun t : ℂ => f (x₀ + t • w)) 0 := by
+    intro N hN
+    rw [natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero hline]
+    intro k hk
+    rw [iteratedDeriv_line_eq_iteratedFDeriv_diag f x₀ w k hf,
+      iteratedFDeriv_eq_zero_of_lt_order (lt_of_lt_of_le (by exact_mod_cast hk) hN)]
+    rfl
+  rcases eq_or_ne (order ℂ f x₀) ⊤ with htop | hfin
+  · rw [htop, top_le_iff]
+    by_contra hne
+    obtain ⟨M, hM⟩ : ∃ M : ℕ, analyticOrderAt (fun t : ℂ => f (x₀ + t • w)) 0 = (M : ℕ∞) :=
+      ⟨_, (ENat.coe_toNat hne).symm⟩
+    have hcontra := hkey (M + 1) (by rw [htop]; exact le_top)
+    rw [hM] at hcontra
+    exact absurd (by exact_mod_cast hcontra : M + 1 ≤ M) (by omega)
+  · obtain ⟨N, hNeq⟩ : ∃ N : ℕ, order ℂ f x₀ = (N : ℕ∞) := ⟨_, (ENat.coe_toNat hfin).symm⟩
+    rw [hNeq]; exact hkey N (by rw [hNeq])
+
+/-- **The multivariate order is at least `V` iff every line restriction has order `≥ V`** (lower-bound
+direction). If every line `t ↦ f(x₀ + t·w)` vanishes to order `≥ V`, then `f` vanishes to multivariate
+order `≥ V`. (For `k < V`, every diagonal value `(iteratedFDeriv k f x₀)(w,…,w) = iteratedDeriv k(line)
+0 = 0`; by polarization a symmetric multilinear map with zero diagonal is zero.) This is the dual of
+`order_le_line` — the tool for the *lower* bound in Lemma 4.2.8. -/
+theorem le_order_of_forall_line {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {f : E → ℂ} {x₀ : E} (hf : AnalyticAt ℂ f x₀) {V : ℕ}
+    (h : ∀ w : E, (V : ℕ∞) ≤ analyticOrderAt (fun t : ℂ => f (x₀ + t • w)) 0) :
+    (V : ℕ∞) ≤ order ℂ f x₀ := by
+  by_contra hlt
+  push_neg at hlt
+  obtain ⟨K, hKeq⟩ : ∃ K : ℕ, order ℂ f x₀ = (K : ℕ∞) :=
+    ⟨_, (ENat.coe_toNat (ne_top_of_lt hlt)).symm⟩
+  have hK_lt : K < V := by rw [hKeq] at hlt; exact_mod_cast hlt
+  refine absurd (order_eq_natCast_iff.mp hKeq).2 ?_
+  push_neg
+  refine symmetric_multilinear_eq_zero_of_diagonal_zero _
+    (fun v σ => hf.contDiffAt.iteratedFDeriv_comp_perm v σ) ?_
+  intro w
+  rw [← iteratedDeriv_line_eq_iteratedFDeriv_diag f x₀ w K hf]
+  have hline := h w
+  rw [natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero
+    (analyticAt_line_restriction f x₀ w hf)] at hline
+  exact hline K hK_lt
+
+/-- **Order of a multivariate sum is at least the minimum of the orders.** If every summand vanishes
+to multivariate order `≥ V`, so does the sum. (The easy direction of the Newton polygon: via line
+restrictions, `analyticOrderAt(Σ lines) ≥ min` reduces to the 1-variable
+`le_analyticOrderAt_finset_sum`.) -/
+theorem le_order_finset_sum {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {ι : Type*} (s : Finset ι) {f : ι → E → ℂ} {x₀ : E} {V : ℕ}
+    (hf : ∀ i ∈ s, AnalyticAt ℂ (f i) x₀) (hV : ∀ i ∈ s, (V : ℕ∞) ≤ order ℂ (f i) x₀) :
+    (V : ℕ∞) ≤ order ℂ (fun y => ∑ i ∈ s, f i y) x₀ := by
+  refine le_order_of_forall_line (Finset.analyticAt_fun_sum s hf) (fun w => ?_)
+  exact le_analyticOrderAt_finset_sum s (fun i hi =>
+    le_trans (hV i hi) (order_le_line (f i) x₀ w (hf i hi)))
+
+open Polynomial in
+/-- **Lemma 4.2.8, upper bound (Case I direction).** If the central section polynomial is
+`q(cons(0,z')) = (X − ψ)ᵐ` (the single root `ψ` of multiplicity `m`, from Conclusion 1), then the
+full multivariate order of `h(y,x) = (q y).eval x` at the graph point `(cons(0,z'), ψ)` is `≤ m`. The
+`x`-axis line restriction is `t ↦ ((X − ψ)ᵐ).eval(ψ + t) = tᵐ`, of order `m`. -/
+theorem order_eval_le_deg {n m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) {z' : Fin n → ℂ} {ψ : ℂ}
+    (hq_central : q (Fin.cons 0 z') = (X - C ψ) ^ m)
+    (hf : AnalyticAt ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2)
+      (Fin.cons 0 z', ψ)) :
+    order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2) (Fin.cons 0 z', ψ)
+      ≤ (m : ℕ∞) := by
+  refine le_trans (order_le_line _ (Fin.cons 0 z', ψ) ((0 : Fin (n + 1) → ℂ), (1 : ℂ)) hf)
+    (le_of_eq ?_)
+  have hline_eq :
+      (fun t : ℂ => (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2)
+        ((Fin.cons 0 z', ψ) + t • ((0 : Fin (n + 1) → ℂ), (1 : ℂ)))) = fun t => t ^ m := by
+    funext t
+    simp only [Prod.smul_mk, smul_zero, Prod.mk_add_mk, add_zero, smul_eq_mul, mul_one]
+    rw [hq_central]
+    simp only [Polynomial.eval_pow, Polynomial.eval_sub, Polynomial.eval_X, Polynomial.eval_C,
+      add_sub_cancel_left]
+  rw [hline_eq]
+  refine (analyticAt_id.pow m).analyticOrderAt_eq_natCast.mpr ⟨fun _ => 1, analyticAt_const,
+    one_ne_zero, ?_⟩
+  filter_upwards with t
+  simp
+
+open Polynomial in
+/-- **Lemma 4.2.8, upper bound (Case II direction).** The full order of `h` at `(cons 0 z', ψ)` is
+bounded by `m₁ := ord_t((q(cons t z')).eval ψ)` — the order in the transverse coordinate `t` of the
+section polynomial's value at the (fixed) root `ψ`. The transverse-axis line restriction is exactly
+`t ↦ (q(cons t z')).eval ψ`. (This `m₁` equals the Puiseux order of `φ` relative to the section; here
+only the *definition* is needed for the upper bound, sidestepping the branch computation.) -/
+theorem order_eval_le_transverse {n : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) {z' : Fin n → ℂ}
+    {ψ : ℂ}
+    (hf : AnalyticAt ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2)
+      (Fin.cons 0 z', ψ)) :
+    order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2) (Fin.cons 0 z', ψ)
+      ≤ analyticOrderAt (fun t : ℂ => (q (Fin.cons t z')).eval ψ) 0 := by
+  refine le_trans (order_le_line _ (Fin.cons 0 z', ψ)
+    ((Pi.single 0 1 : Fin (n + 1) → ℂ), (0 : ℂ)) hf) (le_of_eq ?_)
+  congr 1
+  funext t
+  have hcons : (Fin.cons 0 z' + t • (Pi.single 0 1 : Fin (n + 1) → ℂ)) = Fin.cons t z' := by
+    funext j
+    refine Fin.cases ?_ (fun i => ?_) j
+    · simp [Fin.cons_zero]
+    · simp [Fin.cons_succ, Pi.single_eq_of_ne (Fin.succ_ne_zero i)]
+  simp only [Prod.smul_mk, smul_zero, Prod.mk_add_mk, add_zero, hcons]
+
+open Polynomial in
+/-- **Lemma 4.2.8, the upper bound `≤ min(m, m₁)`.** Combining the `x`-axis (`≤ m`) and transverse
+(`≤ m₁`) line restrictions. The lower bound `≥ min(m, m₁)` is the remaining (hard, equisingularity)
+direction. -/
+theorem order_eval_le_min {n m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) {z' : Fin n → ℂ} {ψ : ℂ}
+    (hq_central : q (Fin.cons 0 z') = (X - C ψ) ^ m)
+    (hf : AnalyticAt ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2)
+      (Fin.cons 0 z', ψ)) :
+    order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).eval yx.2) (Fin.cons 0 z', ψ)
+      ≤ min (m : ℕ∞) (analyticOrderAt (fun t : ℂ => (q (Fin.cons t z')).eval ψ) 0) :=
+  le_min (order_eval_le_deg q hq_central hf) (order_eval_le_transverse q hf)
+
+/-- **Upper-semicontinuity of the order along a continuous map.** If `f` is analytic on an open `U`
+and `γ a ∈ U` with finite order there, then `order ℂ f (γ b) ≤ order ℂ f (γ a)` for `b` near `a`
+(the order can only *drop* nearby). This is the "order doesn't rise" half of the order-invariance
+constancy, from `isOpen_order_lt_inter`. -/
+theorem order_comp_le_eventually {α : Type*} [TopologicalSpace α]
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {f : E → ℂ} {γ : α → E} {a : α} (hγ : ContinuousAt γ a)
+    {U : Set E} (hU : IsOpen U) (hf : AnalyticOnNhd ℂ f U) (haU : γ a ∈ U)
+    (hfin : order ℂ f (γ a) ≠ ⊤) :
+    ∀ᶠ b in 𝓝 a, order ℂ f (γ b) ≤ order ℂ f (γ a) := by
+  set K := (order ℂ f (γ a)).toNat with hKdef
+  have hK : order ℂ f (γ a) = (K : ℕ∞) := (ENat.coe_toNat hfin).symm
+  have hopen : IsOpen {z ∈ U | order ℂ f z < (K : ℕ∞) + 1} :=
+    isOpen_order_lt_inter U hU f hf ((K : ℕ∞) + 1)
+  have hmem : γ a ∈ {z ∈ U | order ℂ f z < (K : ℕ∞) + 1} :=
+    ⟨haU, by rw [hK]; exact_mod_cast Nat.lt_succ_self K⟩
+  have hpre : γ ⁻¹' {z ∈ U | order ℂ f z < (K : ℕ∞) + 1} ∈ 𝓝 a :=
+    hγ (hopen.mem_nhds hmem)
+  filter_upwards [hpre] with b hb
+  rw [hK]
+  by_contra hc
+  push_neg at hc
+  exact absurd (lt_of_lt_of_le hb.2 (Order.add_one_le_of_lt hc)) (lt_irrefl _)
+
 /-! ### Step B — order of the branch product equals the sum of branch-difference orders -/
 
 /-- **Sum of branch-difference orders = order of the branch product.** With the off-diagonal
@@ -682,6 +1199,110 @@ theorem sum_order_eq_order_branchProd {n m : ℕ} {φ : (Fin n → ℂ) × ℂ �
   have hji : j ≠ i := (Finset.mem_erase.mp hj).1
   simp only [if_neg (Ne.symm hji)]
 
+/-! ### Bridge — analyticity of the discriminant of an analytic family -/
+
+/-- **Determinant of a matrix with analytic entries is analytic.** `det` is a finite signed sum of
+products of the entries (`Matrix.det_apply`), so analyticity is inherited from the entries. -/
+theorem analyticAt_matrix_det {W : Type*} [NormedAddCommGroup W] [NormedSpace ℂ W]
+    {ι : Type*} [Fintype ι] [DecidableEq ι] {M : W → Matrix ι ι ℂ}
+    {z₀ : W} (h : ∀ i j, AnalyticAt ℂ (fun u => M u i j) z₀) :
+    AnalyticAt ℂ (fun u => (M u).det) z₀ := by
+  have he : (fun u => (M u).det)
+      = fun u => ∑ σ : Equiv.Perm ι, Equiv.Perm.sign σ • ∏ i, M u (σ i) i := by
+    funext u; rw [Matrix.det_apply]
+  rw [he]
+  refine Finset.analyticAt_fun_sum _ (fun σ _ => ?_)
+  exact (Finset.analyticAt_fun_prod _ (fun i _ => h (σ i) i)).const_smul
+
+open Polynomial in
+/-- **The discriminant of the ramified Weierstrass family is analytic in `u`.** Since
+`disc f = ± resultant f f' = ± det(sylvester f f')` and the Sylvester entries are coefficients of
+`f = q(cons(uᵐ,z))` and `f' = f.derivative` (analytic in `u`), the map `u ↦ disc(q(cons(uᵐ,z)))` is
+analytic. This is the missing regularity that lets the order of the branch product be identified with
+the order of the discriminant. -/
+theorem analyticAt_disc_comp {n m : ℕ} (hm : 0 < m) {W : Type*} [NormedAddCommGroup W]
+    [NormedSpace ℂ W] {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    {g : W → Fin (n + 1) → ℂ} {u₀ : W}
+    (hcoeff : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (g u₀)) (hg : AnalyticAt ℂ g u₀) :
+    AnalyticAt ℂ (fun u => (q (g u)).discr) u₀ := by
+  classical
+  -- coefficients of `f = q(g u)` and `f' = derivative f` are analytic in `u`
+  have hPan : ∀ k, AnalyticAt ℂ (fun u => (q (g u)).coeff k) u₀ := fun k =>
+    AnalyticAt.comp (g := fun y => (q y).coeff k) (f := g) (hcoeff k) hg
+  have hQan : ∀ k, AnalyticAt ℂ (fun u => (q (g u)).derivative.coeff k) u₀ := by
+    intro k
+    simp only [coeff_derivative]
+    exact (hPan (k + 1)).mul analyticAt_const
+  -- entries of the Sylvester matrix are analytic
+  have hentry : ∀ i j : Fin (m + (m - 1)),
+      AnalyticAt ℂ (fun u => sylvester (q (g u)) (q (g u)).derivative m (m - 1) i j) u₀ := by
+    intro i j
+    induction j using Fin.addCases with
+    | left j₁ =>
+      simp only [sylvester, Matrix.of_apply, Fin.addCases_left]
+      by_cases hcond : (i : ℕ) ∈ Set.Icc (j₁ : ℕ) ((j₁ : ℕ) + (m - 1))
+      · simp only [if_pos hcond]; exact hQan _
+      · simp only [if_neg hcond]; exact analyticAt_const
+    | right j₁ =>
+      simp only [sylvester, Matrix.of_apply, Fin.addCases_right]
+      by_cases hcond : (i : ℕ) ∈ Set.Icc (j₁ : ℕ) ((j₁ : ℕ) + m)
+      · simp only [if_pos hcond]; exact hPan _
+      · simp only [if_neg hcond]; exact analyticAt_const
+  -- `disc f = ± resultant f f' m (m-1)`, pointwise
+  have hdisceq : ∀ u, (q (g u)).discr
+      = (-1) ^ (m * (m - 1) / 2)
+        * resultant (q (g u)) (q (g u)).derivative m (m - 1) := by
+    intro u
+    have hfdeg : (q (g u)).natDegree = m := hdeg _
+    have hfmonic : (q (g u)).Monic := hmonic _
+    have hdpos : 0 < (q (g u)).degree := by
+      rw [degree_eq_natDegree hfmonic.ne_zero, hfdeg]; exact_mod_cast hm
+    have hrd := resultant_deriv hdpos
+    rw [hfdeg, hfmonic.leadingCoeff, mul_one] at hrd
+    have hsq : ((-1 : ℂ)) ^ (m * (m - 1) / 2) * (-1) ^ (m * (m - 1) / 2) = 1 := by
+      rw [← pow_add, ← two_mul, pow_mul]; norm_num
+    rw [hrd, ← mul_assoc, hsq, one_mul]
+  rw [show (fun u => (q (g u)).discr)
+      = fun u => (-1) ^ (m * (m - 1) / 2)
+        * (sylvester (q (g u)) (q (g u)).derivative m (m - 1)).det
+      from funext hdisceq]
+  exact analyticAt_const.mul (analyticAt_matrix_det hentry)
+
+/-- The ramified specialisation `g = u ↦ cons(uᵐ, z)` of `analyticAt_disc_comp`. -/
+theorem analyticAt_disc_comp_pow {n m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m) (z : Fin n → ℂ) (u₀ : ℂ)
+    (hcoeff : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (Fin.cons (u₀ ^ m) z)) :
+    AnalyticAt ℂ (fun u => (q (Fin.cons (u ^ m) z)).discr) u₀ :=
+  analyticAt_disc_comp hm hmonic hdeg hcoeff
+    (g := fun u => (Fin.cons (u ^ m) z : Fin (n + 1) → ℂ)) (by
+      rw [analyticAt_pi_iff]
+      intro j
+      refine Fin.cases ?_ (fun i => ?_) j
+      · simp only [Fin.cons_zero]; exact analyticAt_id.pow m
+      · simp only [Fin.cons_succ]; exact analyticAt_const)
+
+open Polynomial in
+/-- **Ramification of the discriminant order.** The order in `u` of `disc(q(cons(uᵐ,z)))` is `m`
+times the order in `w` (the transverse coordinate) of `disc(q(cons(w,z)))` at `w = 0`. Immediate
+from `analyticOrderAt_comp_pow` applied to the analytic slice `w ↦ disc(q(cons(w,z)))`. This converts
+the (ramified) `u`-order appearing in the branch analysis into the genuine transverse-coordinate
+order that the discriminant normal form controls. -/
+theorem disc_comp_pow_order_eq {n m : ℕ} (hm : 0 < m) {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m) (z : Fin n → ℂ)
+    (hcoeff : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (Fin.cons 0 z)) :
+    analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z)).discr) 0
+      = m * analyticOrderAt (fun w => (q (Fin.cons w z)).discr) 0 := by
+  have hf : AnalyticAt ℂ (fun w => (q (Fin.cons w z)).discr) 0 :=
+    analyticAt_disc_comp hm hmonic hdeg hcoeff
+      (g := fun w => (Fin.cons w z : Fin (n + 1) → ℂ)) (by
+        rw [analyticAt_pi_iff]
+        intro j
+        refine Fin.cases ?_ (fun i => ?_) j
+        · simp only [Fin.cons_zero]; exact analyticAt_id
+        · simp only [Fin.cons_succ]; exact analyticAt_const)
+  exact analyticOrderAt_comp_pow hf hm
+
 /-! ### Bridge ingredient — the discriminant equals the branch product near `u = 0` -/
 
 open Polynomial in
@@ -711,6 +1332,113 @@ theorem disc_eventuallyEq_branchProd {n m : ℕ} (hm : 0 < m)
   filter_upwards [hsep, hlt, self_mem_nhdsWithin] with u hsepu hudu huneq
   have hune : u ≠ 0 := huneq
   exact weierstrass_disc_eq_prod_branches hm hmonic hdeg hiff hζ hz (norm_pos_iff.mpr hune) hudu hsepu
+
+open Polynomial in
+/-- **Branch-product order = discriminant order.** For `z` in the domain with `q(cons(uᵐ,z))`
+separable for small `u ≠ 0`, the order at `0` of the branch product equals the order of the
+discriminant `u ↦ disc(q(cons(uᵐ,z)))`. The two functions agree on a punctured neighbourhood
+(`disc_eventuallyEq_branchProd`) and are *both analytic at `0`* (Step A for the product,
+`analyticAt_disc_comp_pow` for the discriminant), so the identity theorem
+(`frequently_eq_iff_eventually_eq`) upgrades the agreement across `0`; the `±1` factor is a unit. -/
+theorem branchProd_order_eq_disc_order {n m : ℕ} (hm : 0 < m)
+    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcont : ∀ i, Continuous (fun y => (q y).coeff i))
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
+    (hroot : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      (q (Fin.cons (u ^ m) z)).eval (φ (z, u)) = 0)
+    (han : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c → AnalyticAt ℂ φ (z, u))
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) {z : Fin n → ℂ} (hz : ‖z‖ < δz)
+    (hana : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (Fin.cons 0 z))
+    {R : ℝ} (hR : 0 < R) (hRc : R ^ m < Real.exp c)
+    (hsep : ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable) :
+    analyticOrderAt (fun u => ∏ i : Fin m, ∏ j ∈ Finset.univ.erase i,
+        (φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u))) 0
+      = analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z)).discr) 0 := by
+  have hnormζ : ‖ζ‖ = 1 := Complex.norm_eq_one_of_pow_eq_one hζ.pow_eq_one hm.ne'
+  have hnormζp : ∀ i : Fin m, ‖ζ ^ (i : ℕ)‖ = 1 := fun i => by rw [norm_pow, hnormζ, one_pow]
+  have hdiff_an : ∀ i j : Fin m, i ≠ j →
+      AnalyticAt ℂ (fun u => φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u)) 0 := by
+    intro i j _
+    exact branchDiff_slice_analyticOnNhd hm hmonic hdeg hcont hroot han hz
+      (hnormζp i) (hnormζp j) hRc 0 (Metric.mem_ball_self hR)
+  have hbp_an : AnalyticAt ℂ (fun u => ∏ i : Fin m, ∏ j ∈ Finset.univ.erase i,
+      (φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u))) 0 := by
+    refine Finset.analyticAt_fun_prod _ (fun i _ => ?_)
+    exact Finset.analyticAt_fun_prod _
+      (fun j hj => hdiff_an i j ((Finset.mem_erase.mp hj).1).symm)
+  have hdisc_an : AnalyticAt ℂ (fun u => (q (Fin.cons (u ^ m) z)).discr) 0 :=
+    analyticAt_disc_comp_pow hm hmonic hdeg z 0
+      (fun i => by simpa only [zero_pow hm.ne'] using hana i)
+  have hrhs_an : AnalyticAt ℂ (fun u => (-1) ^ (m * (m - 1) / 2)
+      * ∏ i : Fin m, ∏ j ∈ Finset.univ.erase i,
+          (φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u))) 0 := analyticAt_const.mul hbp_an
+  have heqp := disc_eventuallyEq_branchProd hm hmonic hdeg hiff hζ hz hsep
+  have heqfull := (hdisc_an.frequently_eq_iff_eventually_eq hrhs_an).mp heqp.frequently
+  have hord_rhs : analyticOrderAt (fun u => (-1) ^ (m * (m - 1) / 2)
+      * ∏ i : Fin m, ∏ j ∈ Finset.univ.erase i,
+          (φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u))) 0
+      = analyticOrderAt (fun u => ∏ i : Fin m, ∏ j ∈ Finset.univ.erase i,
+          (φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u))) 0 := by
+    rw [show (fun u => (-1 : ℂ) ^ (m * (m - 1) / 2)
+          * ∏ i : Fin m, ∏ j ∈ Finset.univ.erase i,
+              (φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u)))
+        = (fun _ => (-1 : ℂ) ^ (m * (m - 1) / 2))
+          * (fun u => ∏ i : Fin m, ∏ j ∈ Finset.univ.erase i,
+              (φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u))) from rfl,
+      analyticOrderAt_mul analyticAt_const hbp_an,
+      analyticAt_const.analyticOrderAt_eq_zero.mpr (pow_ne_zero _ (by norm_num)), zero_add]
+  rw [analyticOrderAt_congr heqfull, hord_rhs]
+
+/-! ### Bridge — transverse-slice order from the discriminant normal form -/
+
+/-- **Slice order from a coordinate-`0` factorization.** If `D = (coord 0)ʳ · G` near
+`cons 0 z₀` with `G` analytic and `G(cons 0 z₀) ≠ 0` (the discriminant *normal form* `disc =
+wʳ·unit`), then the order in the transverse coordinate `w` of the slice `w ↦ D(cons w z)` is exactly
+`r` for all `z` near `z₀` — in particular *constant*. This is the bridge from the discriminant
+normal form to `hslice_const`. -/
+theorem slice_order_eq_of_factor {n : ℕ} {D G : (Fin (n + 1) → ℂ) → ℂ} {z₀ : Fin n → ℂ} {r : ℕ}
+    (hG : AnalyticAt ℂ G (Fin.cons 0 z₀)) (hG0 : G (Fin.cons 0 z₀) ≠ 0)
+    (hfac : D =ᶠ[𝓝 (Fin.cons 0 z₀)] fun y => (y 0) ^ r * G y) :
+    ∀ᶠ z in 𝓝 z₀, analyticOrderAt (fun w => D (Fin.cons w z)) 0 = (r : ℕ∞) := by
+  -- the gluing map `(z, w) ↦ cons w z`
+  have hκ : Continuous (fun p : (Fin n → ℂ) × ℂ => (Fin.cons p.2 p.1 : Fin (n + 1) → ℂ)) := by
+    refine continuous_pi (fun j => ?_)
+    refine Fin.cases ?_ (fun i => ?_) j
+    · simp only [Fin.cons_zero]; exact continuous_snd
+    · simp only [Fin.cons_succ]; exact (continuous_apply i).comp continuous_fst
+  have hcons0 : Continuous (fun z : Fin n → ℂ => (Fin.cons 0 z : Fin (n + 1) → ℂ)) := by
+    refine continuous_pi (fun j => ?_)
+    refine Fin.cases ?_ (fun i => ?_) j
+    · simp only [Fin.cons_zero]; exact continuous_const
+    · simp only [Fin.cons_succ]; exact continuous_apply i
+  -- pull the factorization back to the slices
+  have hpre := (hκ.continuousAt (x := (z₀, 0))).eventually hfac
+  rw [nhds_prod_eq] at hpre
+  have hGne : ∀ᶠ z in 𝓝 z₀, G (Fin.cons 0 z) ≠ 0 :=
+    ((hG.continuousAt.comp hcons0.continuousAt).eventually_ne hG0)
+  have hGan : ∀ᶠ z in 𝓝 z₀, AnalyticAt ℂ G (Fin.cons 0 z) :=
+    hcons0.continuousAt.eventually hG.eventually_analyticAt
+  filter_upwards [hpre.curry, hGne, hGan] with z hslice hz0 hzan
+  -- the slice base map `w ↦ cons w z` is analytic
+  have hcons_w : AnalyticAt ℂ (fun w : ℂ => (Fin.cons w z : Fin (n + 1) → ℂ)) 0 := by
+    rw [analyticAt_pi_iff]
+    intro j
+    refine Fin.cases ?_ (fun i => ?_) j
+    · simp only [Fin.cons_zero]; exact analyticAt_id
+    · simp only [Fin.cons_succ]; exact analyticAt_const
+  have hg_an : AnalyticAt ℂ (fun w => G (Fin.cons w z)) 0 :=
+    AnalyticAt.comp (g := G) (f := fun w => (Fin.cons w z : Fin (n + 1) → ℂ)) hzan hcons_w
+  have hg0 : (fun w => G (Fin.cons w z)) 0 ≠ 0 := hz0
+  have hf_eq : (fun w => D (Fin.cons w z)) =ᶠ[𝓝 (0 : ℂ)]
+      fun w => (w - 0) ^ r • G (Fin.cons w z) := by
+    filter_upwards [hslice] with w hw
+    simp only [hw, Fin.cons_zero, sub_zero, smul_eq_mul]
+  have hf_an : AnalyticAt ℂ (fun w => D (Fin.cons w z)) 0 :=
+    (((analyticAt_id.sub analyticAt_const).pow r).smul hg_an).congr hf_eq.symm
+  exact hf_an.analyticOrderAt_eq_natCast.mpr ⟨fun w => G (Fin.cons w z), hg_an, hg0, hf_eq⟩
 
 /-! ### Assembly — branch-difference orders are locally constant (modulo the bridge) -/
 
@@ -821,5 +1549,202 @@ theorem branchDiff_orders_eventually_constant {n m : ℕ} (hm : 0 < m)
   have h := hz (i, j)
   simp only [if_neg hij] at h
   exact h
+
+open Polynomial in
+/-- **Lemma 4.2.7, reduced to discriminant-order constancy.** This is `branchDiff_orders_eventually_
+constant` with the bridge hypothesis replaced by the *more primitive* and natural condition that the
+order in `u` of the discriminant `u ↦ disc(q(cons(uᵐ,z)))` is locally constant in `z`. The branch
+product order is identified with the discriminant order (`branchProd_order_eq_disc_order`) at each
+`z` near `z₀`, discharging the bridge. The remaining input `hdisc_const` is what the discriminant
+theory (ramification + normal form, cf. `analyticOrderAt_comp_pow` and `DiscNormalForm`) supplies. -/
+theorem branchDiff_orders_eventually_constant_of_disc {n m : ℕ} (hm : 0 < m)
+    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcont : ∀ i, Continuous (fun y => (q y).coeff i))
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
+    (hroot : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      (q (Fin.cons (u ^ m) z)).eval (φ (z, u)) = 0)
+    (han : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c → AnalyticAt ℂ φ (z, u))
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m)
+    {z₀ : Fin n → ℂ} (hz₀ : ‖z₀‖ < δz)
+    (hana_ev : ∀ᶠ z in 𝓝 z₀, ∀ i, AnalyticAt ℂ (fun z' => (q z').coeff i) (Fin.cons 0 z))
+    (hsep_nbhd : ∀ᶠ z in 𝓝 z₀, ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable)
+    {R ρ : ℝ} (hρ : 0 < ρ) (hρR : ρ < R) (hRc : R ^ m < Real.exp c)
+    (hdisc_const : ∀ᶠ z in 𝓝 z₀,
+        analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z)).discr) 0
+      = analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z₀)).discr) 0) :
+    ∀ᶠ z in 𝓝 z₀, ∀ i j : Fin m, i ≠ j →
+      analyticOrderAt (fun u => φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u)) 0
+      = analyticOrderAt (fun u => φ (z₀, ζ ^ (i : ℕ) * u) - φ (z₀, ζ ^ (j : ℕ) * u)) 0 := by
+  have hR : 0 < R := lt_trans hρ hρR
+  have hrz : 0 < δz - ‖z₀‖ := by linarith
+  have hS : Metric.ball z₀ (δz - ‖z₀‖) ∈ 𝓝 z₀ := Metric.ball_mem_nhds _ hrz
+  have hSsub : ∀ z ∈ Metric.ball z₀ (δz - ‖z₀‖), ‖z‖ < δz := by
+    intro z hz
+    have hd : dist z z₀ < δz - ‖z₀‖ := Metric.mem_ball.mp hz
+    have htri : ‖z‖ ≤ ‖z₀‖ + ‖z - z₀‖ := by simpa using norm_add_le z₀ (z - z₀)
+    rw [dist_eq_norm] at hd; linarith
+  have hzev : ∀ᶠ z in 𝓝 z₀, ‖z‖ < δz := Filter.eventually_of_mem hS hSsub
+  have hsep₀ : ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z₀)).Separable :=
+    hsep_nbhd.self_of_nhds
+  -- discharge the branch-product bridge from discriminant-order constancy (part a)
+  have hbp0 := branchProd_order_eq_disc_order hm hmonic hdeg hcont hroot han hiff hζ hz₀
+    hana_ev.self_of_nhds hR hRc hsep₀
+  have hbridge : ∀ᶠ z in 𝓝 z₀,
+      analyticOrderAt (fun u => ∏ i : Fin m, ∏ j ∈ Finset.univ.erase i,
+          (φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u))) 0
+      = analyticOrderAt (fun u => ∏ i : Fin m, ∏ j ∈ Finset.univ.erase i,
+          (φ (z₀, ζ ^ (i : ℕ) * u) - φ (z₀, ζ ^ (j : ℕ) * u))) 0 := by
+    filter_upwards [hsep_nbhd, hdisc_const, hzev, hana_ev] with z hsepz hdiscz hz hanaz
+    rw [branchProd_order_eq_disc_order hm hmonic hdeg hcont hroot han hiff hζ hz hanaz hR hRc hsepz,
+      hdiscz, ← hbp0]
+  exact branchDiff_orders_eventually_constant hm hmonic hdeg hcont hroot han hiff hζ hz₀
+    hsep₀ hρ hρR hRc hbridge
+
+open Polynomial in
+/-- **Lemma 4.2.7, reduced to transverse-coordinate discriminant-order constancy.** The cleanest
+interface to the discriminant theory: the bridge holds as soon as the order in the *transverse
+coordinate* `w` of `disc(q(cons(w,z)))` at `w = 0` is locally constant in the section variable `z`.
+This is exactly the statement supplied by the discriminant normal form together with the axiom's
+hypothesis that the (multivariate) discriminant has constant order along the section. The ramification
+factor `m` (`disc_comp_pow_order_eq`) cancels. -/
+theorem branchDiff_orders_eventually_constant_of_disc_slice {n m : ℕ} (hm : 0 < m)
+    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcont : ∀ i, Continuous (fun y => (q y).coeff i))
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
+    (hroot : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      (q (Fin.cons (u ^ m) z)).eval (φ (z, u)) = 0)
+    (han : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c → AnalyticAt ℂ φ (z, u))
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m)
+    {z₀ : Fin n → ℂ} (hz₀ : ‖z₀‖ < δz)
+    (hana_ev : ∀ᶠ z in 𝓝 z₀, ∀ i, AnalyticAt ℂ (fun z' => (q z').coeff i) (Fin.cons 0 z))
+    (hsep_nbhd : ∀ᶠ z in 𝓝 z₀, ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable)
+    {R ρ : ℝ} (hρ : 0 < ρ) (hρR : ρ < R) (hRc : R ^ m < Real.exp c)
+    (hslice_const : ∀ᶠ z in 𝓝 z₀,
+        analyticOrderAt (fun w => (q (Fin.cons w z)).discr) 0
+      = analyticOrderAt (fun w => (q (Fin.cons w z₀)).discr) 0) :
+    ∀ᶠ z in 𝓝 z₀, ∀ i j : Fin m, i ≠ j →
+      analyticOrderAt (fun u => φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u)) 0
+      = analyticOrderAt (fun u => φ (z₀, ζ ^ (i : ℕ) * u) - φ (z₀, ζ ^ (j : ℕ) * u)) 0 := by
+  have hdisc_const : ∀ᶠ z in 𝓝 z₀,
+      analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z)).discr) 0
+      = analyticOrderAt (fun u => (q (Fin.cons (u ^ m) z₀)).discr) 0 := by
+    filter_upwards [hslice_const, hana_ev] with z hsz hanaz
+    rw [disc_comp_pow_order_eq hm hmonic hdeg z hanaz,
+      disc_comp_pow_order_eq hm hmonic hdeg z₀ hana_ev.self_of_nhds, hsz]
+  exact branchDiff_orders_eventually_constant_of_disc hm hmonic hdeg hcont hroot han hiff hζ hz₀
+    hana_ev hsep_nbhd hρ hρR hRc hdisc_const
+
+open Polynomial in
+/-- **Lemma 4.2.7, reduced to the discriminant normal form.** The final, cleanest interface: the
+branch-difference orders are locally constant as soon as the discriminant `y ↦ disc(q y)` admits the
+normal form `disc = (coord 0)ʳ · G` near `cons 0 z₀` with `G(cons 0 z₀) ≠ 0` (`G` a unit). This is
+exactly what the discriminant theory (`DiscNormalForm`: `disc` divisible by the transverse coordinate
+to its full order, with non-vanishing cofactor) produces from the axiom's hypothesis that the
+discriminant has finite, section-constant order. The transverse-slice order is then identically `r`
+(`slice_order_eq_of_factor`), discharging the bridge entirely. -/
+theorem branchDiff_orders_eventually_constant_of_factor {n m : ℕ} (hm : 0 < m)
+    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcont : ∀ i, Continuous (fun y => (q y).coeff i))
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
+    (hroot : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      (q (Fin.cons (u ^ m) z)).eval (φ (z, u)) = 0)
+    (han : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c → AnalyticAt ℂ φ (z, u))
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m)
+    {z₀ : Fin n → ℂ} (hz₀ : ‖z₀‖ < δz)
+    (hana_ev : ∀ᶠ z in 𝓝 z₀, ∀ i, AnalyticAt ℂ (fun z' => (q z').coeff i) (Fin.cons 0 z))
+    (hsep_nbhd : ∀ᶠ z in 𝓝 z₀, ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable)
+    {R ρ : ℝ} (hρ : 0 < ρ) (hρR : ρ < R) (hRc : R ^ m < Real.exp c)
+    {r : ℕ} {G : (Fin (n + 1) → ℂ) → ℂ}
+    (hG : AnalyticAt ℂ G (Fin.cons 0 z₀)) (hG0 : G (Fin.cons 0 z₀) ≠ 0)
+    (hfac : (fun y => (q y).discr) =ᶠ[𝓝 (Fin.cons 0 z₀)] fun y => (y 0) ^ r * G y) :
+    ∀ᶠ z in 𝓝 z₀, ∀ i j : Fin m, i ≠ j →
+      analyticOrderAt (fun u => φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u)) 0
+      = analyticOrderAt (fun u => φ (z₀, ζ ^ (i : ℕ) * u) - φ (z₀, ζ ^ (j : ℕ) * u)) 0 := by
+  have hslice := slice_order_eq_of_factor hG hG0 hfac
+  have h0 : analyticOrderAt (fun w => (q (Fin.cons w z₀)).discr) 0 = (r : ℕ∞) :=
+    hslice.self_of_nhds
+  have hslice_const : ∀ᶠ z in 𝓝 z₀,
+      analyticOrderAt (fun w => (q (Fin.cons w z)).discr) 0
+      = analyticOrderAt (fun w => (q (Fin.cons w z₀)).discr) 0 := by
+    filter_upwards [hslice] with z hz
+    rw [hz, h0]
+  exact branchDiff_orders_eventually_constant_of_disc_slice hm hmonic hdeg hcont hroot han hiff hζ
+    hz₀ hana_ev hsep_nbhd hρ hρR hRc hslice_const
+
+open Polynomial in
+/-- **Lemma 4.2.7, from the discriminant's `order` hypotheses (full bridge closed).** The
+branch-difference orders are locally constant around the central section point `0`, given the
+*discriminant theory* hypotheses in the exact form supplied by the axiom / `DiscNormalForm`:
+the discriminant `y ↦ disc(q y)` is analytic, vanishes on the hyperplane `{y 0 = 0}` near `0`, has
+finite order, and its multivariate `order` is constant along the section. `DiscNormalForm.exists_
+coord0_pow_factor` turns these into the normal form `disc = (y 0)ʳ · G` with `G 0 ≠ 0`, and
+`branchDiff_orders_eventually_constant_of_factor` finishes. This closes the bridge: no hypothesis here
+mentions the Puiseux branches or the discriminant *normal form witness* — only the raw `order`
+conditions of the axiom. -/
+theorem branchDiff_orders_eventually_constant_of_discNormalForm {n m : ℕ} (hm : 0 < m)
+    {q : (Fin (n + 1) → ℂ) → Polynomial ℂ}
+    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hcont : ∀ i, Continuous (fun y => (q y).coeff i))
+    (hana0 : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (0 : Fin (n + 1) → ℂ))
+    {φ : (Fin n → ℂ) × ℂ → ℂ} {δz c : ℝ}
+    (hroot : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      (q (Fin.cons (u ^ m) z)).eval (φ (z, u)) = 0)
+    (han : ∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c → AnalyticAt ℂ φ (z, u))
+    (hiff : ∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
+      ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t))
+    {ζ : ℂ} (hζ : IsPrimitiveRoot ζ m) (hz₀ : ‖(0 : Fin n → ℂ)‖ < δz)
+    (hsep_nbhd : ∀ᶠ z in 𝓝 (0 : Fin n → ℂ),
+      ∀ᶠ u in 𝓝[≠] (0 : ℂ), (q (Fin.cons (u ^ m) z)).Separable)
+    {R ρ : ℝ} (hρ : 0 < ρ) (hρR : ρ < R) (hRc : R ^ m < Real.exp c)
+    (hdisc_vanish : ∀ᶠ y in 𝓝 (0 : Fin (n + 1) → ℂ), y 0 = 0 → (q y).discr = 0)
+    (hdisc_ne : order ℂ (fun y => (q y).discr) (0 : Fin (n + 1) → ℂ) ≠ ⊤)
+    (hdisc_const : ∀ᶠ w in 𝓝[{z : Fin (n + 1) → ℂ | z 0 = 0}] (0 : Fin (n + 1) → ℂ),
+        order ℂ (fun y => (q y).discr) w = order ℂ (fun y => (q y).discr) (0 : Fin (n + 1) → ℂ)) :
+    ∀ᶠ z in 𝓝 (0 : Fin n → ℂ), ∀ i j : Fin m, i ≠ j →
+      analyticOrderAt (fun u => φ (z, ζ ^ (i : ℕ) * u) - φ (z, ζ ^ (j : ℕ) * u)) 0
+      = analyticOrderAt
+          (fun u => φ ((0 : Fin n → ℂ), ζ ^ (i : ℕ) * u) - φ ((0 : Fin n → ℂ), ζ ^ (j : ℕ) * u)) 0 := by
+  have hcz : (Fin.cons (0 : ℂ) (0 : Fin n → ℂ) : Fin (n + 1) → ℂ) = 0 := by
+    funext j; refine Fin.cases ?_ (fun i => ?_) j <;> simp
+  have hDan : AnalyticAt ℂ (fun y => (q y).discr) (0 : Fin (n + 1) → ℂ) :=
+    analyticAt_disc_comp hm hmonic hdeg (W := Fin (n + 1) → ℂ) (g := fun y => y) hana0 analyticAt_id
+  -- coefficients are analytic on a neighbourhood of `0`, hence at `cons 0 z` for `z` near `0`
+  have hev : ∀ᶠ y in 𝓝 (0 : Fin (n + 1) → ℂ), ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) y := by
+    have hfin : ∀ᶠ y in 𝓝 (0 : Fin (n + 1) → ℂ),
+        ∀ i ∈ Finset.range (m + 1), AnalyticAt ℂ (fun z => (q z).coeff i) y :=
+      (Filter.eventually_all_finset _).mpr (fun i _ => (hana0 i).eventually_analyticAt)
+    filter_upwards [hfin] with y hy i
+    by_cases hi : i ≤ m
+    · exact hy i (Finset.mem_range.mpr (by omega))
+    · have hzero : (fun z => (q z).coeff i) = fun _ => (0 : ℂ) := by
+        funext z; exact Polynomial.coeff_eq_zero_of_natDegree_lt (by rw [hdeg z]; omega)
+      rw [hzero]; exact analyticAt_const
+  have hcons0 : Continuous (fun z : Fin n → ℂ => (Fin.cons 0 z : Fin (n + 1) → ℂ)) := by
+    refine continuous_pi (fun j => ?_)
+    refine Fin.cases ?_ (fun i => ?_) j
+    · simp only [Fin.cons_zero]; exact continuous_const
+    · simp only [Fin.cons_succ]; exact continuous_apply i
+  have htend : Filter.Tendsto (fun z : Fin n → ℂ => (Fin.cons 0 z : Fin (n + 1) → ℂ))
+      (𝓝 0) (𝓝 0) := by have := hcons0.tendsto (0 : Fin n → ℂ); rwa [hcz] at this
+  have hana_ev : ∀ᶠ z in 𝓝 (0 : Fin n → ℂ),
+      ∀ i, AnalyticAt ℂ (fun z' => (q z').coeff i) (Fin.cons 0 z) := htend.eventually hev
+  obtain ⟨G, hGan, hG0, hfac⟩ := DiscNormalForm.exists_coord0_pow_factor
+    (order ℂ (fun y => (q y).discr) (0 : Fin (n + 1) → ℂ)).toNat (fun y => (q y).discr)
+    hDan hdisc_vanish rfl hdisc_ne hdisc_const
+  refine branchDiff_orders_eventually_constant_of_factor hm hmonic hdeg hcont hroot han hiff hζ
+    hz₀ hana_ev hsep_nbhd hρ hρR hRc (r := (order ℂ (fun y => (q y).discr) (0 : Fin (n + 1) → ℂ)).toNat)
+    (G := G) ?_ ?_ ?_
+  · rw [hcz]; exact hGan
+  · rw [hcz]; exact hG0
+  · rw [hcz]; exact hfac
 
 end Puiseux

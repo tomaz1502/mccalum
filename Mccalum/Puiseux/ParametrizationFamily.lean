@@ -108,13 +108,15 @@ is jointly analytic in `(z, τ)` (via the `W`-general `analyticAt_continuous_roo
 `g = ptOfF`). -/
 theorem analyticOn_root_family (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (m : ℕ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
-    {δz c : ℝ} (hsep : ∀ y ∈ baseU n δz c, (q y).Separable)
+    {δz c : ℝ}
+    (hanaU : ∀ i, ∀ y ∈ baseU n δz c, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hsep : ∀ y ∈ baseU n δz c, (q y).Separable)
     {ρ : (Fin n → ℂ) × ℂ → ℂ} (hcont : ContinuousOn ρ (prodDom n δz c))
     (hroot : ∀ p ∈ prodDom n δz c, (q (ptOfF n p)).eval (ρ p) = 0) :
     ∀ p ∈ prodDom n δz c, AnalyticAt ℂ ρ p := by
   intro p hp
-  refine analyticAt_continuous_root q m hmonic hdeg (analyticAt_ptOfF p) (fun i => hcoeff i _)
+  refine analyticAt_continuous_root q m hmonic hdeg (analyticAt_ptOfF p)
+    (fun i => hanaU i _ (ptOfF_mem_baseU hp))
     (hsep (ptOfF n p) (ptOfF_mem_baseU hp))
     (hcont.continuousAt ((isOpen_prodDom δz c).mem_nhds hp)) ?_
   filter_upwards [(isOpen_prodDom δz c).mem_nhds hp] with p' hp'
@@ -422,8 +424,10 @@ root cover along `(z,τ) ↦ cons (exp τ) z` from the simply-connected product 
 section `ρ(z,τ)` with `(q (ptOfF (z,τ))).eval (ρ (z,τ)) = 0`. -/
 theorem exists_root_lift_family (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (m : ℕ)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
-    {δz c : ℝ} (hsep : ∀ y ∈ baseU n δz c, (q y).Separable)
+    (hcont : ∀ i, Continuous (fun y => (q y).coeff i))
+    {δz c : ℝ}
+    (hanaU : ∀ i, ∀ y ∈ baseU n δz c, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hsep : ∀ y ∈ baseU n δz c, (q y).Separable)
     (hpc : PathConnectedSpace ↥(rootProj q ⁻¹' baseU n δz c))
     {p₀ : (Fin n → ℂ) × ℂ} (hp₀ : p₀ ∈ prodDom n δz c)
     {t₀ : ℂ} (ht₀ : (q (ptOfF n p₀)).eval t₀ = 0) :
@@ -438,10 +442,8 @@ theorem exists_root_lift_family (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (
   classical
   have hδz : 0 < δz := lt_of_le_of_lt (norm_nonneg _) (ptOfF_section_norm hp₀)
   haveI : SimplyConnectedSpace (prodDom n δz c) := simplyConnected_prodDom hδz c
-  have hcont : ∀ i, Continuous (fun y => (q y).coeff i) :=
-    fun i => continuous_iff_continuousAt.mpr fun y => (hcoeff i y).continuousAt
   have cov : IsCoveringMap ((baseU n δz c).restrictPreimage (rootProj q)) :=
-    rootCover_isCoveringMap_gen q hmonic hdeg hcont (fun i y _ => hcoeff i y) hsep
+    rootCover_isCoveringMap_gen q hmonic hdeg hcont (fun i y hy => hanaU i y hy) hsep
   let f : C(↥(prodDom n δz c), ↥(baseU n δz c)) :=
     ⟨fun p => ⟨ptOfF n p.val, ptOfF_mem_baseU p.property⟩,
       (continuous_ptOfF.comp continuous_subtype_val).subtype_mk _⟩
@@ -684,22 +686,23 @@ parametrization `φ(z,u)`: jointly analytic on the punctured `u`-disc, with the 
 root-bijection. Only separability off `0` (the discriminant condition) remains a hypothesis. -/
 theorem exists_param_family (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (m : ℕ) (hm : 0 < m)
     (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
-    (hcoeff : ∀ i, ∀ y, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hcont : ∀ i, Continuous (fun y => (q y).coeff i))
+    (hana0 : ∀ i, AnalyticAt ℂ (fun z => (q z).coeff i) (0 : Fin (n + 1) → ℂ))
     (hq0 : q 0 = X ^ m) (hirr : UnivIrreducibleGen q)
-    {δz c : ℝ} (hδz : 0 < δz) (hsep : ∀ y ∈ baseU n δz c, (q y).Separable) :
+    {δz c : ℝ} (hδz : 0 < δz)
+    (hanaU : ∀ i, ∀ y ∈ baseU n δz c, AnalyticAt ℂ (fun z => (q z).coeff i) y)
+    (hsep : ∀ y ∈ baseU n δz c, (q y).Separable) :
     ∃ φ : (Fin n → ℂ) × ℂ → ℂ,
       (∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
         (q (Fin.cons (u ^ m) z)).eval (φ (z, u)) = 0) ∧
       (∀ z u, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c → AnalyticAt ℂ φ (z, u)) ∧
       (∀ z u t, ‖z‖ < δz → 0 < ‖u‖ → ‖u‖ ^ m < Real.exp c →
         ((q (Fin.cons (u ^ m) z)).eval t = 0 ↔ ∃ u', u' ^ m = u ^ m ∧ φ (z, u') = t)) := by
-  have hcont : ∀ i, Continuous (fun y => (q y).coeff i) :=
-    fun i => continuous_iff_continuousAt.mpr fun y => (hcoeff i y).continuousAt
   have hbdd := roots_eventually_bounded q m hm hmonic hdeg hcont hq0 (R := 1) one_pos
   have hpc : PathConnectedSpace ↥(rootProj q ⁻¹' baseU n δz c) :=
-    rootCover_pathConnected_gen q hm hmonic hdeg hcont (fun i => hcoeff i 0) hq0 hirr
+    rootCover_pathConnected_gen q hm hmonic hdeg hcont hana0 hq0 hirr
       (isOpen_baseU δz c) (isPreconnected_baseU hδz c) hsep (baseU_mem_nhdsWithin hδz c)
-      (fun i y _ => hcoeff i y) zero_le_one hbdd
+      (fun i y hy => hanaU i y hy) zero_le_one hbdd
   have hp₀ : ((0 : Fin n → ℂ), ((c - 1 : ℝ) : ℂ)) ∈ prodDom n δz c :=
     Set.mk_mem_prod (Metric.mem_ball_self hδz)
       (by simp only [halfPlane, Set.mem_setOf_eq, Complex.ofReal_re]; linarith)
@@ -707,8 +710,8 @@ theorem exists_param_family (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (m : 
     (q (ptOfF n ((0 : Fin n → ℂ), ((c - 1 : ℝ) : ℂ)))) (by
       rw [Polynomial.degree_eq_natDegree (hmonic _).ne_zero, hdeg]; exact_mod_cast hm.ne')
   obtain ⟨ρ, _, hcont_ρ, hroot_ρ, hper_ρ, hsurj_ρ⟩ :=
-    exists_root_lift_family q m hmonic hdeg hcoeff hsep hpc hp₀ ht₀
-  have han_ρ := analyticOn_root_family q m hmonic hdeg hcoeff hsep hcont_ρ hroot_ρ
+    exists_root_lift_family q m hmonic hdeg hcont hanaU hsep hpc hp₀ ht₀
+  have han_ρ := analyticOn_root_family q m hmonic hdeg hanaU hsep hcont_ρ hroot_ρ
   exact descend_phi_family hm hroot_ρ han_ρ hper_ρ hsurj_ρ
 
 end Puiseux
