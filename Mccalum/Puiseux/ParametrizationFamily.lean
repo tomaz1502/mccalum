@@ -503,7 +503,6 @@ theorem exists_root_lift_family (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (
     · simp only [hρdef]
       rw [dif_pos hk_mem, hk_eq]
 
-set_option maxHeartbeats 1000000 in
 /-- **Family descent (Lemma 4.2.6, s≥1, step 3).** `φ(z,u) := ρ(z, m·log u)` is single-valued (period),
 jointly analytic on the punctured `u`-disc, with `(q (cons uᵐ z)).eval (φ (z,u)) = 0` and the
 root-bijection. The log branch cut is invisible because the `±2πi` jump is a period of `ρ(z,·)`. -/

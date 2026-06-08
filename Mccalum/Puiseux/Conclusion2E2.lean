@@ -30,7 +30,6 @@ namespace Puiseux
 
 variable {s k : ℕ}
 
-set_option maxHeartbeats 1600000 in
 /-- **The `e ≥ 2` order-under-blow-up, PROVED** — the discharge of `order_eval_value_e2_blowup`. -/
 theorem order_eval_value_e2_blowup_proof {s k : ℕ} (fac : CParam s (k + 2) → Polynomial ℂ) (d : ℕ)
     (hd : 2 ≤ d) (hfam : IsWeierstrassFamily fac d) (hirr : WeierstrassIrreducible fac d)
