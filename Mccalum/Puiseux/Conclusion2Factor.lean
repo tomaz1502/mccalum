@@ -137,6 +137,42 @@ theorem order_eval_constant_of_factors {s e : ℕ} {h : CParam s e → Polynomia
   rw [order_eval_eq_sum_factors hy_eq hy_an, h0]
   exact Finset.sum_congr rfl (fun j _ => hy_const j)
 
+/-- **e = 0 degenerate case — vacuous.** For an irreducible Weierstrass factor of degree `d ≥ 2` over
+`CParam s 0`, the discriminant hypotheses are contradictory: the transverse `Fin 0 → ℂ` is trivial, so
+`hdisc_oi` makes `order D` constant on a full neighbourhood of `0`; since `D 0 = disc(Xᵈ) = 0` the order
+is `≥ 1` everywhere, forcing `D ≡ 0` near `0` and `order D 0 = ⊤`, contradicting `hdisc_ne`. Mirrors
+`irreducible_section_single_root_e0`. -/
+theorem order_eval_value_e0 {s : ℕ} {fac : CParam s 0 → Polynomial ℂ} {d : ℕ} (hd : 2 ≤ d)
+    (hfam : IsWeierstrassFamily fac d)
+    (hdisc_ne : order ℂ (fun w => (fac w).discr) (0 : CParam s 0) ≠ ⊤)
+    (hdisc_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (fun w => (fac w).discr) ((y, 0) : CParam s 0)
+        = order ℂ (fun w => (fac w).discr) ((0, 0) : CParam s 0))
+    (ψ : (Fin s → ℂ) → ℂ) :
+    ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
+      order ℂ (fun wt : CParam s 0 × ℂ => (fac wt.1).eval wt.2) (((y, 0) : CParam s 0), ψ y)
+        = order ℂ (fun wt : CParam s 0 × ℂ => (fac wt.1).eval wt.2) (((0, 0) : CParam s 0), ψ 0) := by
+  exfalso
+  set D : CParam s 0 → ℂ := fun w => (fac w).discr with hD
+  have hD0 : D 0 = 0 := by
+    show (fac 0).discr = 0; rw [hfam.eval_zero]; exact discr_X_pow_eq_zero hd
+  have hord_ne0 : order ℂ D 0 ≠ 0 := order_ne_zero_of_eq_zero D 0 hD0
+  have hconst : ∀ᶠ w in 𝓝 (0 : CParam s 0), order ℂ D w = order ℂ D 0 := by
+    have htend : Filter.Tendsto (fun w : CParam s 0 => w.1) (𝓝 0) (𝓝 (0 : Fin s → ℂ)) :=
+      continuous_fst.tendsto 0
+    filter_upwards [htend.eventually hdisc_oi] with w hw
+    have hweq : ((w.1, (0 : Fin 0 → ℂ)) : CParam s 0) = w := by
+      refine Prod.ext rfl ?_; exact Subsingleton.elim _ _
+    rwa [hweq] at hw
+  have hDvanish : ∀ᶠ w in 𝓝 (0 : CParam s 0), D w = 0 := by
+    filter_upwards [hconst] with w hw
+    by_contra hDw
+    exact hord_ne0 (hw.symm.trans (order_eq_zero_of_ne D w hDw))
+  have htop : order ℂ D 0 = ⊤ := by
+    rw [order_congr_of_eventuallyEq' (hDvanish : D =ᶠ[𝓝 (0 : CParam s 0)] (fun _ => 0))]
+    exact order_eq_top_iff.mpr (fun n => by simp [iteratedFDeriv_zero_fun])
+  exact hdisc_ne htop
+
 /-- **Per-factor order constancy (e = 1).** For a single irreducible Weierstrass factor over
 `CParam s 1` (degree `d ≥ 1`) with finite, section-constant discriminant order and single section root
 `ψ`, the evaluation order is constant along the section. Dispatches `d = 1` (order `1`, `order_eval_deg1`)

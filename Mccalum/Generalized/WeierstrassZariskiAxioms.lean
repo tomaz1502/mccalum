@@ -60,30 +60,13 @@ theorem weierstrass_division_unique {s e : ℕ}
   (weierstrass_division (fun wt => (weierstrassPoly m a wt.1).eval wt.2)
     (weierstrassPolyEval_analyticAt m a ha_an) m (weierstrassPolyEval_order m a ha0)).2 q ρ hq hρ hzero
 
-/-- **Zariski's theorem 4.1.1 — order-invariance in the graph (conclusion (2), AXIOM).**
+/-! **Zariski 4.1.1, conclusion (2) — order-invariance in the graph — NO LONGER AN AXIOM.**
 
-The *second* conclusion of Zariski 4.1.1: under the same hypotheses, with `ψ` the single holomorphic
-root section (conclusion (1), `zariski_single_branch`), the Weierstrass polynomial `h` is
-**order-invariant in its graph** `G* = {((y,0), ψ y)}` — the multivariate analytic order
-`ord_{((y,0), ψ y)} h` is constant along the section. This is the equisingularity content proved in
-the thesis (Chapter 4) by Lemmas 4.2.6–4.2.8 (Puiseux parametrization, `ord = min(m, m₁)`). It is the
-clean residual of the codim order-invariance: everything wrapping it (chart, complexification,
-Weierstrass `f = u·h`, real recovery) is proved transport. To be discharged with
-`zariski_single_branch`. -/
-axiom zariski_order_invariant_in_graph {s e : ℕ}
-    (m : ℕ) (hm_pos : 0 < m)
-    (a : Fin m → (CParam s e → ℂ))
-    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0)
-    (ha0 : ∀ i, a i 0 = 0)
-    (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
-    (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-      order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
-        = order ℂ (weierstrassDiscFn m a) (0 : CParam s e))
-    (ψ : (Fin s → ℂ) → ℂ) (hψ_an : AnalyticAt ℂ ψ 0) (hψ0 : ψ 0 = 0)
-    (hψ_root : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
-      (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ α = ψ y) :
-    ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
-      order ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2) ((y, 0), ψ y)
-        = order ℂ (fun wt : CParam s e × ℂ => (weierstrassPoly m a wt.1).eval wt.2) ((0, 0), ψ 0)
+The former axiom `zariski_order_invariant_in_graph` is now the theorem `Puiseux.order_invariant_in_graph`
+(`Mccalum/Puiseux/Conclusion2General.lean`), and `cluster_root_structure` (`ClusterRootStructure.lean`)
+calls it directly. The full general-`e` order-invariance is proved (factorization + Lemma 4.2.8 +
+e=0/e=1 dispatch) modulo the single residual `Puiseux.order_eval_value_e2_blowup` (the `e ≥ 2` quadratic
+blow-up to codimension one). It cannot live in this file because the Puiseux proof chain transitively
+imports it; see the discharge in the `Puiseux` namespace. -/
 
 end

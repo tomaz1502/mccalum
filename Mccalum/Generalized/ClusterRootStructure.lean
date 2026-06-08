@@ -1,5 +1,6 @@
 import Mccalum.Generalized.RootSectionsAlgebra
 import Mccalum.Generalized.ZariskiNonsplitting
+import Mccalum.Puiseux.Conclusion2General
 
 /-!
 # Single-cluster composition (part 1): disc-order ⟹ root structure
@@ -41,6 +42,6 @@ theorem cluster_root_structure {s e : ℕ} (m : ℕ) (hm : 0 < m)
               ((0, 0), ψ 0)) := by
   obtain ⟨ψ, hψ_an, hψ0, hroots, hmults⟩ := zariski_single_branch m hm a ha_an ha0 hdisc_ne hdisc
   exact ⟨ψ, hψ_an, hψ0, hroots, hmults,
-    zariski_order_invariant_in_graph m hm a ha_an ha0 hdisc_ne hdisc ψ hψ_an hψ0 hroots⟩
+    Puiseux.order_invariant_in_graph m hm a ha_an ha0 hdisc_ne hdisc ψ hψ_an hψ0 hroots⟩
 
 end
