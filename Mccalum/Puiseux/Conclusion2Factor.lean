@@ -242,7 +242,7 @@ theorem order_invariant_in_graph_e1 {s : ℕ} (m : ℕ) (hm_pos : 0 < m)
     (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s 1)
         = order ℂ (weierstrassDiscFn m a) (0 : CParam s 1))
-    (ψ : (Fin s → ℂ) → ℂ) (hψ_an : AnalyticAt ℂ ψ 0) (hψ0 : ψ 0 = 0)
+    (ψ : (Fin s → ℂ) → ℂ) (hψ_an : AnalyticAt ℂ ψ 0)
     (hψ_root : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
       (weierstrassPoly m a ((y, 0) : CParam s 1)).IsRoot α ↔ α = ψ y) :
     ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),

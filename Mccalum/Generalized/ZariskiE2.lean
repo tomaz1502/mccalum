@@ -199,7 +199,7 @@ lemma mixed_diag (g : CParam s (k + 2) → ℂ) (r : ℕ)
       have hΦγ : Φ (γ t) = g ((t * a) • ws, t • wt) := by
         show g (L (γ t)) = g ((t * a) • ws, t • wt)
         rw [hLapply]
-        congr 1 <;> · simp [hγ, mul_comm]
+        congr 1 ; · simp [hγ, mul_comm]
       have h0 : (γ t) 0 = t := by simp [hγ]
       rw [← hΦγ, ht, h0]
     rw [hcurve.iteratedDeriv_eq,

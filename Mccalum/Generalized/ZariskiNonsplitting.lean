@@ -44,14 +44,14 @@ blow-up. Formerly a temporary axiom; now discharged by
 `ZariskiE2.irreducible_section_single_root_blowup_proof`. -/
 theorem irreducible_section_single_root_blowup {s k : ℕ}
     (H : CParam s (k + 2) → Polynomial ℂ) (d : ℕ) (hd : 2 ≤ d)
-    (hH_fam : IsWeierstrassFamily H d) (hH_irr : WeierstrassIrreducible H d)
+    (hH_fam : IsWeierstrassFamily H d)
     (hHdisc_ne : order ℂ (fun w => (H w).discr) (0 : CParam s (k + 2)) ≠ ⊤)
     (hHdisc_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (fun w => (H w).discr) ((y, 0) : CParam s (k + 2))
         = order ℂ (fun w => (H w).discr) ((0, 0) : CParam s (k + 2))) :
     ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       ∃ α : ℂ, ∀ β : ℂ, (H ((y, 0) : CParam s (k + 2))).IsRoot β ↔ β = α :=
-  ZariskiE2.irreducible_section_single_root_blowup_proof H d hd hH_fam hH_irr hHdisc_ne hHdisc_oi
+  ZariskiE2.irreducible_section_single_root_blowup_proof H d hd hH_fam hHdisc_ne hHdisc_oi
 
 /-- **(A4-core, degenerate case `d ≥ 2`) Irreducible Weierstrass family is nonsplitting over the
 section — now a THEOREM dispatching on the section codimension `e`.**
@@ -77,7 +77,7 @@ theorem irreducible_section_single_root_deg {s e : ℕ}
   | 1, H, hH_fam, hH_irr, hHdisc_ne, hHdisc_oi =>
       exact irreducible_section_single_root_e1 H d hd hH_fam hH_irr hHdisc_ne hHdisc_oi
   | (k + 2), H, hH_fam, hH_irr, hHdisc_ne, hHdisc_oi =>
-      exact irreducible_section_single_root_blowup H d hd hH_fam hH_irr hHdisc_ne hHdisc_oi
+      exact irreducible_section_single_root_blowup H d hd hH_fam hHdisc_ne hHdisc_oi
 
 /-- **(A4-core) Single irreducible Weierstrass family is nonsplitting over the section.**
 
@@ -122,7 +122,6 @@ trivial factorization `k = 1` the single factor is `h` itself (germ-equal), inhe
 `hdisc` directly. The roots of *different* factors are reconciled separately by A5. -/
 theorem irreducible_factor_section_single_root {s e : ℕ}
     (m : ℕ) (a : Fin m → (CParam s e → ℂ))
-    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
     (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
     (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
@@ -185,7 +184,6 @@ root shared between `facⱼ` and `fac₀` must equal both `αⱼ` and `α₀`, s
 common single root of all factors. -/
 theorem irreducible_factors_common_section_root {s e : ℕ}
     (m : ℕ) (a : Fin m → (CParam s e → ℂ))
-    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
     (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
     (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
@@ -197,9 +195,9 @@ theorem irreducible_factors_common_section_root {s e : ℕ}
     ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       ∃ α : ℂ, ∀ j : Fin k, ∀ β : ℂ, (fac j ((y, 0) : CParam s e)).IsRoot β ↔ β = α := by
   filter_upwards
-    [irreducible_factor_section_single_root m a ha_an ha0 hdisc_ne hdisc k deg fac hk hfac_fam
+    [irreducible_factor_section_single_root m a hdisc_ne hdisc k deg fac hk hfac_fam
       hfac_irr hfac_eq,
-     irreducible_factors_section_share_root m a ha_an ha0 hdisc_ne hdisc k deg fac hk hfac_fam
+     irreducible_factors_section_share_root m a hdisc_ne hdisc k deg fac hfac_fam
       hfac_irr hfac_eq] with y h4 h5
   obtain ⟨α₀, hα₀⟩ := h4 ⟨0, hk⟩
   refine ⟨α₀, fun j => ?_⟩
@@ -229,7 +227,7 @@ theorem zariski_nonsplitting {s e : ℕ}
   obtain ⟨k, deg, fac, hk, _hdeg1, hfac_fam, hfac_irr, hfac_eq⟩ :=
     weierstrass_irreducible_factorization (weierstrassPoly m a) m hH hm_pos
   -- A4·A5: the factors have one common single section root.
-  have hcommon := irreducible_factors_common_section_root m a ha_an ha0 hdisc_ne hdisc
+  have hcommon := irreducible_factors_common_section_root m a hdisc_ne hdisc
     k deg fac hk hfac_fam hfac_irr hfac_eq
   -- restrict the germ factorization to the section `t ↦ (y, 0)`
   have hsec : Filter.Tendsto (fun y : Fin s → ℂ => ((y, 0) : CParam s e)) (𝓝 0) (𝓝 0) := by

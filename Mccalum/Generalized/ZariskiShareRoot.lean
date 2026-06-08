@@ -19,13 +19,12 @@ Any two factors `facᵢ, facⱼ` of the factorization *share a root* over the se
 Proved (no axiom) by `pair_share_root`. -/
 theorem irreducible_factors_section_share_root {s e : ℕ}
     (m : ℕ) (a : Fin m → (CParam s e → ℂ))
-    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
     (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
     (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
         = order ℂ (weierstrassDiscFn m a) (0 : CParam s e))
     (k : ℕ) (deg : Fin k → ℕ) (fac : Fin k → (CParam s e → Polynomial ℂ))
-    (hk : 0 < k) (hfac_fam : ∀ j, IsWeierstrassFamily (fac j) (deg j))
+    (hfac_fam : ∀ j, IsWeierstrassFamily (fac j) (deg j))
     (hfac_irr : ∀ j, WeierstrassIrreducible (fac j) (deg j))
     (hfac_eq : ∀ᶠ w in 𝓝 (0 : CParam s e), weierstrassPoly m a w = ∏ j : Fin k, fac j w) :
     ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),

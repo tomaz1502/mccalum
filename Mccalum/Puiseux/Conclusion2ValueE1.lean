@@ -108,7 +108,7 @@ theorem order_eval_value_e1_weierstrass {s : ℕ}
       (norm_pos_iff.mp hy.1)
     exact separable_of_discr_ne_zero (hq_monic y) (by rw [hq_deg y]; omega) hdy
   have hirr : UnivIrreducibleGen qt := by
-    refine univIrreducibleGen_of_germ qt hqt_monic hqt_deg
+    refine univIrreducibleGen_of_germ qt hqt_deg
       (fun i => hqt_ana i 0 (mem_ball_self hr0)) ?_
     rintro ⟨dA, dB, HA, HB, hdA, hdB, hHAm, hHAd, hHAc, hHA0, hHBm, hHBd, hHBc, hHB0, heq⟩
     apply hH_irr.2

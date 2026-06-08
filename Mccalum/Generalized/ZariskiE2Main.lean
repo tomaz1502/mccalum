@@ -45,7 +45,7 @@ lemma familyDiscr_analyticAt_pt (H : CParam s e → Polynomial ℂ) (d : ℕ) (h
   have hshift0 : (fun w : CParam s e => w - p) p = 0 := by simp
   have hcomp := hdisc'.comp_of_eq hshift hshift0
   have heq : (fun w => (H' w).discr) ∘ (fun w : CParam s e => w - p) = fun w => (H w).discr := by
-    funext w; show (H' (w - p)).discr = (H w).discr; rw [hH']; congr 2; abel
+    funext w; show (H' (w - p)).discr = (H w).discr; rw [hH']; congr 2; abel_nf
   rwa [heq] at hcomp
 
 /-- A monic family of constant degree `d` is the Weierstrass polynomial of its low coefficients. -/
@@ -75,7 +75,7 @@ lemma weierstrassPoly_recon (P : CParam s e → Polynomial ℂ) (d : ℕ)
 /-- **The `e ≥ 2` blow-up case of `irreducible_section_single_root_deg`, PROVED.** -/
 theorem irreducible_section_single_root_blowup_proof {s k : ℕ}
     (H : CParam s (k + 2) → Polynomial ℂ) (d : ℕ) (hd : 2 ≤ d)
-    (hH_fam : IsWeierstrassFamily H d) (hH_irr : WeierstrassIrreducible H d)
+    (hH_fam : IsWeierstrassFamily H d)
     (hHdisc_ne : order ℂ (fun w => (H w).discr) (0 : CParam s (k + 2)) ≠ ⊤)
     (hHdisc_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (fun w => (H w).discr) ((y, 0) : CParam s (k + 2))

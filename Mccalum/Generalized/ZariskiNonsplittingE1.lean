@@ -54,7 +54,6 @@ theorem single_root_codim1 {s : ℕ}
 rather than via `irreducible_section_single_root`. -/
 theorem irreducible_factor_section_single_root_of {s e : ℕ}
     (m : ℕ) (a : Fin m → (CParam s e → ℂ))
-    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
     (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
     (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
@@ -115,7 +114,6 @@ theorem irreducible_factor_section_single_root_of {s e : ℕ}
 /-- **Common single section root parametrized over `hfactor`.** -/
 theorem irreducible_factors_common_section_root_of {s e : ℕ}
     (m : ℕ) (a : Fin m → (CParam s e → ℂ))
-    (ha_an : ∀ i, AnalyticAt ℂ (a i) 0) (ha0 : ∀ i, a i 0 = 0)
     (hdisc_ne : order ℂ (weierstrassDiscFn m a) (0 : CParam s e) ≠ ⊤)
     (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
@@ -134,9 +132,9 @@ theorem irreducible_factors_common_section_root_of {s e : ℕ}
     ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       ∃ α : ℂ, ∀ j : Fin k, ∀ β : ℂ, (fac j ((y, 0) : CParam s e)).IsRoot β ↔ β = α := by
   filter_upwards
-    [irreducible_factor_section_single_root_of m a ha_an ha0 hdisc_ne hdisc k deg fac hk hfac_fam
+    [irreducible_factor_section_single_root_of m a hdisc_ne hdisc k deg fac hk hfac_fam
       hfac_irr hfac_eq hfactor,
-     irreducible_factors_section_share_root m a ha_an ha0 hdisc_ne hdisc k deg fac hk hfac_fam
+     irreducible_factors_section_share_root m a hdisc_ne hdisc k deg fac hfac_fam
       hfac_irr hfac_eq] with y h4 h5
   obtain ⟨α₀, hα₀⟩ := h4 ⟨0, hk⟩
   refine ⟨α₀, fun j => ?_⟩
@@ -164,7 +162,7 @@ theorem zariski_nonsplitting_e1 {s : ℕ}
     weierstrassPoly_isWeierstrassFamily m a ha_an ha0
   obtain ⟨k, deg, fac, hk, _hdeg1, hfac_fam, hfac_irr, hfac_eq⟩ :=
     weierstrass_irreducible_factorization (weierstrassPoly m a) m hH hm_pos
-  have hcommon := irreducible_factors_common_section_root_of m a ha_an ha0 hdisc_ne hdisc
+  have hcommon := irreducible_factors_common_section_root_of m a hdisc_ne hdisc
     k deg fac hk hfac_fam hfac_irr hfac_eq
     (fun j hne hoi => single_root_codim1 (fac j) (deg j) (hfac_irr j).1 (hfac_fam j) (hfac_irr j)
       hne hoi)

@@ -25,7 +25,7 @@ namespace Puiseux
 root `ψ`, the evaluation order is constant along the section. Discharged by the quadratic blow-up to
 codimension one (`Conclusion2E2.order_eval_value_e2_blowup_proof`, thesis stage-8 term-tracking). -/
 theorem order_eval_value_e2_blowup {s k : ℕ} (fac : CParam s (k + 2) → Polynomial ℂ) (d : ℕ) (hd : 2 ≤ d)
-    (hfam : IsWeierstrassFamily fac d) (hirr : WeierstrassIrreducible fac d)
+    (hfam : IsWeierstrassFamily fac d)
     (hdisc_ne : order ℂ (fun w => (fac w).discr) (0 : CParam s (k + 2)) ≠ ⊤)
     (hdisc_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (fun w => (fac w).discr) ((y, 0) : CParam s (k + 2))
@@ -37,7 +37,7 @@ theorem order_eval_value_e2_blowup {s k : ℕ} (fac : CParam s (k + 2) → Polyn
       order ℂ (fun wt : CParam s (k + 2) × ℂ => (fac wt.1).eval wt.2) (((y, 0) : CParam s (k + 2)), ψ y)
         = order ℂ (fun wt : CParam s (k + 2) × ℂ => (fac wt.1).eval wt.2)
             (((0, 0) : CParam s (k + 2)), ψ 0) :=
-  order_eval_value_e2_blowup_proof fac d hd hfam hirr hdisc_ne hdisc_oi ψ hψ_an hψ_root
+  order_eval_value_e2_blowup_proof fac d hd hfam hdisc_ne hdisc_oi ψ hψ_an hψ_root
 
 /-- **Per-factor order constancy (general codimension `e`).** Dispatches `d = 1` (`order_eval_deg1`) and
 `d ≥ 2` on the codimension `e` (`order_eval_value_e0` / `order_eval_value_e1_weierstrass` /
@@ -68,7 +68,7 @@ theorem order_eval_constant_factor {s e : ℕ} {fac : CParam s e → Polynomial 
     | 1, fac, hfam, hirr, hdisc_ne, hdisc_oi, hψ_root =>
         exact order_eval_value_e1_weierstrass fac d hd2 hfam hirr hdisc_ne hdisc_oi ψ hψ_an hψ_root
     | (k + 2), fac, hfam, hirr, hdisc_ne, hdisc_oi, hψ_root =>
-        exact order_eval_value_e2_blowup fac d hd2 hfam hirr hdisc_ne hdisc_oi ψ hψ_an hψ_root
+        exact order_eval_value_e2_blowup fac d hd2 hfam hdisc_ne hdisc_oi ψ hψ_an hψ_root
 
 /-- **Zariski 4.1.1 Conclusion (2) — order-invariance in the graph, general codimension `e`.** The
 full axiom-shaped statement, discharged modulo the single `e ≥ 2` blow-up axiom
@@ -80,7 +80,7 @@ theorem order_invariant_in_graph {s e : ℕ} (m : ℕ) (hm_pos : 0 < m)
     (hdisc : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (weierstrassDiscFn m a) ((y, 0) : CParam s e)
         = order ℂ (weierstrassDiscFn m a) (0 : CParam s e))
-    (ψ : (Fin s → ℂ) → ℂ) (hψ_an : AnalyticAt ℂ ψ 0) (hψ0 : ψ 0 = 0)
+    (ψ : (Fin s → ℂ) → ℂ) (hψ_an : AnalyticAt ℂ ψ 0)
     (hψ_root : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ), ∀ α : ℂ,
       (weierstrassPoly m a ((y, 0) : CParam s e)).IsRoot α ↔ α = ψ y) :
     ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),

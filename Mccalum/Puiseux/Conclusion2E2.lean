@@ -32,7 +32,7 @@ variable {s k : ℕ}
 
 /-- **The `e ≥ 2` order-under-blow-up, PROVED** — the discharge of `order_eval_value_e2_blowup`. -/
 theorem order_eval_value_e2_blowup_proof {s k : ℕ} (fac : CParam s (k + 2) → Polynomial ℂ) (d : ℕ)
-    (hd : 2 ≤ d) (hfam : IsWeierstrassFamily fac d) (hirr : WeierstrassIrreducible fac d)
+    (hd : 2 ≤ d) (hfam : IsWeierstrassFamily fac d)
     (hdisc_ne : order ℂ (fun w => (fac w).discr) (0 : CParam s (k + 2)) ≠ ⊤)
     (hdisc_oi : ∀ᶠ y in 𝓝 (0 : Fin s → ℂ),
       order ℂ (fun w => (fac w).discr) ((y, 0) : CParam s (k + 2))
@@ -318,7 +318,7 @@ theorem order_eval_value_e2_blowup_proof {s k : ℕ} (fac : CParam s (k + 2) →
     exact hY_root α
   -- apply the proved codimension-one order-invariance to `a'`
   have he1 := order_invariant_in_graph_e1 d (by omega) a' ha_an ha0 hdisc_ne' hdisc'
-    ψ' hψ'_an hψ'0 hψ'_root
+    ψ' hψ'_an hψ'_root
   -- push to the *blown* section `{(append y 0, 0)}`
   set emb : (Fin s → ℂ) → (Fin (s + (k + 1)) → ℂ) :=
     fun y => Fin.append y (0 : Fin (k + 1) → ℂ) with hemb

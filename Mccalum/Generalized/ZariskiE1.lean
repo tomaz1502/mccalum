@@ -114,7 +114,7 @@ theorem irreducible_section_single_root_e1 {s : ℕ}
     (fun i => (hqt_cont i).continuousAt)
   -- irreducibility of `qt` from `WeierstrassIrreducible H`
   have hirr : UnivIrreducibleGen qt := by
-    refine univIrreducibleGen_of_germ qt hqt_monic hqt_deg (fun i => hqt_ana i 0 (mem_ball_self hr0)) ?_
+    refine univIrreducibleGen_of_germ qt hqt_deg (fun i => hqt_ana i 0 (mem_ball_self hr0)) ?_
     rintro ⟨dA, dB, HA, HB, hdA, hdB, hHAm, hHAd, hHAc, hHA0, hHBm, hHBd, hHBc, hHB0, heq⟩
     apply hH_irr.2
     have hfam : ∀ (HX : (Fin (s + 1) → ℂ) → Polynomial ℂ) (dX : ℕ),

@@ -90,7 +90,7 @@ admits none even *off the hyperplane* `{x 0 ≠ 0}` — because an off-hyperplan
 the density extension, to a full-neighbourhood one. This is the M5 wiring discharging M4's
 `UnivIrreducibleGen` hypothesis from the germ-irreducibility supplied by the Zariski axiom. -/
 theorem univIrreducibleGen_of_germ {m : ℕ} (q : (Fin (n + 1) → ℂ) → Polynomial ℂ)
-    (hmonic : ∀ y, (q y).Monic) (hdeg : ∀ y, (q y).natDegree = m)
+    (hdeg : ∀ y, (q y).natDegree = m)
     (hcoeff : ∀ i, AnalyticAt ℂ (fun y => (q y).coeff i) (0 : Fin (n + 1) → ℂ))
     (hgerm : ¬ ∃ (dA dB : ℕ) (HA HB : (Fin (n + 1) → ℂ) → Polynomial ℂ),
       1 ≤ dA ∧ 1 ≤ dB ∧

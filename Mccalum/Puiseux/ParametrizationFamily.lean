@@ -153,7 +153,7 @@ lemma isOpen_baseU (δz c : ℝ) : IsOpen (baseU n δz c) := by
   exact (consHomeo n).continuous.isOpen_preimage _
     ((Metric.isOpen_ball.sdiff isClosed_singleton).prod Metric.isOpen_ball)
 
-lemma isPreconnected_baseU {δz : ℝ} (hδz : 0 < δz) (c : ℝ) : IsPreconnected (baseU n δz c) := by
+lemma isPreconnected_baseU {δz : ℝ} (c : ℝ) : IsPreconnected (baseU n δz c) := by
   rw [baseU_eq_preimage, (consHomeo n).isPreconnected_preimage]
   have hrank : (1 : Cardinal) < Module.rank ℝ ℂ := by
     rw [Complex.rank_real_complex]; exact_mod_cast Nat.one_lt_two
@@ -700,7 +700,7 @@ theorem exists_param_family (q : (Fin (n + 1) → ℂ) → Polynomial ℂ) (m : 
   have hbdd := roots_eventually_bounded q m hm hmonic hdeg hcont hq0 (R := 1) one_pos
   have hpc : PathConnectedSpace ↥(rootProj q ⁻¹' baseU n δz c) :=
     rootCover_pathConnected_gen q hm hmonic hdeg hcont hana0 hq0 hirr
-      (isOpen_baseU δz c) (isPreconnected_baseU hδz c) hsep (baseU_mem_nhdsWithin hδz c)
+      (isOpen_baseU δz c) (isPreconnected_baseU c) hsep (baseU_mem_nhdsWithin hδz c)
       (fun i y hy => hanaU i y hy) zero_le_one hbdd
   have hp₀ : ((0 : Fin n → ℂ), ((c - 1 : ℝ) : ℂ)) ∈ prodDom n δz c :=
     Set.mk_mem_prod (Metric.mem_ball_self hδz)

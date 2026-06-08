@@ -595,7 +595,7 @@ theorem exists_root_lift (q : (Fin 1 → ℂ) → Polynomial ℂ) (m : ℕ)
 /-- **Descent (Lemma 4.2.6, step 3).** The period makes `φ(u) := ρ(m·log u)` single-valued and
 analytic on the punctured disc `0 < ‖u‖`, `‖u‖ᵐ < δ`, satisfying `(q uᵐ).eval (φ u) = 0`. The log
 branch cut is invisible because the jump `±2πi` in `log` is a period of `ρ`. -/
-theorem descend_phi {ρ : ℂ → ℂ} {δ : ℝ} (hδ : 0 < δ) {m : ℕ} (hm : 0 < m)
+theorem descend_phi {ρ : ℂ → ℂ} {δ : ℝ} {m : ℕ} (hm : 0 < m)
     {q : (Fin 1 → ℂ) → Polynomial ℂ}
     (hρ_root : ∀ τ ∈ halfPlane (Real.log δ), (q (ptOf τ)).eval (ρ τ) = 0)
     (hρ_an : ∀ τ ∈ halfPlane (Real.log δ), AnalyticAt ℂ ρ τ)
@@ -738,7 +738,7 @@ theorem exists_param_s0 (q : (Fin 1 → ℂ) → Polynomial ℂ) (m : ℕ) (hm :
     rw [Polynomial.degree_eq_natDegree (hmonic _).ne_zero, hdeg]; exact_mod_cast hm.ne')
   obtain ⟨ρ, _, _, hρ_root, hρ_an, hρ_period, hρ_surj⟩ :=
     exists_root_lift q m hmonic hdeg hcoeff hδ hsep hpc hτ₀ ht₀
-  exact descend_phi hδ hm hρ_root hρ_an hρ_period hρ_surj
+  exact descend_phi hm hρ_root hρ_an hρ_period hρ_surj
 
 /-- **Root bound (Lagrange, `Fin n → ℂ` base).** For a monic family with `q 0 = Xᵐ` (so the lower
 coefficients vanish at `0`), all roots of `q y` lie within `‖·‖ ≤ R` for `y` near `0`. Discharges the

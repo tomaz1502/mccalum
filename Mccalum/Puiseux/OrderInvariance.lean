@@ -1608,7 +1608,7 @@ theorem le_order_finset_sum {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ 
 
 /-- **Newton-polygon arithmetic.** With `N ≤ m`, the floor `⌊(m−k)·N/m⌋ + k ≥ N`. The `k = m` term
 `xᵐ` contributes `m`, the `k = 0` term contributes `N`, intermediate terms stay `≥ N`. -/
-theorem nat_newton {N k m : ℕ} (hN : N ≤ m) (hk : k ≤ m) : N ≤ (m - k) * N / m + k := by
+theorem nat_newton {N k m : ℕ} (hN : N ≤ m) : N ≤ (m - k) * N / m + k := by
   rcases Nat.eq_zero_or_pos m with hm0 | hmpos
   · exact le_trans (show N ≤ 0 by omega) (Nat.zero_le _)
   · have h1 : N - k ≤ (m - k) * N / m := by
@@ -1785,7 +1785,7 @@ theorem order_eval_ge_min {n m : ℕ} {q : (Fin (n + 1) → ℂ) → Polynomial 
   have hVk := coeff_fst_order_ge hm hmonic hdeg hcoeff hroot han hiff hζ hz'
     (show k ≤ m by omega) hGan hGeq hM hcentral hana_pt hsep
   have hnat : min m M ≤ (m - k) * min M m / m + k := by
-    have := nat_newton (min_le_right M m) (show k ≤ m by omega); omega
+    have := @nat_newton (min M m) k m (min_le_right M m); omega
   calc ((min m M : ℕ) : ℕ∞) ≤ (((m - k) * min M m / m + k : ℕ) : ℕ∞) := by exact_mod_cast hnat
     _ = (((m - k) * min M m / m : ℕ) : ℕ∞) + (k : ℕ∞) := by push_cast; ring
     _ ≤ order ℂ (fun yx : (Fin (n + 1) → ℂ) × ℂ => (q yx.1).coeff k) (Fin.cons 0 z', 0)
