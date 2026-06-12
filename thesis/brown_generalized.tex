@@ -1,0 +1,734 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.7cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{lmodern}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue]{hyperref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\xb}{\bar{x}}
+\newcommand{\lc}{\operatorname{lc}}
+\newcommand{\disc}{\operatorname{disc}}
+\newcommand{\rev}{\operatorname{rev}}
+\newcommand{\ord}{\operatorname{ord}}
+\newcommand{\E}{\mathcal{E}}
+\newcommand{\ideal}[1]{\langle #1\rangle}
+\newcommand{\code}[1]{{\ttfamily\spaceskip=.5em plus .25em minus .1em\relax #1}}
+\emergencystretch=1.5em
+
+\title{Generalizing Brown's Reduced McCallum Projection\\ to Elimination Ideals}
+\author{Notes for the \code{mccalum} formalization project}
+\date{June 10, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The repository \code{mccalum} contains a Lean~4 proof of a generalization of
+McCallum's projection theorem for cylindrical algebraic decomposition (CAD):
+discriminants and resultants are replaced by arbitrary nonzero elements of the
+corresponding elimination ideals. These notes investigate whether the same
+generalization applies to Brown's reduced McCallum projection
+\cite{Brown01}, specifically to Brown's Theorem~3.1, which removes all
+non-leading coefficients from the projection. We show that the verbatim
+generalization is \emph{false}, by an explicit counterexample, and that the
+failure is structural: the affine elimination ideal $\ideal{f,f_z}\cap\R[\xb]$
+is blind to roots at infinity, while degree-invariance --- the conclusion of
+Brown's theorem --- is a statement about infinity. We then prove a corrected
+generalization: it suffices to require the witness polynomial to lie in the
+elimination ideals of both $f$ \emph{and its degree-$n$ reverse}, a condition
+equivalent to membership in the projective (saturated) elimination ideal of the
+homogenization, satisfied by the discriminant, and stable under the
+shift-and-reverse transformations used in Brown's proof. Finally, we describe
+how a single B\'ezout certificate for $f$, as produced by an external solver,
+can be transformed mechanically into the second required certificate at the
+cost of a factor $\lc(f)^M$ --- a factor that adds no new projection factors and
+no cost to the CAD algorithm --- and we assess the difficulty of formalizing the
+corrected theorem in Lean on top of the existing development.
+\end{abstract}
+
+\section{Setting and notation}\label{sec:setting}
+
+Throughout, $R := \R[x_1,\dots,x_k] = \R[\xb]$ and $f \in R[z]$ is a polynomial
+of positive degree $n := \deg_z f$, written $f = \sum_{i=0}^{n} a_i z^i$ with
+$a_i \in R$ and $a_n \neq 0$. We write $f_z := \partial f/\partial z$, and
+$\lc f := a_n$ for the leading coefficient. For $q \in \R^k$ we write $f(q,\cdot)
+\in \R[z]$ for the specialization (in the Lean development,
+\code{specialize f q}). The central object of these notes is the
+\emph{elimination ideal}
+\[
+  \E(f) \;:=\; \ideal{f,\, f_z} \cap R ,
+\]
+the ideal of $R$ consisting of polynomials in $\xb$ alone that can be written as
+$A f + B f_z$ with $A, B \in R[z]$.
+
+For a nonzero polynomial $g \in R$ and $p \in \R^k$, $\ord_p g$ denotes the
+order of vanishing of $g$ at $p$ (the least total degree of a nonvanishing
+partial derivative). $g$ is \emph{order-invariant} on $S \subseteq \R^k$ if
+$p \mapsto \ord_p g$ is constant on $S$, and \emph{sign-invariant} on $S$ if
+$p \mapsto \operatorname{sign} g(p) \in \{-1,0,+1\}$ is constant on $S$. Note
+that ``identically zero on $S$'' is sign-invariant. Analytic submanifolds of
+$\R^k$ and analytic delineability are as in McCallum \cite{McCallum98} and as
+formalized in \code{Mccalum/Submanifold.lean} and
+\code{Mccalum/Delineability.lean}; we emphasize that the formalized notion of
+delineability (\code{AnalyticDelineable}) includes \emph{constant
+multiplicities}: the real roots of $f(q,\cdot)$ over $S$ are given by finitely
+many analytic sections $\theta_1 < \cdots < \theta_s$ on $S$, the
+$\theta_j(q)$ exhaust the real roots of $f(q,\cdot)$ for every $q\in S$, and
+the multiplicity of $\theta_j(q)$ as a root of $f(q,\cdot)$ is a constant
+$m_j \geq 1$.
+
+The starting point is the following theorem, already proved in the repository;
+it generalizes McCallum's Theorem~2 \cite{McCallum98} (= Theorem~2.1 of
+\cite{Brown01}) by replacing the discriminant with an arbitrary nonzero element
+of $\E(f)$. In Lean it is \code{lifting\_theorem\_generalized}, in
+\code{Mccalum/Generalized/Projection.lean}.
+
+\begin{theorem}[Generalized lifting theorem, Theorem 3.2.1$'$; proved in Lean]
+\label{thm:lifting}
+Let $S$ be a connected analytic submanifold of $\R^k$, and let $f \in R[z]$ be
+degree-invariant on $S$ with $f(q,\cdot) \not\equiv 0$ for every $q \in S$.
+Suppose there is $P \in R$, $P \neq 0$, with $P \in \E(f)$, such that $P$ is
+order-invariant on $S$. Then $f$ is analytically delineable on $S$ and is
+order-invariant in each $f$-section over $S$.
+\end{theorem}
+
+\section{Brown's theorem and its naive generalization}\label{sec:brown}
+
+McCallum's projection of $f$ contains \emph{all} coefficients $a_n,\dots,a_0$
+(to secure degree-invariance on cells), together with the discriminant and the
+pairwise resultants. Brown's contribution \cite[Theorem~3.1]{Brown01} is that
+the non-leading coefficients are redundant:
+
+\begin{theorem}[Brown, 2001]\label{thm:brown}
+Let $f \in \R[\xb][z]$ have positive degree $n$ in $z$, with discriminant
+$D(\xb) \neq 0$. Let $S$ be a connected analytic submanifold of $\R^k$ on which
+$D$ is order-invariant and $\lc f$ is sign-invariant, and such that $f$
+vanishes identically at no point of $S$. Then $f$ is degree-invariant on $S$.
+\end{theorem}
+
+Degree-invariance is exactly the hypothesis that Theorem~\ref{thm:lifting}
+needs; combining the two yields Brown's \emph{reduced} projection: leading
+coefficients, discriminants, and resultants only.
+
+Given the repository's generalization of McCallum's theorem, the natural
+candidate statement is:
+
+\begin{conjecture}[Naive generalization --- \textbf{false}]\label{conj:naive}
+Let $f \in \R[\xb][z]$ have positive degree $n$ in $z$. Let $P \in \E(f)$,
+$P \neq 0$. Let $S$ be a connected analytic submanifold of $\R^k$ on which $P$
+is order-invariant and $\lc f$ is sign-invariant, and such that $f$ vanishes
+identically at no point of $S$. Then $f$ is degree-invariant on $S$.
+\end{conjecture}
+
+Note that the hypothesis already implies $D \neq 0$: if $f$ had a repeated
+factor over $\R(\xb)$, then $\gcd(f,f_z)$ would have positive $z$-degree and
+divide every element of $\ideal{f,f_z}$ in $\R(\xb)[z]$, forcing
+$\E(f) = 0$. So Conjecture~\ref{conj:naive} genuinely only relaxes the
+\emph{order-invariance} hypothesis from $D$ to $P$, in exact analogy with the
+proved Theorem~\ref{thm:lifting}.
+
+\section{A counterexample}\label{sec:counterexample}
+
+\begin{proposition}\label{prop:counterexample}
+Conjecture~\ref{conj:naive} is false. Let $k = 2$, $\xb = (x,y)$, and
+\[
+  f \;=\; -x y^2 z^2 + y z + 1, \qquad n = 2, \qquad \lc f = -xy^2 ,
+\]
+let $S = \{(0,t) : t \in \R\}$ be the $y$-axis, and let $P = 1 + 4x$. Then all
+hypotheses of Conjecture~\ref{conj:naive} hold, but $f$ is not degree-invariant
+on $S$.
+\end{proposition}
+
+\begin{proof}
+First, $P \in \E(f)$, with the explicit certificate
+\begin{equation}\label{eq:certificate}
+  1 + 4x \;=\; \bigl(1 - 2xyz + 4x\bigr)\cdot f \;+\;
+               \bigl(-z\,(1 + 2x - xyz)\bigr)\cdot f_z ,
+\end{equation}
+which is verified by direct expansion. (It can be found by noting
+$2f - z f_z = yz + 2$ and $1+4x = -f + (yz+2)\bigl(1 - x(yz-2)\bigr)$.)
+Clearly $P \neq 0$.
+
+$S$ is a connected analytic submanifold of $\R^2$ (the regular zero set of
+$(x,y)\mapsto x$). On $S$ we have $P(0,t) = 1$, so $P$ is nowhere zero on $S$
+and hence order-invariant (constant order $0$). The leading coefficient
+$-xy^2$ vanishes identically on $S$, hence is sign-invariant (constant sign
+$0$). Finally $f(0,t,z) = tz + 1$ is never the zero polynomial.
+
+Yet $\deg_z f(0,t,\cdot) = \deg_z (tz+1)$ equals $1$ for $t \neq 0$ and $0$ for
+$t = 0$: the degree jumps at the origin.
+\end{proof}
+
+\begin{remark}[Where the degree-drop hides from $\E(f)$]\label{rem:variety}
+Over $\C$, the common zeros of $(f, f_z)$ are easily computed: $f_z =
+y(1-2xyz)$, and on $y \neq 0$, $1-2xyz=0$ forces $yz = -2$ and then $x =
+-1/4$. Thus
+\[
+  V_\C(f, f_z) \;=\; \bigl\{\,(-\tfrac14,\; t,\; -2/t) : t \in \C^\times \bigr\},
+\]
+whose projection to $(x,y)$-space has Zariski closure $\{x = -1/4\}$. By
+elimination theory, $V_\C(\E(f)) = \{x=-1/4\}$, which is disjoint from (the
+complexification of) $S$. This is why an element of $\E(f)$, such as $1+4x$,
+can be a unit along $S$: the elimination ideal of $(f,f_z)$ records only
+\emph{finite} multiple roots, and there are none above $S$. The degree drop at
+the origin is a collision of roots \emph{at infinity}
+($tz+1$ has its root $-1/t \to \infty$ as $t \to 0$), invisible to
+$\ideal{f,f_z} \cap R$.
+
+The discriminant, in contrast, does see infinity: $D = y^2(1+4x)$, and the
+formal degree-$n$ discriminant always vanishes on the locus
+$\{a_n = a_{n-1} = 0\}$ where the degree drops by at least two. On $S$, $D$ has
+order $0$ at $(0,t)$, $t\neq0$, and order $2$ at the origin --- it is
+\emph{not} order-invariant, so Brown's actual hypotheses correctly exclude
+this~$S$. In Brown's proof, the ``sees infinity'' property of $D$ is used in
+exactly one place: his Lemma~8.1, $\disc f = \disc(\rev f)$, which transports
+the order-invariance hypothesis to the reversed auxiliary polynomial. That is
+the property an arbitrary $P \in \E(f)$ lacks, and the corrected
+generalization restores it by hypothesis.
+\end{remark}
+
+\section{The corrected generalization}\label{sec:corrected}
+
+\subsection{Reversal and homogenization}
+
+\begin{definition}\label{def:rev}
+For $g = \sum_{i=0}^{m} c_i z^i \in R[z]$ with $\deg g \leq m$, the
+\emph{degree-$m$ reverse} is $\rev_m g := \sum_{i=0}^{m} c_i z^{m-i}
+= z^m\, g(1/z)$. (In Mathlib: \code{Polynomial.reflect m g}; for $m = \deg g$
+this is \code{Polynomial.reverse}.) For $f$ as in
+Section~\ref{sec:setting} we write $\rev f := \rev_n f = a_0 z^n + a_1
+z^{n-1} + \cdots + a_n$. Note the constant coefficient of $\rev f$ is
+$a_n = \lc f$, and $\rev_m$ is multiplicative in the sense
+$\rev_{d+e}(QR) = \rev_d(Q)\,\rev_e(R)$ whenever $\deg Q \le d$, $\deg R \le e$
+(Mathlib's \code{reflect\_mul}).
+\end{definition}
+
+We emphasize that the relevant second ideal is
+$\ideal{\rev f,\ (\rev f)'}$, with the derivative taken \emph{after}
+reversing; reversal and $d/dz$ do not commute. They are related by an
+Euler-type identity:
+
+\begin{lemma}\label{lem:euler}
+For $f \in R[z]$ with $\deg f \leq n$,
+\[
+  \rev_{n-1}(f_z) \;=\; n \cdot \rev_n f \;-\; z\,(\rev_n f)' .
+\]
+\end{lemma}
+
+\begin{proof}
+Both sides equal $\sum_{i=0}^n i\, a_i z^{n-i}$: the left side because
+$f_z = \sum_i i a_i z^{i-1}$ reverses (at degree $n-1$) to
+$\sum_i i a_i z^{(n-1)-(i-1)}$; the right side because $(\rev_n f)' =
+\sum_i (n-i) a_i z^{n-i-1}$, so $n\,\rev_n f - z (\rev_n f)' =
+\sum_i \bigl(n-(n-i)\bigr) a_i z^{n-i}$.
+\end{proof}
+
+\begin{definition}\label{def:homog}
+For $\varphi = \sum_{i=0}^N c_i z^i \in R[z]$ with $\deg\varphi \leq N$, the
+\emph{formal degree-$N$ homogenization} is
+$H_N(\varphi) := \sum_{i=0}^N c_i Z^i W^{N-i} \in R[Z,W]$, homogeneous of
+degree $N$ in $(Z,W)$. Let $\varepsilon : R[Z,W] \to R[z]$ be the substitution
+$Z \mapsto z$, $W \mapsto 1$; then $\varepsilon(H_N\varphi) = \varphi$, and
+$H_N \circ \varepsilon$ is the identity on homogeneous polynomials of degree
+$N$. For homogeneous $\Phi$ set
+$J(\Phi) := \ideal{\Phi,\ \Phi_Z,\ \Phi_W} \subseteq R[Z,W]$.
+\end{definition}
+
+\begin{lemma}\label{lem:homog}
+Let $\varphi \in R[z]$ with $\deg \varphi \leq N$, $\Phi := H_N(\varphi)$, and
+$P \in R$.
+\begin{enumerate}[label=(\alph*)]
+\item $\Phi_Z = H_{N-1}(\varphi')$, and by Euler's relation
+  $N\Phi = Z\Phi_Z + W\Phi_W$ we get
+  $\varepsilon(\Phi_W) = N\varphi - z\varphi' \in \ideal{\varphi,\varphi'}$.
+  Consequently, for \emph{any} homogeneous $\Phi$ of degree $N$:
+  \[
+    \varepsilon\bigl(J(\Phi)\bigr) \subseteq
+       \ideal{\,\varepsilon(\Phi),\ \varepsilon(\Phi)'\,}.
+  \]
+  In particular, if $P\cdot W^m \in J(\Phi)$ for some $m$, then
+  $P \in \ideal{\varepsilon(\Phi), \varepsilon(\Phi)'}$.
+\item Conversely, if $P \in \ideal{\varphi, \varphi'}$, say
+  $P = A\varphi + B\varphi'$ with $\deg A \le a$, $\deg B \le b$, then
+  \[
+    P\cdot W^{M} \;\in\; \ideal{\Phi,\ \Phi_Z}\;\subseteq\;J(\Phi),
+    \qquad M := \max(a+N,\ b+N-1),
+  \]
+  by homogenizing the identity term by term
+  ($H$ is multiplicative on matching formal degrees, and
+  $H_{N-1}(\varphi') = \Phi_Z$).
+\item (Swap.) Let $\sigma$ be the substitution $Z \leftrightarrow W$. Then
+  $\sigma(H_N \varphi) = H_N(\rev_N \varphi)$, and
+  $\sigma(J(\Phi)) = J(\sigma\Phi)$ for every homogeneous $\Phi$.
+\item (Linear substitutions.) For invertible
+  $T \in \mathrm{GL}_2(\R)$ acting by substitution
+  $\sigma_T(\Phi)(Z,W) := \Phi(T(Z,W))$, one has
+  $\sigma_T(J(\Phi)) = J(\sigma_T\Phi)$ (chain rule: the pair
+  $(\Phi_Z,\Phi_W)$ transforms by the invertible matrix $T^{\mathsf T}$),
+  and $\sigma_T(\ideal{Z,W}) = \ideal{Z,W}$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+All items are direct computations with the definitions. For (a), note that
+$\Phi_Z = \sum_i i c_i Z^{i-1}W^{N-i}$ dehomogenizes to $\varphi'$, and
+that $\varepsilon$ is a ring homomorphism, so $\varepsilon(J(\Phi))$ lands in
+the ideal generated by the $\varepsilon$-images of the three generators, which
+by the two identities equals
+$\ideal{\varepsilon\Phi, (\varepsilon\Phi)'}$. Item (a) holds for
+any homogeneous $\Phi$, including those with vanishing ``leading''
+coefficients --- this is important below, where reversals may have degree
+$< n$.
+\end{proof}
+
+\subsection{The transfer lemma}
+
+Brown's proof works pointwise: at $p \in S$ it chooses $\gamma \in \R$ with
+$f(p,\gamma) \neq 0$ and passes to the auxiliary polynomial
+\[
+  f^*_\gamma \;:=\; \rev_n\bigl(f(\xb,\, z+\gamma)\bigr)
+  \;=\; z^n\, f\!\left(\xb,\ \tfrac1z + \gamma\right),
+\]
+whose roots are $1/(\rho - \gamma)$ for $\rho$ the roots of $f$, and whose
+formal leading coefficient is $f(\xb,\gamma)$. The corrected hypothesis must
+therefore put $P$ in $\E(f^*_\gamma)$ for the (point-dependent!) shifts
+$\gamma$ used in the proof. The following lemma shows that the two fixed,
+$\gamma$-free memberships suffice.
+
+\begin{lemma}[Transfer]\label{lem:transfer}
+Let $f \in R[z]$, $\deg_z f = n \geq 1$, and $P \in R$. Suppose
+\[
+  P \in \ideal{f,\ f_z} \qquad\text{and}\qquad
+  P \in \ideal{\rev f,\ (\rev f)'} .
+\]
+Then for every $\gamma \in \R$,
+\(
+  P \in \ideal{\,f^*_\gamma,\ (f^*_\gamma)'\,}.
+\)
+\end{lemma}
+
+\begin{proof}
+Let $F := H_n(f)$ and $J := J(F)$. By Lemma~\ref{lem:homog}(b),
+$P\,W^{M_1} \in J$ for some $M_1$. Applying Lemma~\ref{lem:homog}(b) to
+$\rev f$ (which has degree $\le n$) and then the swap (c),
+\[
+  P\,W^{M_2} \in J\bigl(H_n(\rev f)\bigr) = J(\sigma F) = \sigma(J)
+  \quad\Longrightarrow\quad P\,Z^{M_2} \in J .
+\]
+With $M := \max(M_1,M_2)$, every monomial $Z^iW^j$ with $i+j = 2M$ has
+$i \geq M$ or $j \geq M$, hence
+\begin{equation}\label{eq:saturation}
+  P\cdot \ideal{Z,W}^{2M} \;\subseteq\; J .
+\end{equation}
+Now fix $\gamma$ and let $T$ be the (invertible) substitution
+$Z \mapsto W + \gamma Z$, $W \mapsto Z$. A homogeneous polynomial of degree
+$n$ is determined by its dehomogenization, and
+$\varepsilon(\sigma_T F) = \varepsilon\bigl(F(W+\gamma Z,\, Z)\bigr)$
+evaluated as follows: $F(Z + \gamma W, W)$ dehomogenizes to
+$f(z+\gamma)$, so $F(Z+\gamma W, W) = H_n(f(z+\gamma))$, and applying the swap
+(Lemma~\ref{lem:homog}(c)) gives
+\[
+  \sigma_T F \;=\; F(W + \gamma Z,\ Z) \;=\;
+  \sigma\bigl(H_n(f(z+\gamma))\bigr) \;=\;
+  H_n\bigl(\rev_n(f(z+\gamma))\bigr) \;=\; H_n(f^*_\gamma).
+\]
+Applying the automorphism $\sigma_T$ to \eqref{eq:saturation} and using
+Lemma~\ref{lem:homog}(d),
+\[
+  P\cdot\ideal{Z,W}^{2M} \;\subseteq\; \sigma_T(J) \;=\;
+  J\bigl(H_n(f^*_\gamma)\bigr) ,
+\]
+in particular $P\,W^{2M} \in J(H_n(f^*_\gamma))$, and
+Lemma~\ref{lem:homog}(a) yields
+$P \in \ideal{f^*_\gamma, (f^*_\gamma)'}$.
+\end{proof}
+
+\begin{remark}\label{rem:projective}
+Display \eqref{eq:saturation} identifies the corrected hypothesis
+intrinsically: $P$ lies in the $\ideal{Z,W}$-\emph{saturated (projective)
+elimination ideal} of $J(F) = \ideal{F, F_Z, F_W}$. Its variety is the
+\emph{closed} image of the projective incidence variety
+$\{F = F_Z = F_W = 0\} \subseteq \R^k_{\mathstrut} \times \mathbb{P}^1$, which
+contains both the finite multiple-root locus and the
+degree-drop-$\ge 2$ locus $\{a_n = a_{n-1} = 0\}$ (the point
+$[1:0]$ at infinity gives $F = a_n$, $F_W = a_{n-1}$ there). This is the
+smallest $\mathrm{GL}_2$-invariant correction of $\E(f)$, so requiring
+anything less invites counterexamples of the same flavor as
+Proposition~\ref{prop:counterexample}.
+\end{remark}
+
+\subsection{The theorem}
+
+We also need Brown's local refinement lemma \cite[Lemma~8.2]{Brown01}, an easy
+consequence of the straightening chart already formalized
+(\code{IsAnalyticSubmanifold.straightening\_chart}):
+
+\begin{lemma}[Refinement]\label{lem:refine}
+Let $S$ be a connected analytic submanifold of $\R^k$, $p \in S$, and $N_0$ an
+open neighborhood of $p$. There is an open $N$ with $p \in N \subseteq N_0$
+such that $S \cap N$ is a connected analytic submanifold of $\R^k$.
+\end{lemma}
+
+\begin{proof}[Proof sketch]
+Take a straightening chart $\Phi$ at $p$ mapping $S$ locally onto
+$(\R^s\times\{0\}) \cap \Phi(\,\cdot\,)$, shrink its source to lie in $N_0$,
+and pull back a small open ball $B$ around $\Phi(p)$; then
+$\Phi(S \cap N) = B \cap (\R^s \times \{0\})$ is convex, hence connected, and
+the submanifold property is local. (The same argument already appears inline
+in \code{Mccalum/Generalized/Delineable.lean} to establish preconnectedness of
+$S \cap U$.)
+\end{proof}
+
+\begin{theorem}[Generalized Brown, Theorem 3.1$'$]\label{thm:main}
+Let $f \in \R[\xb][z]$ have positive degree $n$ in $z$. Let $P \in R$,
+$P \neq 0$, with
+\[
+  P \in \ideal{f,\ f_z} \cap R
+  \qquad\text{and}\qquad
+  P \in \ideal{\rev f,\ (\rev f)'} \cap R .
+\]
+Let $S$ be a connected analytic submanifold of $\R^k$ on which $P$ is
+order-invariant and $\lc f$ is sign-invariant, and such that $f$ vanishes
+identically at no point of $S$. Then $f$ is degree-invariant on $S$.
+\end{theorem}
+
+\begin{proof}
+By sign-invariance of $a_n = \lc f$ on $S$, either $a_n$ vanishes nowhere on
+$S$ --- and then $\deg f(q,\cdot) = n$ for all $q \in S$ and we are done --- or
+$a_n \equiv 0$ on $S$; assume the latter, so $\deg f(q,\cdot) \le n-1$ on $S$.
+Since a locally constant function on a connected space is constant, it
+suffices to show that $q \mapsto \deg f(q,\cdot)$ is constant near each
+$p \in S$ (within $S$).
+
+Fix $p \in S$. Since $f(p,\cdot) \not\equiv 0$, choose $\gamma \in \R$ with
+$f(p,\gamma) \neq 0$, and an open $N_0 \ni p$ with $f(q,\gamma) \neq 0$ for
+all $q \in N_0$. Put $\bar f := f(\xb, z+\gamma)$ and
+$f^* := f^*_\gamma = \rev_n \bar f$, with coefficients
+$f^* = \sum_{i=0}^n \bar a_i z^{\,n-i}$ where
+$\bar f = \sum_i \bar a_i z^i$. We record:
+\begin{enumerate}[label=(\arabic*)]
+\item \emph{$f^*$ is degree-invariant on $N_0$, of degree $n$:} its formal
+  leading coefficient is $\bar a_0 = \bar f(\xb,0) = f(\xb,\gamma)$, which is
+  nonzero at every point of $N_0$. In particular $f^*(q,\cdot)\not\equiv 0$
+  on $N_0$.
+\item \emph{Multiplicity of $0$ records the degree drop:} for $q \in N_0$,
+  the multiplicity of $0$ as a root of $f^*(q,\cdot)$ is the trailing degree
+  \[
+    \mathrm{mult}_0\, f^*(q,\cdot)
+      \;=\; n - \max\{ i : \bar a_i(q) \neq 0\}
+      \;=\; n - \deg \bar f(q,\cdot)
+      \;=\; n - \deg f(q,\cdot),
+  \]
+  the last step because shifting $z$ preserves degree. Moreover the constant
+  coefficient of $f^*(q,\cdot)$ is $\bar a_n(q) = a_n(q)$, so for
+  $q \in S$ (where $a_n \equiv 0$), $0$ is a root of $f^*(q,\cdot)$, of
+  multiplicity $n - \deg f(q,\cdot) \ge 1$.
+\item \emph{Witness:} by Lemma~\ref{lem:transfer},
+  $P \in \ideal{f^*, (f^*)_z} \cap R$, $P \neq 0$, and $P$ is order-invariant
+  on every subset of $S$.
+\end{enumerate}
+By Lemma~\ref{lem:refine}, pick $N \subseteq N_0$ with $p \in N$ and
+$S \cap N$ a connected analytic submanifold. By (1)--(3), all hypotheses of
+Theorem~\ref{thm:lifting} hold for $f^*$ on $S \cap N$, so $f^*$ is
+analytically delineable on $S\cap N$: there are analytic sections
+$\theta_1 < \cdots < \theta_s$ on $S \cap N$ exhausting the real roots of
+$f^*(q,\cdot)$, with constant multiplicities $m_1,\dots,m_s \geq 1$.
+
+By (2), $0$ is a real root of $f^*(p,\cdot)$, so there is exactly one index
+$i$ with $\theta_i(p) = 0$ (the $\theta_j(p)$ are pairwise distinct). By
+continuity of the finitely many sections, shrink $N$ to an open
+$N' \ni p$ such that $\theta_j \neq 0$ on $S \cap N'$ for all $j \neq i$. Now
+let $q \in S \cap N'$ be arbitrary: by (2), $0$ is a real root of
+$f^*(q,\cdot)$, hence $0 = \theta_j(q)$ for some $j$, hence $j = i$; therefore
+\[
+  n - \deg f(q,\cdot) \;=\; \mathrm{mult}_0\, f^*(q,\cdot)
+    \;=\; \mathrm{mult}_{\theta_i(q)} f^*(q,\cdot) \;=\; m_i ,
+\]
+so $\deg f(q,\cdot) = n - m_i$ for every $q \in S\cap N'$. This is the desired
+local constancy.
+\end{proof}
+
+\begin{remark}[Brown's theorem is the special case $P = D$]\label{rem:recover}
+The formal degree-$n$ discriminant satisfies both memberships. First,
+$\disc_n(\mathfrak f) \in \ideal{\mathfrak f, \mathfrak f'}$ holds for the
+generic polynomial $\mathfrak f = \sum_i \mathfrak a_i z^i$ over
+$\Z[\mathfrak a_0,\dots,\mathfrak a_n]$ (a classical fact, cf.\
+\cite{Jouanolou}; it is also how the repository recovers Theorem~3.2.3 from
+3.2.3$'$), and hence for every specialization. Second, Brown's Lemma~8.1
+gives $\disc_n(\mathfrak f) = \disc_n(\rev_n \mathfrak f)$ whenever
+$\mathfrak a_0 \mathfrak a_n \neq 0$; since both sides are polynomials in the
+$\mathfrak a_i$ and agree on a Zariski-dense set, they are equal in
+$\Z[\mathfrak a_0,\dots,\mathfrak a_n]$, so $D = \disc_n f = \disc_n(\rev f)
+\in \ideal{\rev f, (\rev f)'}$ by the first fact applied to $\rev f$. Thus
+Theorem~\ref{thm:main} strictly subsumes Theorem~\ref{thm:brown}.
+\end{remark}
+
+\begin{remark}[Non-vacuity]\label{rem:nonvacuous}
+A nonzero $P \in \E(f) \cap \E(\rev f)$ exists if and only if $D \neq 0$
+(i.e., $f$ is squarefree over $\R(\xb)$): ``only if'' is the gcd argument
+after Conjecture~\ref{conj:naive}, and ``if'' is Remark~\ref{rem:recover}.
+So the corrected hypothesis class is non-vacuous exactly under Brown's
+nondegeneracy condition. More is true: the intersection contains the product
+of any elements of the two factors, since each of
+$\E(f), \E(\rev f)$ is an ideal of $R$.
+\end{remark}
+
+\begin{remark}[The counterexample, revisited]\label{rem:cex-revisited}
+In Proposition~\ref{prop:counterexample}, $\rev f = z^2 + yz - xy^2$ is
+\emph{monic}, so elimination is a closed projection and
+\[
+  V_\C\bigl(\E(\rev f)\bigr)
+   = \pi\bigl(V_\C(\rev f, (\rev f)')\bigr)
+   = V\bigl(\disc(\rev f)\bigr) = V\bigl(y^2(1+4x)\bigr) \supseteq \{y=0\} .
+\]
+Every element of $\E(\rev f)$ vanishes on the $x$-axis; $P = 1+4x$ does not,
+so $P \notin \E(\rev f)$ and Theorem~\ref{thm:main} correctly refuses the
+configuration.
+\end{remark}
+
+\section{Proof certificates for the pipeline}\label{sec:certificates}
+
+In the intended CAD proof-reconstruction pipeline, an external solver computes
+an element $P$ of $\E(f)$ (typically the discriminant, via a subresultant
+computation) \emph{together with} B\'ezout cofactors witnessing
+$P = A f + B f_z$. Theorem~\ref{thm:main} now demands a second certificate,
+for $\ideal{\rev f, (\rev f)'}$. The next lemma shows the second certificate
+is a \emph{mechanical transformation} of the first --- no new solver call, no
+search --- at the price of a factor $\lc(f)^M$.
+
+\begin{lemma}[Certificate transfer]\label{lem:cert}
+Let $f = \sum_{i=0}^n a_i z^i$ with $a_n \neq 0$, $n \ge 1$, and suppose
+\[
+  P \;=\; A f + B f_z, \qquad A, B \in R[z],\quad
+  a := \deg A,\ b := \deg B,\quad P \in R .
+\]
+Set $g := \rev f$, let $h := \mathrm{divX}\, g$ (so that $g = z\,h + a_n$,
+using that the constant coefficient of $g$ is $a_n$), and let
+$M := \max(a+n,\ b+n-1)$. Then:
+\begin{enumerate}[label=(\roman*)]
+\item \emph{(Reflection.)}
+  $\displaystyle z^M P \;=\; U g + V g'$, where
+  \[
+    U \;=\; z^{\,M-n-a}\,\rev_a A \;+\; n\, z^{\,M-n+1-b}\,\rev_b B,
+    \qquad
+    V \;=\; -\,z^{\,M-n+2-b}\,\rev_b B .
+  \]
+  This is obtained by applying $\rev_M$ to $P = Af + Bf_z$, using
+  multiplicativity of $\rev$ and Lemma~\ref{lem:euler} for the term
+  $\rev_{n-1}(f_z) = n g - z g'$.
+\item \emph{(Clearing $z^M$.)} With
+  $G := \sum_{j=0}^{M-1}\binom{M}{j}(-zh)^j\, g^{\,M-1-j}$, so that
+  $a_n^M = (g - zh)^M = g\,G + (-zh)^M$,
+  \[
+    a_n^M\, P \;=\;
+      \bigl(G P + (-h)^M U\bigr)\, g \;+\; \bigl((-h)^M V\bigr)\, g' .
+  \]
+\end{enumerate}
+Consequently $\lc(f)^M P \in \ideal{\rev f, (\rev f)'} \cap R$, with explicit
+cofactors; and trivially $\lc(f)^M P = (a_n^M A) f + (a_n^M B) f_z \in
+\ideal{f, f_z}$ as well. Both identities have been verified symbolically on
+the data of Proposition~\ref{prop:counterexample}
+($n = 2$, $a = 1$, $b = 2$, $M = 3$).
+\end{lemma}
+
+\begin{remark}[No transfer without the factor]
+Some correction factor is unavoidable: Proposition~\ref{prop:counterexample}
+exhibits $P \in \E(f) \setminus \E(\rev f)$, so no general implication
+$\E(f) \subseteq \E(\rev f)$ exists. The factor $\lc(f)^M$ is conceptually
+exactly right --- it forces the witness to vanish on the degree-drop locus,
+which is the information $\E(f)$ lacks (Remark~\ref{rem:variety}).
+\end{remark}
+
+In the pipeline, the order-invariance of the corrected witness is free,
+because Brown's reduced projection already contains $\lc f$ as a projection
+factor, and projection factors are order-invariant on the cells of the induced
+CAD. This yields the form of the theorem most convenient for the algorithm:
+
+\begin{corollary}[Pipeline form]\label{cor:pipeline}
+Let $f$, $P \neq 0$, $P \in \E(f)$ be as above, and let $S$ be a connected
+analytic submanifold on which \emph{both} $P$ \emph{and} $\lc f$ are
+order-invariant, with $f(q,\cdot) \not\equiv 0$ for all $q \in S$. Then $f$ is
+degree-invariant on $S$.
+\end{corollary}
+
+\begin{proof}
+On a connected $S$, order-invariance of $\lc f$ implies sign-invariance: if
+the constant order is $0$ then $\lc f$ is nonvanishing on $S$, hence of
+constant sign by continuity and connectedness; if it is $\geq 1$ then
+$\lc f \equiv 0$ on $S$. Let $\widetilde P := \lc(f)^M P$ with $M$ as in
+Lemma~\ref{lem:cert}; then $\widetilde P \neq 0$, $\widetilde P \in \E(f)
+\cap \E(\rev f)$, and $\widetilde P$ is order-invariant on $S$ because orders
+add over products:
+$\ord_q \widetilde P = M\,\ord_q(\lc f) + \ord_q P$ is constant. Apply
+Theorem~\ref{thm:main} with witness $\widetilde P$.
+\end{proof}
+
+\begin{remark}[No new roots, no slowdown]\label{rem:noroots}
+The corrected witness $\widetilde P = \lc(f)^M P$ is never computed, expanded,
+factored, or evaluated by the CAD algorithm. The projection factor set remains
+\[
+  \{\lc F\} \;\cup\; \{\text{irreducible factors of } P(F)\}
+            \;\cup\; \{\text{irreducible factors of } r(F,G)\},
+\]
+identical to the naive generalized reduced projection, because
+$V(\widetilde P) = V(\lc f) \cup V(P)$ contributes no irreducible factor not
+already present. $\widetilde P$ exists only on the proof side, as the witness
+handed to Theorem~\ref{thm:main}; the exponent $M$ is fixed once by the
+degrees of the cofactors $A, B$ in the solver's certificate and appears only
+there. In particular the generalization causes no additional cells, no larger
+degrees, and no extra projection work. The pair elements $r(F,G) \in
+\ideal{F,G}\cap R$ of the generalized projection are entirely unaffected:
+Brown's Theorem~3.1 concerns only the per-polynomial degree-invariance
+recovery.
+\end{remark}
+
+\section{Formalizing Theorem 3.1$'$ in Lean: an assessment}\label{sec:lean}
+
+We recommend formalizing Corollary~\ref{cor:pipeline} \emph{directly}
+(``Version~A''), with witness construction via Lemma~\ref{lem:cert}, rather
+than Theorem~\ref{thm:main} (``Version~B''). Version~A avoids the bivariate
+homogenization layer entirely: in the pointwise argument one obtains the
+witness for $f^*_\gamma$ from the chain
+\[
+  P \in \ideal{f, f_z}
+  \ \xrightarrow{\ \text{shift } z \mapsto z + \gamma\ }\
+  P \in \ideal{\bar f, \bar f_z}
+  \ \xrightarrow{\ \text{Lemma}~\ref{lem:cert}\ }\
+  \lc(f)^M P \in \ideal{f^*_\gamma, (f^*_\gamma)'},
+\]
+using $\lc \bar f = \lc f$, and order-invariance of the witness follows from
+the strengthened hypothesis exactly as in the proof of
+Corollary~\ref{cor:pipeline}. Version~A is also all the CAD pipeline needs,
+since cells of a McCallum-style CAD make every projection factor ---
+including $\lc F$ --- order-invariant.
+
+\subsection*{Already available}
+
+\begin{itemize}[leftmargin=2em]
+\item \textbf{The analytic core is done.} \code{lifting\_theorem\_generalized}
+  (Theorem~\ref{thm:lifting}) is proved, axiom-free; it is invoked once, for
+  $f^*$ on $S \cap N$. No new analysis (Weierstrass preparation, monodromy,
+  etc.) is required anywhere in the proof of Theorem~\ref{thm:main}.
+\item \code{AnalyticDelineable} already carries constant multiplicities
+  (\code{rootMultiplicity ($\theta$ i a) = m i}), which is precisely what step (2) of
+  the proof consumes.
+\item \code{IsAnalyticSubmanifold.}\allowbreak\code{straightening\_chart}
+  (Theorem~2.2.1) is
+  proved, and the connectivity-refinement argument for $S \cap U$ already
+  appears inline in \code{Generalized/}\allowbreak\code{Delineable.lean};
+  Lemma~\ref{lem:refine} is a repackaging.
+\item \code{order\_invariant\_mul\_mv} / \code{order\_invariant\_pow\_mv}
+  give additivity of order over products, for the witness
+  $\lc(f)^M P$.
+\item Mathlib supplies the entire reversal toolkit:
+  \code{Polynomial.reflect}, \code{reflect\_mul},
+  \code{coeff\_zero\_reverse},
+  \code{rootMultiplicity\_eq\_}\allowbreak\code{natTrailingDegree$'$}
+  ($\mathrm{mult}_0 = $ trailing degree), \code{X\_pow\_dvd\_iff},
+  \code{X\_mul\_divX\_add} ($g = X\cdot\mathrm{divX}\,g + C(g(0))$), and
+  \code{derivative\_comp} (for the shift homomorphism
+  $\mathrm{aeval}(X + C\,\gamma)$). Since \code{PolyR n} is literally
+  \code{Polynomial (MvPolyR n)} and \code{specialize} is a
+  \code{Polynomial.map}, specialization commutes with \code{reflect}
+  definitionally (a one-line \code{ext}).
+\end{itemize}
+
+\subsection*{To build (Version A)}
+
+\begin{enumerate}[leftmargin=2em]
+\item \code{SignInvariant} (new definition) and ``order-invariant
+  $\Rightarrow$ sign-invariant on connected $S$'' --- small
+  ($\approx$ 50--100 lines; the nonvanishing case uses connectedness and the
+  intermediate value property, for which the repo has precedents).
+\item Lemma~\ref{lem:euler} as a \code{reflect} identity --- elementary
+  coefficient computation ($\approx$ 50--100 lines).
+\item Shift transport: \code{C P $\in$ span \{f, f$'$\}} implies the same for
+  $f(z+\gamma)$, via the algebra map $\mathrm{aeval}(X + C\gamma)$ and
+  \code{derivative\_comp} ($\approx$ 50 lines).
+\item Lemma~\ref{lem:cert}: \code{reflect\_mul} + binomial expansion +
+  \code{divX} bookkeeping. The statement to prove is
+  \begin{center}
+    \code{C P $\in$ span \{f, derivative f\} $\to$}\\
+    \code{C (lc f \char94{} M * P) $\in$ span \{reflect n f, derivative (reflect n f)\}}
+  \end{center}
+  with $M$ existential ($\approx$ 200--350 lines; entirely computational, the
+  proof in Section~\ref{sec:certificates} is already phrased in Mathlib-shaped
+  steps). Here \code{lc} abbreviates \code{leadingCoeff}, and the reversal is
+  taken at the fixed formal degree $n$ via \code{reflect}, which agrees with
+  \code{reverse} since $a_n \neq 0$.
+\item Lemma~\ref{lem:refine} as a standalone lemma from the straightening
+  chart, plus the (easy) fact that \code{IsAnalyticSubmanifold} restricts to
+  open subsets --- the definition is pointwise-local with a fixed dimension,
+  so the same local data restricted to $W \cap N$ works
+  ($\approx$ 150--300 lines, mostly adapting the existing inline argument).
+\item {\sloppy Trailing-degree bookkeeping ($\approx$ 100--150 lines):
+  \code{rootMultiplicity\_eq\_\allowbreak natTrailingDegree$'$}, together with the
+  commutation of \code{specialize} with \code{reflect} and with the shift,
+  gives that the multiplicity of $0$ as a root of
+  \code{specialize (reflect n (shift f)) q} equals
+  $n$ minus \code{natDegree (specialize f q)}.\par}
+\item The main theorem \code{brown\_3\_1\_generalized}: the pointwise argument
+  (choose $\gamma$ by finiteness of roots, choose $N_0$ by continuity of the
+  polynomial $(q \mapsto f(q,\gamma))$, apply Theorem~\ref{thm:lifting},
+  identify and isolate the zero section, conclude), plus
+  ``locally constant $\Rightarrow$ constant'' on a connected set
+  ($\approx$ 300--500 lines; compare the similar clopen/branch-tracking
+  arguments already in \code{Generalized/Delineable.lean}).
+\end{enumerate}
+
+Total estimate: roughly 0.9--1.5k lines of new Lean, none of it deep --- the
+difficulty profile is ``elementary but fiddly polynomial algebra plus soft
+topology,'' comparable to \code{Projection.lean}-style glue, and far below the
+monodromy/Puiseux work already completed in this repository. The main
+uncertainty is item 5 (chart API friction) and the $\gamma$-selection
+topology in item 7.
+
+\subsection*{Version B and integration}
+
+Version~B (Theorem~\ref{thm:main} verbatim, $\lc f$ only sign-invariant)
+additionally needs the homogenization layer of Lemma~\ref{lem:homog}: a model
+of $R[Z,W]$ (e.g.\ \code{Polynomial (Polynomial (MvPolyR n))} or
+\code{MvPolynomial (Fin 2) (MvPolyR n)}), formal homogenization, the Euler
+relation, and the substitution automorphisms --- all elementary, but an
+estimated additional 500--900 lines of API. It can be deferred: Version~A is
+what the pipeline consumes.
+
+Finally, integrating into a full ``generalized reduced projection'' theorem
+(the analogue of \code{mccallum\_3\_2\_3\_generalized} with the
+all-coefficients hypothesis \code{hcoeff} replaced by leading-coefficient
+order-invariance) is a moderate refactor: degree-invariance of each basis
+element now comes from \code{brown\_3\_1\_generalized}, the hypothesis
+``$\forall q \in S$, \code{specialize f q} $\neq 0$'' is assumed directly (as Brown
+does) instead of being derived from coefficient order-invariance, and the
+existing product/factor plumbing is reused unchanged
+(\code{degree\_invariant\_prod},
+\code{delineable\_factor\_of\_}\allowbreak\code{delineable\_prod}, \dots;
+$\approx$ 100--200 lines).
+
+\begin{thebibliography}{9}
+\bibitem{Brown01} C.~W.~Brown,
+  \emph{Improved projection for cylindrical algebraic decomposition},
+  J.~Symbolic Computation \textbf{32} (2001), 447--465.
+\bibitem{McCallum98} S.~McCallum,
+  \emph{An improved projection operator for cylindrical algebraic
+  decomposition}, in: Caviness, Johnson (eds.), \emph{Quantifier Elimination
+  and Cylindrical Algebraic Decomposition}, Springer, 1998.
+\bibitem{Jouanolou} J.-P.~Jouanolou,
+  \emph{Le formalisme du r\'esultant}, Adv.\ Math.\ \textbf{90} (1991),
+  117--263.
+\end{thebibliography}
+
+\end{document}

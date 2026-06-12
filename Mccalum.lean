@@ -5,6 +5,7 @@ import Mccalum.Puiseux.Covering
 import Mccalum.Puiseux.RootCover
 import Mccalum.Puiseux.RootFactor
 import Mccalum.DiscrMul
+import Mccalum.DiscrNonzero
 import Mccalum.DiscrProdInvariant
 import Mccalum.Generalized.CArgPrinciple
 import Mccalum.Generalized.CDivisionAlgebra
