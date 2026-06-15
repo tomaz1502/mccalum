@@ -1,0 +1,21 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
+\contentsline {section}{\numberline {2}Preliminaries and notation}{3}{section.2}%
+\contentsline {section}{\numberline {3}The generalized theorems}{3}{section.3}%
+\contentsline {section}{\numberline {4}The three new ingredients}{4}{section.4}%
+\contentsline {subsection}{\numberline {4.1}A norm--resultant identity for monic polynomials}{4}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Order-invariance of factors: Lemma 3.2.2 in ambient form}{5}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}The radical lemma}{6}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Proof of the projection theorem from the lifting theorem}{6}{section.5}%
+\contentsline {section}{\numberline {6}Proof of the lifting theorem}{7}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Reduction to the local statements}{7}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Case $s=r-1$ ($S$ open)}{7}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Case $1\le s\le r-2$: coordinate change and transport of the witness}{8}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Complexification}{8}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.5}Weierstrass preparation and descent of the membership}{8}{subsection.6.5}%
+\contentsline {subsection}{\numberline {6.6}The discriminant of $h$ has constant order along $T^*$}{9}{subsection.6.6}%
+\contentsline {subsection}{\numberline {6.7}Application of Zariski's theorem}{9}{subsection.6.7}%
+\contentsline {subsection}{\numberline {6.8}Return to the real domain and reassembly}{9}{subsection.6.8}%
+\contentsline {section}{\numberline {7}The Zariski theorem (thesis Chapter 4): unchanged}{10}{section.7}%
+\contentsline {section}{\numberline {8}Summary of changes, and the Lean formalization}{11}{section.8}%
+\contentsline {subsection}{\numberline {8.1}What changed relative to the thesis}{11}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}The formalization}{12}{subsection.8.2}%
