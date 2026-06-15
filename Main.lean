@@ -1,8 +1,5 @@
 import Mccalum
 
-noncomputable def sgn (a : ℝ) : ℤ :=
-  if a > 0 then 1 else if a = 0 then 0 else -1
-
 def an_sub (i : Nat) (S: Set (Fin i → ℝ)) : Prop := IsAnalyticSubmanifold S
 
 def an_del (i : Nat) (S : Set (Fin i → ℝ)) (f : Polynomial (MvPolynomial (Fin i) ℝ)) : Prop := AnalyticDelineable f S
@@ -15,33 +12,46 @@ def non_null (i : Nat) (S : Set (Fin i → ℝ)) (f : Polynomial (MvPolynomial (
 def ord_inv (i : Nat) (S : Set (Fin i → ℝ)) (f : MvPolynomial (Fin i) ℝ) : Prop :=
   ∀ a ∈ S, ∀ b ∈ S, polyOrder i f a = polyOrder i f b
 
-def sgn_inv (i : Nat) (S : Set (Fin i → ℝ)) (f : MvPolynomial (Fin i) ℝ) : Prop :=
-  ∀ a ∈ S, ∀ b ∈ S, sgn (f.eval a) = sgn (f.eval b)
-
-theorem deg_inv_of_ldcf_sgn_inv (i : Nat) (p : Polynomial (MvPolynomial (Fin i) ℝ)) (S : Set (Fin i → ℝ)) (hp_i : p.natDegree > 0) (h_non_null : non_null i S p) :
-    sgn_inv i S p.leadingCoeff → DegreeInvariant p S := by
-  intros h s1 hs1 s2 hs2
-  simp [sgn_inv] at h
-  have := h s1 hs1 s2 hs2
-  if h_deg: MvPolynomial.eval s1 p.leadingCoeff = 0 then
-    have := h_non_null s1 hs1
-    admit
-  else
-    admit
-
-theorem discr_in_elim_ideal (i : Nat) (p : Polynomial (MvPolynomial (Fin i) ℝ)) : Polynomial.C p.discr ∈ Ideal.span ({p, Polynomial.derivative p} : Set (PolyR i)) := sorry
-
-theorem nalbach_4_1 (i : Nat) (S : Set (Fin i → ℝ)) (p : Polynomial (MvPolynomial (Fin i) ℝ)) (hp_sf : Squarefree p) (hp_i : p.natDegree > 0) :
+theorem nalbach_4_1
+    (i : Nat) (S : Set (Fin i → ℝ)) (f : PolyR i) (hf_sf : Squarefree f) (hf_i : f.natDegree > 1) :
     an_sub i S →
     connected i S →
-    non_null i S p →
-    ord_inv i S p.discr →
-    sgn_inv i S p.leadingCoeff →
-    an_del i S p := by
+    non_null i S f →
+    ord_inv i S f.discr →
+    sgn_inv i S f.leadingCoeff →
+    an_del i S f := by
 
   intros h_sub h_conn h_non_null h_ord_inv h_sgn_inv
-  have deg_inv := deg_inv_of_ldcf_sgn_inv i p S hp_i h_non_null h_sgn_inv
-  have discr_in_elim := discr_in_elim_ideal i p
-  have discr_ne_zero : p.discr ≠ 0 := by apply discr_ne_zero_of_squarefree p hp_sf hp_i
-  have := lifting_theorem_generalized S p h_sub h_conn deg_inv h_non_null p.discr discr_ne_zero discr_in_elim h_ord_inv
+  have hp_i0 : f.natDegree > 0 := by omega
+  have discr_ne_zero : f.discr ≠ 0 := by apply discr_ne_zero_of_squarefree f hf_sf hp_i0
+  have deg_inv := brown_original i f hp_i0 discr_ne_zero S h_sub h_conn h_ord_inv h_sgn_inv h_non_null
+  have hunit : IsUnit (f.natDegree : MvPolynomial (Fin i) ℝ) := by
+    rw [← map_natCast (MvPolynomial.C : ℝ →+* MvPolynomial (Fin i) ℝ) f.natDegree]
+    exact RingHom.isUnit_map _ (isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr (by omega)))
+  have discr_in_elim := Brown.discr_mem_span f hf_i hunit
+  have := lifting_theorem_generalized S f h_sub h_conn deg_inv h_non_null f.discr discr_ne_zero discr_in_elim h_ord_inv
   exact this.1
+
+#print axioms nalbach_4_1
+
+theorem nalbach_4_1_generalized
+  (i : Nat) (S : Set (Fin i → ℝ)) (f : PolyR i) (P : MvPolynomial (Fin i) ℝ)
+  (hP : P ≠ 0) (hP_mem₁ : Polynomial.C P ∈
+    Ideal.span ({ f, f.derivative } : Set (PolyR i)))
+  (hP_mem₂ : Polynomial.C P ∈
+    Ideal.span ({ f.reverse, f.reverse.derivative } : Set (PolyR i)))
+  (hf_deg : f.natDegree > 0) :
+    an_sub i S →
+    connected i S →
+    non_null i S f →
+    ord_inv i S P →
+    sgn_inv i S f.leadingCoeff →
+    an_del i S f := by
+
+  intros h_sub h_conn h_non_null h_ord_inv h_sgn_inv
+  have h_deg_inv :=
+    brown_generalized i f P hP hP_mem₁ hP_mem₂ hf_deg S h_sub h_conn h_ord_inv h_sgn_inv h_non_null
+  have := lifting_theorem_generalized S f h_sub h_conn h_deg_inv h_non_null P hP hP_mem₁ h_ord_inv
+  exact this.1
+
+#print axioms nalbach_4_1_generalized

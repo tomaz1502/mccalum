@@ -2,7 +2,6 @@ import Mccalum.Prerequisites
 import Mccalum.DiscrProdInvariant
 import Mccalum.OrderInvariantFactor
 import Mccalum.SquarefreeBasis
-import Mccalum.Projection
 import Mccalum.Generalized.Lifting
 import Mccalum.Generalized.Delineable
 
@@ -66,7 +65,6 @@ theorem lifting_theorem_generalized
   · exact lifting_generalized_codim_case S f hS_submfld hS_conn hopen hdeg hspec_ne P hP_ne hP_mem hP_oi
 
 #print axioms lifting_theorem_generalized
-#check irreducible_section_single_root_blowup
 
 /-! ### Elimination product -/
 
@@ -217,6 +215,24 @@ theorem nullstellensatz_elim
     have h : Polynomial.C (elimProduct A d r) ^ (N + 1) =
         Polynomial.C (elimProduct A d r) * Polynomial.C (elimProduct A d r) ^ N := by ring
     rw [h]; exact Ideal.mul_mem_left _ _ hN⟩
+
+/-- Coprime polynomials have no common root after specialization. -/
+theorem no_common_root_of_coprime (F G : PolyR n) (hcop : IsCoprime F G)
+    (a : Fin n → ℝ) (y : ℝ) :
+    ¬ ((specialize F a).IsRoot y ∧ (specialize G a).IsRoot y) := by
+  intro ⟨hF, hG⟩
+  obtain ⟨u, v, huv⟩ := hcop
+  have h1 : specialize (u * F + v * G) a = 1 := by
+    rw [huv]; simp [specialize, Polynomial.map_one]
+  have h2 : (specialize (u * F + v * G) a).eval y = 1 := by
+    rw [h1]; simp
+  simp only [specialize, Polynomial.map_add, Polynomial.map_mul,
+    Polynomial.eval_add, Polynomial.eval_mul] at h2
+  rw [Polynomial.IsRoot] at hF hG
+  simp only [specialize] at hF hG
+  rw [hF, hG] at h2
+  linarith
+
 
 /-! ### Generalized Projection Theorem (Theorem 3.2.3') -/
 

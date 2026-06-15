@@ -1,8 +1,11 @@
 import Mccalum.DiscrMul
+import Mccalum.DiscrNonzero
 import Mccalum.DiscrProdInvariant
 import Mccalum.OrderInvariantFactor
 import Mccalum.Prerequisites
 import Mccalum.SquarefreeBasis
+import Mccalum.Generalized.Projection
+import Mccalum.Brown.Discr
 
 /-!
 # McCallum's Reduced Projection Theorem (Theorem 3.2.3)
@@ -28,21 +31,73 @@ open Polynomial MvPolynomial Set Classical
 
 variable {n : ℕ}
 
-/-- Coprime polynomials have no common root after specialization. -/
-theorem no_common_root_of_coprime (F G : PolyR n) (hcop : IsCoprime F G)
-    (a : Fin n → ℝ) (y : ℝ) :
-    ¬ ((specialize F a).IsRoot y ∧ (specialize G a).IsRoot y) := by
-  intro ⟨hF, hG⟩
-  obtain ⟨u, v, huv⟩ := hcop
-  have h1 : specialize (u * F + v * G) a = 1 := by
-    rw [huv]; simp [specialize, Polynomial.map_one]
-  have h2 : (specialize (u * F + v * G) a).eval y = 1 := by
-    rw [h1]; simp
-  simp only [specialize, Polynomial.map_add, Polynomial.map_mul,
-    Polynomial.eval_add, Polynomial.eval_mul] at h2
-  rw [Polynomial.IsRoot] at hF hG
-  simp only [specialize] at hF hG
-  rw [hF, hG] at h2
-  linarith
+theorem lifting_theorem
+    (S : Set (Fin n → ℝ))
+    (f : PolyR n)
+    (hS_submfld : IsAnalyticSubmanifold S)
+    (hS_conn : IsConnected S)
+    (hdeg : DegreeInvariant f S)
+    (hf_deg : 1 < f.natDegree)
+    (hspec_ne : ∀ a ∈ S, specialize f a ≠ 0)
+    (hf_sf : Squarefree f)
+    (hP_oi : OrderInvariantMv f.discr S) :
+    AnalyticDelineable f S ∧
+    (∀ (θ : (Fin n → ℝ) → ℝ), ContinuousOn θ S → IsRootFunction f θ S →
+      OrderInvariantFull f (SectionGraph θ S)) := by
+  have hf_deg' : 0 < f.natDegree := by omega
+  have discr_ne_zero : f.discr ≠ 0 := by apply discr_ne_zero_of_squarefree f hf_sf hf_deg'
+
+  have hunit : IsUnit (f.natDegree : MvPolynomial (Fin n) ℝ) := by
+    rw [← map_natCast (MvPolynomial.C : ℝ →+* MvPolynomial (Fin n) ℝ) f.natDegree]
+    exact RingHom.isUnit_map _ (isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr (by omega)))
+
+  have discr_in_span := Brown.discr_mem_span f hf_deg hunit
+  exact lifting_theorem_generalized S f hS_submfld hS_conn hdeg hspec_ne f.discr discr_ne_zero discr_in_span hP_oi
+
+/-/1-- The set of nonzero coefficients of polynomials in `A`, viewed as multivariate -/
+/-polynomials in the base ring. Part of the reduced projection `P(A)`. -1/ -/
+/-def coeffSet (A : Finset (PolyR n)) : Set (MvPolyR n) := -/
+/-  {c | ∃ f ∈ A, ∃ k : ℕ, f.coeff k = c ∧ c ≠ 0} -/
+
+/-/1-- The set of discriminants of polynomials in `A` of degree at least 2. -/
+/-Part of the reduced projection `P(A)`. -1/ -/
+/-def discrSet (A : Finset (PolyR n)) : Set (MvPolyR n) := -/
+/-  {d | ∃ f ∈ A, 2 ≤ f.natDegree ∧ d = Polynomial.discr f} -/
+
+/-/1-- The set of resultants of pairs of distinct polynomials in `A`, both of positive -/
+/-degree. Part of the reduced projection `P(A)`. -1/ -/
+/-def resSet (A : Finset (PolyR n)) : Set (MvPolyR n) := -/
+/-  {r | ∃ f ∈ A, ∃ g ∈ A, f ≠ g ∧ 1 ≤ f.natDegree ∧ 1 ≤ g.natDegree ∧ -/
+/-    r = Polynomial.resultant f g} -/
+
+/-/1-- McCallum's **reduced projection** `P(A)`: the union of `coeffSet A`, `discrSet A`, -/
+/-and `resSet A`. -1/ -/
+/-def reducedProjection (A : Finset (PolyR n)) : Set (MvPolyR n) := -/
+/-  coeffSet A ∪ discrSet A ∪ resSet A -/
+
+/-theorem mccallum_3_2_3 -/
+/-    (A : Finset (PolyR n)) -/
+/-    (S : Set (Fin n → ℝ)) -/
+/-    (hA : IsSquarefreeBasis A) -/
+/-    (hA_ne : A.Nonempty) -/
+/-    (hS_submfld : IsAnalyticSubmanifold S) -/
+/-    (hS_conn : IsConnected S) -/
+/-    (hnonzero : ∀ f ∈ A, NotIdenticallyZeroOn f S) -/
+/-    (hP : ∀ g ∈ reducedProjection A, OrderInvariantMv g S) : -/
+/-    (∀ f ∈ A, DegreeInvariant f S) ∧ -/
+/-    (∀ f ∈ A, AnalyticDelineable f S) ∧ -/
+/-    SectionsDisjoint A S ∧ -/
+/-    OrderInvariantInAllSections A S := by -/
+/-  have h_coeff : -/
+/-     (∀ f ∈ A, ∀ (k : ℕ), Polynomial.coeff f k ≠ 0 → OrderInvariantMv (Polynomial.coeff f k) S) := sorry -/
+/-  let d := fun f: PolyR n => f.discr -/
+/-  have hD_ne : ∀ p ∈ A, d p ≠ 0 := by -/
+/-    intros p hp -/
+/-    have : Squarefree p := hA.sq_free p hp -/
+/-    unfold d -/
+/-    exact discr_ne_zero_of_squarefree p this (hA.pos_degree p hp) -/
+/-  -- Needs to be refined a bit, right now there is no guarantee that the elements of `A` have degree >= 2 -/
+/-  have := mccallum_3_2_3_generalized A S hA hA_ne hS_submfld hS_conn hnonzero h_coeff d hD_ne -/
+/-  admit -/
 
 end
